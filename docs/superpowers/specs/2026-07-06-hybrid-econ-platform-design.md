@@ -1,5 +1,7 @@
 # Hybrid Econ Platform Design
 
+Historical design, superseded by the dashboard-first product rebuild on 2026-10-03. The current app has separate working views rather than a hero-led single page. See the root README and AGENTS.md for the implemented architecture.
+
 ## Goal
 
 Turn the single-page IBDP Economics prototype into a polished static demo with two clear modes: a calm dashboard for progress and structure, and a TikTok-inspired learning feed for short-form revision.

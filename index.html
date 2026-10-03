@@ -1,13 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="refresh" content="0; url=TikTok%20Econ.html" />
-  <title>IBDP Economics Swipe Academy</title>
-  <script>window.location.replace("TikTok%20Econ.html" + window.location.search + window.location.hash);</script>
-</head>
-<body>
-  <p><a href="TikTok%20Econ.html">Open IBDP Economics Swipe Academy</a></p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <meta
+      name="description"
+      content="Your economics study desk. Short lessons, active recall, and spaced revision."
+    />
+    <title>Econ / Study desk</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/lucide.js"></script>
+    <script defer src="vendor/fsrs.js"></script>
+    <script defer src="content.js"></script>
+    <script defer src="learning.js"></script>
+    <script defer src="decisions.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <aside class="sidebar">
+      <a class="brand" href="#progress" aria-label="Econ study desk"
+        ><span class="brand-mark">e.</span
+        ><span>econ<span class="brand-period">.</span></span></a
+      >
+      <div class="course-label">
+        <span class="course-icon">IB</span>
+        <div><strong>Economics</strong><small>Diploma Programme</small></div>
+        <i data-lucide="chevrons-up-down"></i>
+      </div>
+      <span class="nav-label">WORKSPACE</span>
+      <nav class="primary-nav" aria-label="Workspace">
+        <a href="#progress" data-nav="progress"
+          ><i data-lucide="layout-dashboard"></i><span>Overview</span></a
+        >
+        <a href="#feed" data-nav="feed"
+          ><i data-lucide="layers-2"></i><span>Study feed</span
+          ><span id="navDue" class="nav-count">0</span></a
+        >
+        <a href="#units" data-nav="units"
+          ><i data-lucide="library"></i><span>Topic library</span></a
+        >
+        <a href="#saved" data-nav="saved"
+          ><i data-lucide="bookmark"></i><span>Saved cards</span></a
+        >
+        <a href="#studio" data-nav="studio"
+          ><i data-lucide="square-pen"></i><span>Card studio</span></a
+        >
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="workspace-status">
+          <span class="status-dot"></span>Personal workspace<small
+            >Stored on this device</small
+          >
+        </div>
+        <button class="settings-link" data-action="settings">
+          <i data-lucide="settings-2"></i>Study settings
+        </button>
+        <div class="profile">
+          <span class="avatar">S</span>
+          <div>
+            <strong>My study space</strong><small>Independent learner</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <div class="shell">
+      <header class="topbar">
+        <div class="breadcrumb">
+          Workspace <span>/</span> <strong id="viewLabel">Overview</strong>
+        </div>
+        <div class="header-tools">
+          <button class="search-trigger" data-action="search">
+            <i data-lucide="search"></i><span>Find a topic</span></button
+          ><span class="sample-label">Sample course</span
+          ><span class="avatar small-avatar">S</span>
+        </div>
+      </header>
+      <main id="main" tabindex="-1"></main>
+      <footer class="app-footer">
+        <span>Independent IB Economics practice</span
+        ><span>Sample content · Not teacher verified</span>
+      </footer>
+    </div>
+    <dialog id="modal"><div id="modalContent"></div></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <noscript>This study workspace needs JavaScript enabled.</noscript>
+  </body>
 </html>

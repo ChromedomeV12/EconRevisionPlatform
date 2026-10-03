@@ -1,5 +1,7 @@
 # Hybrid Econ Platform Implementation Plan
 
+Historical plan, superseded by the 2026-10-03 product rebuild. Do not use the unchecked tasks below as the current backlog. See README.md and docs/JEV_INTEGRATION.md for current capabilities and planned integration work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a polished static demo for an IBDP Economics revision platform with dashboard stats and a TikTok-inspired learning feed.

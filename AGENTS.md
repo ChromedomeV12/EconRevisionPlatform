@@ -6,19 +6,25 @@ This is a static prototype for an IBDP Economics revision platform. The product 
 
 ## Current Stack
 
-- `index.html`: GitHub Pages entry point, forwarding to the existing app page.
-- `TikTok Econ.html`: page structure and semantic anchors.
-- `styles.css`: visual system, layout, responsive behavior, light/dark themes.
-- `app.js`: topic data, rendering, progress state, quiz behavior, tabs, feed controls.
-- `docs/superpowers/`: planning and design notes for future agents.
+- `index.html`: application shell, navigation and dialogs. Opens the dashboard directly.
+- `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
+- `styles.css`: visual system and desktop/mobile layouts. The study feed has a dark workspace; other views are light.
+- `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
+- `app.js`: dashboard, feed, search, bookmarks, local submission and review workflows.
+- `learning.js`: FSRS scheduling, review logs, local dates, persistence validation and legacy migration.
+- `decisions.js`: local checks and the future Jev service boundary; no live AI is enabled.
+- `vendor/`, `assets/`: pinned browser dependencies, licensed fonts, topic photographs and credits.
+- `docs/JEV_INTEGRATION.md`: contracts, backend requirements and evaluation plan.
+- `docs/superpowers/`: historical planning notes, superseded where they describe a landing page.
 
-There is no build step, package manager, backend, database, or framework at this stage.
+There is no build step, package manager, backend, database, or framework. The browser loads vendored FSRS and Lucide directly.
 
 ## Design Rules
 
 - Keep the dashboard serious, readable, and teacher-friendly.
 - Let the actual learning feed feel more like a short-form social app.
 - Do not turn the whole site into a marketing landing page.
+- The first screen is the working study desk. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
 - Avoid adding dependencies unless the project gains a clear need for them.
@@ -29,8 +35,21 @@ There is no build step, package manager, backend, database, or framework at this
 - Use vanilla JavaScript unless a future requirement clearly justifies a framework.
 - Store local demo progress in `localStorage`.
 - Preserve existing section anchors unless there is a strong reason to change them.
-- Add content in structured arrays/objects in `app.js`, not scattered through markup.
+- Add content in structured arrays/objects in `content.js`, not scattered through markup.
 - Use accessible labels and visible focus states for interactive controls.
+- New state lives in `econ-workspace-v2`. Keep legacy learned flags as previously seen, never as invented recall history.
+- Only explicit recall ratings update FSRS. Swipes, bookmarks and viewing answers are not reviews.
+- Statistics must derive from stored reviews; do not fabricate activity to fill charts.
+- Submitted strings are untrusted. Escape them before rendering, and keep local approval labelled as personal review.
+- Never expose Jev credentials or private references in client code. AI results cannot bypass human approval or mutate the schedule.
+
+## Verification
+
+- `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
+- `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
+- Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
+- `node scripts/serve.cjs 4181` starts a loopback-only, allowlisted preview. Add new public runtime assets to its allowlist. It must never serve the private source collection.
+- Directly opening `index.html` also works; keep relative asset URLs for GitHub Pages project paths.
 
 ## Private Source Materials
 
