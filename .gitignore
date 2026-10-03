@@ -1,0 +1,16 @@
+# Private teaching and textbook references must never be published.
+/private-sources/
+
+# Local agent configuration and credentials
+/.agents/
+/.codex/
+/.aws/
+.env
+.env.*
+!.env.example
+
+# Local development output
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
