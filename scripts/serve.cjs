@@ -9,6 +9,7 @@ const publicFiles = new Set([
   "app.js",
   "content.js",
   "learning.js",
+  "refresh.js",
   "decisions.js",
   "vendor/fsrs.js",
   "vendor/lucide.js",

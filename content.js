@@ -1,4 +1,5 @@
 /* Original demo prompts. No private textbook excerpts or diagrams are shipped. */
+/* All cards remain original-demo content, not teacher verified; refresh copy uses only their existing content. */
 globalThis.EconData = {
   units: [
     {
@@ -41,6 +42,11 @@ globalThis.EconData = {
   cards: [
     {
       id: "negative-externalities",
+      refresh: {
+        headline: "Unpriced pollution costs can lead to excessive market output",
+        summary:
+          "When a factory ignores pollution costs imposed on residents, marginal social cost exceeds marginal private cost. Market output can then exceed the socially efficient quantity.",
+      },
       unit: "micro",
       title: "The price we don't pay",
       topic: "Negative externalities",
@@ -63,6 +69,11 @@ globalThis.EconData = {
     },
     {
       id: "price-elasticity",
+      refresh: {
+        headline: "Demand is price elastic when PED magnitude exceeds one",
+        summary:
+          "A 10% price rise and 20% fall in quantity demanded give PED = -2. Its magnitude is 2, so quantity demanded changes proportionately more than price: demand is price elastic.",
+      },
       unit: "micro",
       title: "How much is too much?",
       topic: "Price elasticity of demand",
@@ -85,6 +96,11 @@ globalThis.EconData = {
     },
     {
       id: "demand",
+      refresh: {
+        headline: "Own-price changes cause movement along the demand curve",
+        summary:
+          "With other determinants unchanged, a fall in coffee's own price causes movement along its existing demand curve, not a shift. With ordinary downward-sloping demand, quantity demanded increases.",
+      },
       unit: "micro",
       title: "A move, not a shift",
       topic: "Demand and quantity demanded",
@@ -107,6 +123,11 @@ globalThis.EconData = {
     },
     {
       id: "market-failure",
+      refresh: {
+        headline: "Markets can keep trading while allocating resources inefficiently",
+        summary:
+          "Market failure means inefficient resource allocation, even when trade continues. An unpriced external cost can push output above the socially efficient level.",
+      },
       unit: "micro",
       title: "When markets miss",
       topic: "Market failure",
@@ -128,6 +149,11 @@ globalThis.EconData = {
     },
     {
       id: "inflation",
+      refresh: {
+        headline: "Falling positive inflation means prices still rise",
+        summary:
+          "When annual inflation falls from 6% to 3%, the general price level still rises, but more slowly. This is disinflation. Deflation means a fall in the general price level.",
+      },
       unit: "macro",
       title: "Prices are still rising",
       topic: "Inflation and disinflation",
@@ -149,6 +175,11 @@ globalThis.EconData = {
     },
     {
       id: "real-gdp",
+      refresh: {
+        headline: "Unchanged output quantities mean unchanged real GDP",
+        summary:
+          "If quantities stay unchanged while all output prices rise by 5%, nominal GDP rises by 5%, but real GDP does not grow. Real GDP values output at constant prices.",
+      },
       unit: "macro",
       title: "Beyond the price tag",
       topic: "Real and nominal GDP",
@@ -170,6 +201,11 @@ globalThis.EconData = {
     },
     {
       id: "exchange-rates",
+      refresh: {
+        headline: "Appreciation can make imports cheaper",
+        summary:
+          "With foreign prices unchanged, currency appreciation makes imports cheaper in domestic currency. Each unit of domestic currency buys more foreign currency.",
+      },
       unit: "global",
       title: "One currency, two sides",
       topic: "Exchange rates",
@@ -191,6 +227,11 @@ globalThis.EconData = {
     },
     {
       id: "development",
+      refresh: {
+        headline: "Higher average income can hide unequal gains",
+        summary:
+          "GDP per capita can rise while gains are concentrated among a small group. Health, education, inequality, and environmental conditions also matter when assessing economic development.",
+      },
       unit: "global",
       title: "More than a bigger economy",
       topic: "Economic development",
@@ -212,6 +253,11 @@ globalThis.EconData = {
     },
     {
       id: "opportunity-cost",
+      refresh: {
+        headline: "Opportunity cost is the next-best alternative's value forgone",
+        summary:
+          "Choosing revision over your next-best option, football, costs you the value of that football time. Opportunity cost is the value of the next-best alternative forgone, not the sum of all alternatives.",
+      },
       unit: "intro",
       title: "Every yes has a no",
       topic: "Opportunity cost",
@@ -233,6 +279,11 @@ globalThis.EconData = {
     },
     {
       id: "scarcity",
+      refresh: {
+        headline: "Finite resources relative to wants require allocation choices",
+        summary:
+          "Even wealthy economies face scarcity because resources are finite relative to people's wants. More resources do not remove choices about allocating time, labour, land, and capital.",
+      },
       unit: "intro",
       title: "Why choices exist",
       topic: "Scarcity",

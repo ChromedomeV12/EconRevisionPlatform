@@ -10,16 +10,15 @@
   } catch {
     state = L.empty();
   }
-  let route = "progress",
+  let route = "feed",
     filter = "all",
     search = "",
     studioTab = "create",
     editing = null;
-  let session = null,
-    revealed = false,
-    answerDraft = "",
-    assessment = null,
-    revealing = false;
+  let session = null, feedFilter = "all", feedObserver;
+  let refreshState;
+  try { refreshState = EconRefresh.load(localStorage, [...EconData.cards, ...state.submissions.filter(s => s.status === "approved")].map(c => c.id)); }
+  catch { refreshState = EconRefresh.empty(); }
   let toastTimer;
   const escape = (value) =>
     String(value ?? "").replace(
@@ -71,19 +70,13 @@
       3500,
     );
   }
-  function interval(due, now = new Date()) {
-    const minutes = Math.max(1, Math.round((new Date(due) - now) / 60000));
-    return minutes < 60
-      ? `${minutes} min`
-      : minutes < 1440
-        ? `${Math.round(minutes / 60)} hr`
-        : `${Math.round(minutes / 1440)} days`;
+  function saveRefresh() {
+    try { localStorage.setItem(EconRefresh.key, JSON.stringify(refreshState)); }
+    catch { toast("Storage unavailable. Browsing changes last for this visit only."); }
   }
+  const refreshCopy = card => card.refresh || { headline: card.title, summary: card.answer.length > 190 ? card.answer.slice(0, 187) + "..." : card.answer };
   function status(card) {
-    if (!state.cards[card.id]) return "New";
-    return new Date(state.cards[card.id].due) <= new Date()
-      ? "Due now"
-      : `In ${interval(state.cards[card.id].due)}`;
+    return refreshState.confusing.includes(card.id) ? "Flagged" : refreshState.revisit.includes(card.id) ? "Revisit" : refreshState.opened[card.id] ? "Opened" : "Unopened";
   }
   function heading(title, subtitle, action = "") {
     return `<div class="view-heading"><div><h1>${title}</h1><p>${subtitle}</p></div>${action}</div>`;
@@ -113,7 +106,7 @@
     `<button class="icon-button" data-action="close" aria-label="Close dialog" title="Close">${icon("x")}</button>`;
   function render() {
     const alias = {
-      top: "progress",
+      top: "feed",
       chapters: "units",
       deepDive: "units",
       mindmap: "units",
@@ -125,7 +118,8 @@
       alias[hash] ||
       (["progress", "feed", "units", "saved", "studio"].includes(hash)
         ? hash
-        : "progress");
+        : "feed");
+    feedObserver?.disconnect();
     document.body.classList.toggle("feed-mode", route === "feed");
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === route);
@@ -134,86 +128,46 @@
     });
     const labels = {
       progress: "Overview",
-      feed: "Study feed",
+      feed: "Refresh",
       units: "Topic library",
       saved: "Saved cards",
       studio: "Card studio",
     };
     $("#viewLabel").textContent = labels[route];
     document.title = `${labels[route]} / Econ`;
-    $("#navDue").textContent = L.stats(state, cards()).due;
+    $("#navDue").textContent = refreshState.revisit.length;
+    $("#navDue").title = "Points set aside to revisit";
     if (route === "progress") renderDashboard();
     if (route === "units" || route === "saved") renderLibrary();
     if (route === "feed") {
       if (!session) newSession();
+      else {
+        const current = activeCard()?.id;
+        session.ids = cards().map(c => c.id);
+        session.index = Math.max(0, session.ids.indexOf(current));
+      }
       renderFeed();
     }
     if (route === "studio") renderStudio();
     icons();
   }
   function renderDashboard() {
-    const all = cards(),
-      s = L.stats(state, all),
-      queue = L.queue(all, state);
-    const date = new Intl.DateTimeFormat("en", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    }).format(new Date());
-    const stat = (label, value, note, symbol) =>
-      `<div class="stat"><div class="stat-top">${label}${icon(symbol)}</div><strong class="stat-value">${value}</strong><p class="stat-foot">${note}</p></div>`;
-    const unitProgress = (unit) => {
-      const list = all.filter((c) => c.unit === unit.id),
-        reviewed = list.filter((c) => state.cards[c.id]).length;
-      return {
-        list,
-        reviewed,
-        pct: list.length ? (reviewed / list.length) * 100 : 0,
-      };
-    };
-    const activity = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - 6 + i);
-      return {
-        date,
-        count: state.logs.filter((l) => L.dayKey(l.at) === L.dayKey(date))
-          .length,
-      };
-    });
-    const max = Math.max(5, ...activity.map((d) => d.count));
-    $("#main").innerHTML =
-      `${heading("Your study desk", date, button("Start a session", "start", "arrow-up-right"))}
-      ${state.legacySeen.length && !s.total ? '<div class="legacy-note">Your previously viewed topics are preserved. Complete a recall check to start your new review schedule.</div>' : ""}
-      <section class="stats-grid" aria-label="Study statistics">
-        ${stat("Reviews due", s.due, `<span>${s.fresh} new cards</span> to explore`, "layers-2")}
-        ${stat("Cards reviewed", `${s.reviewed}<small> / ${all.length}</small>`, "Across your topic library", "circle-check")}
-        ${stat("Recall rate", s.recall === null ? "&mdash;" : `${s.recall}<small>%</small>`, s.total ? "Self-rated Good or Easy" : "After your first recall check", "chart-no-axes-combined")}
-        ${stat("Study streak", `${s.streak}<small> ${s.streak === 1 ? "day" : "days"}</small>`, s.streak ? "Keep your daily practice going" : "Your first day starts here", "flame")}
-      </section>
-      <div class="dashboard-columns"><div>
-        <section aria-labelledby="nextHeading"><div class="section-heading"><h2 id="nextHeading">Up next</h2><span class="badge green">${queue.length ? "Ready when you are" : "All caught up"}</span></div>
-        <div class="session-banner"><div><span class="eyebrow">YOUR DAILY SESSION</span><h2>${s.due ? "A good time to revisit." : s.fresh ? "Make room for a new idea." : "Today's work, done."}</h2><p>${s.due} due for revision &middot; ${s.fresh} new cards</p>${button(queue.length ? "Let's get into it" : "Browse your cards", queue.length ? "start" : "browse", "arrow-right", "", "lime")}</div><div class="session-stack" aria-hidden="true"><div class="mini-card"></div><div class="mini-card front">${icon("layers-2")}<strong>${Math.min(queue.length, state.goal)}</strong><span>cards in this session</span></div></div></div></section>
-        <section><div class="section-heading"><h2>Explore your topics</h2><a class="text-button" href="#units">View library ${icon("arrow-up-right")}</a></div><div class="topic-grid">${units
-          .slice(1)
-          .map((u) => {
-            const p = unitProgress(u);
-            return `<a href="#units" class="topic-card" data-unit-link="${u.id}"><img class="topic-photo" src="${u.image}" alt="${u.id === "micro" ? "Fresh produce at a market" : u.id === "macro" ? "City office buildings" : "Shipping containers at a port"}" /><div class="topic-info"><span class="eyebrow">UNIT ${u.number}</span><h3>${u.name}</h3><p>${u.description}</p><div class="topic-meta"><span>${p.list.length} cards</span><span>${p.reviewed} reviewed</span></div><div class="mini-progress"><span style="width:${p.pct}%"></span></div></div></a>`;
-          })
-          .join("")}</div></section>
-        <section class="activity"><div class="section-heading"><h2>Your week in revision</h2><span class="activity-key">${activity.reduce((n, d) => n + d.count, 0)} recall checks</span></div><div class="activity-chart" aria-label="Review activity over the last seven days">${activity.map((d, i) => `<div class="activity-day ${i === 6 ? "today" : ""}" title="${d.date.toLocaleDateString()}: ${d.count} reviews"><span>${d.count || ""}</span><div class="activity-bar" style="height:${Math.max(3, (d.count / max) * 56)}px"></div><span>${i === 6 ? "Today" : d.date.toLocaleDateString("en", { weekday: "short" })}</span></div>`).join("")}</div></section>
-      </div><aside class="right-rail"><section><div class="goal-top"><h2>Daily goal</h2><button data-action="settings" aria-label="Change daily goal" title="Change daily goal">${icon("sliders-horizontal")}</button></div><div class="goal-ring" style="--progress:${Math.min(1, s.today / state.goal) * 360}deg"><div class="goal-core"><strong>${s.today}<span> / ${state.goal}</span></strong><small>recall checks today</small></div></div><p class="goal-caption">${s.today >= state.goal ? "Daily goal reached. Nicely done." : "A few focused minutes.<br>A little more that sticks."}</p></section>
-      <section class="rail-section"><h2>Course progress</h2>${units
-        .map((u) => {
-          const p = unitProgress(u);
-          return `<a class="unit-row" href="#units" data-unit-link="${u.id}"><span class="unit-icon ${u.color}">${icon(u.icon)}</span><div class="unit-row-body"><div class="unit-row-top">${u.name}<span>${p.reviewed}/${p.list.length}</span></div><div class="mini-progress"><span style="width:${p.pct}%"></span></div></div></a>`;
-        })
-        .join("")}</section>
-      <section class="rail-section"><h2>Worth remembering</h2><div class="note"><strong>Seeing an answer isn't the same as recalling it.</strong><p>Try to retrieve the idea before you turn the card.</p></div></section></aside></div>`;
+    const all = cards();
+    const opened = all.filter(c => refreshState.opened[c.id]);
+    const today = opened.filter(c => L.dayKey(refreshState.opened[c.id]) === L.dayKey()).length;
+    const stat = (label, value, symbol) => `<div class="stat"><div class="stat-top">${label}${icon(symbol)}</div><strong class="stat-value">${value}</strong></div>`;
+    $("#main").innerHTML = `${heading("Your overview", "Browsing activity, not a measure of recall.", button("Continue refreshing", "start", "play"))}
+      <section class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</section>
+      <section><div class="section-heading"><h2>Your topics</h2><a class="text-button" href="#units">Topic library ${icon("arrow-up-right")}</a></div><div class="topic-grid">${units.map(u => {
+        const list=all.filter(c=>c.unit===u.id), seen=list.filter(c=>refreshState.opened[c.id]).length;
+        return `<a href="#units" class="topic-card" data-unit-link="${u.id}"><img class="topic-photo" src="${u.image}" alt="${u.name} topic photograph"/><div class="topic-info"><span class="eyebrow">UNIT ${u.number}</span><h3>${u.name}</h3><p>${u.description}</p><div class="topic-meta"><span>${list.length} points</span><span>${seen} opened</span></div></div></a>`;
+      }).join("")}</div></section>
+      <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span>${escape(refreshCopy(c).headline)}</span>${icon("arrow-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section>`;
   }
   function libraryCard(card) {
     const unit = unitOf(card),
       saved = state.saved.includes(card.id);
-    return `<article class="library-card"><div class="library-art"><img src="${unit.image}" alt="${unit.name} topic photograph" loading="lazy"/><span class="image-tag">${escape(card.tag)}</span></div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(card.question)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Study card ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
+    return `<article class="library-card"><div class="library-art"><img src="${unit.image}" alt="${unit.name} topic photograph" loading="lazy"/><span class="image-tag">${escape(card.tag)}</span></div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
   }
   function renderLibrary() {
     const savedView = route === "saved";
@@ -247,39 +201,38 @@
     icons();
   }
   function newSession(ids) {
-    const selection =
-      ids ||
-      L.queue(cards(), state)
-        .slice(0, state.goal)
-        .map((c) => c.id);
-    session = { ids: selection, index: 0, done: new Set(), start: Date.now() };
-    revealed = false;
-    answerDraft = "";
-    assessment = null;
+    const selection = ids || cards().map(c => c.id);
+    session = { ids: selection, index: Math.max(0, selection.indexOf(refreshState.current)) };
   }
-  function activeCard() {
-    return session && findCard(session.ids[session.index]);
+  function activeCard() { return session && findCard(session.ids[session.index]); }
+  function feedSelection() {
+    return (session?.ids || cards().map(c=>c.id)).map(findCard).filter(Boolean).filter(c => feedFilter === "all" || (feedFilter === "saved" ? state.saved : refreshState.revisit).includes(c.id));
+  }
+  function feedPosition() {
+    const list=feedSelection(), current=list.findIndex(c=>c.id===activeCard()?.id);
+    const label=$("#refreshPosition"); if(!label) return;
+    label.textContent=`${current+1} / ${list.length}${current===list.length-1 ? " · End of this set" : ""}`;
+    $('[data-action="previous"]').disabled=current<=0;
+    $('[data-action="next"]').disabled=current>=list.length-1;
   }
   function renderFeed() {
-    const card = activeCard();
-    const header = `<div class="feed-head"><div><h1>Study feed</h1><p class="subtle">${session.done.size} reviewed this session</p></div><div><span class="badge">${session.ids.length} cards</span> <button class="icon-button" data-action="end-session" title="End session" aria-label="End session">${icon("x")}</button></div></div>`;
-    if (!card) {
-      const remaining = L.queue(cards(), state).length;
-      $("#main").innerHTML =
-        `<div class="feed-shell">${header}<div class="feed-empty">${empty(session.ids.length ? "A little more that sticks." : "You're all caught up.", session.ids.length ? `${session.done.size} cards reviewed. ${session.ids.length - session.done.size} skipped. Your next reviews are scheduled.` : "No reviews due right now. Explore a topic or return when your cards are ready.", `${remaining ? button("Next session", "start", "arrow-right", "", "lime") : ""}${button("Back to overview", "overview", "layout-dashboard", "", "")}`, "circle-check")}</div></div>`;
-      return;
-    }
-    const unit = unitOf(card),
-      saved = state.saved.includes(card.id),
-      done = session.done.has(card.id),
-      outcomes = L.preview(state, card.id);
-    $("#main").innerHTML =
-      `<div class="feed-shell">${header}<div class="feed-layout"><aside class="session-outline"><span class="eyebrow">IN THIS SESSION</span>${session.ids.map((id, i) => `<div class="outline-item ${i === session.index ? "active" : ""}"><span>${session.done.has(id) ? icon("check") : String(i + 1).padStart(2, "0")}</span>${escape(findCard(id)?.topic || "Card")}</div>`).join("")}</aside>
-      <article class="study-card ${unit.color}" id="studyCard" aria-label="${escape(card.topic)} revision card"><div class="card-top"><span class="badge">${escape(unit.name)}</span><span>${String(session.index + 1).padStart(2, "0")} / ${String(session.ids.length).padStart(2, "0")}</span></div><h2>${escape(card.title)}</h2><p class="topic-caption">${escape(card.tag)} &middot; ${escape(status(card))}</p>
-      ${!revealed ? `<canvas class="concept-visual" id="conceptCanvas" role="img" aria-label="${escape(visualLabel(card))}"></canvas><div class="question-block"><span class="question-label">THINK IT THROUGH</span><p class="question-text">${escape(card.question)}</p><textarea class="answer-input" id="recallAnswer" aria-label="Your answer" placeholder="Your answer, in a sentence... (optional)" maxlength="2000">${escape(answerDraft)}</textarea><button class="btn reveal-button" data-action="reveal">Reveal answer ${icon("arrow-up-right")}</button></div>` : `<div class="question-block" style="margin-top:24px"><span class="question-label">THE IDEA</span><p class="answer-text">${escape(card.answer)}</p>${card.takeaway ? `<p class="takeaway">${escape(card.takeaway)}</p>` : ""}<p class="self-check">${assessment?.status === "complete" ? `Answer check: ${escape(assessment.verdict)}. Choose your own recall rating below.` : "Compare with your answer. How well did you remember?"}</p>${done ? `<p class="self-check">Reviewed this session. Next review ${escape(status(card).toLowerCase())}.</p>${button("Next card", "next", "arrow-right", "", "reveal-button")}` : `<div class="rating-buttons" aria-label="Rate your recall">${["Again", "Hard", "Good", "Easy"].map((label, i) => `<button data-action="rate" data-rating="${i + 1}">${label}<small>${interval(outcomes[i + 1].card.due)}</small></button>`).join("")}</div>`}</div>`}</article>
-      <aside class="feed-actions"><button class="feed-action ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}"><span>${icon("bookmark")}</span>${saved ? "Saved" : "Save"}</button><button class="feed-action" data-action="detail" data-id="${escape(card.id)}"><span>${icon("book-open")}</span>Go deeper</button><button class="feed-action detail-action" data-action="connections" data-id="${escape(card.id)}"><span>${icon("network")}</span>Connections</button><div class="feed-nav"><button class="icon-button" data-action="previous" aria-label="Previous card" title="Previous card" ${session.index === 0 ? "disabled" : ""}>${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Skip to next card" title="Skip to next card">${icon("arrow-down")}</button></div></aside></div><div class="session-footer"><span>${session.done.size} of ${session.ids.length} reviewed</span><div class="session-progress"><span style="width:${(session.done.size / session.ids.length) * 100}%"></span></div><span>Active recall</span></div></div>`;
-    icons();
-    if (!revealed) drawConcept(card);
+    feedObserver?.disconnect();
+    const list=feedSelection();
+    $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">A LITTLE, OFTEN</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
+    ${list.length ? `<div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>{const copy=refreshCopy(card);return `<article class="refresh-point" data-point="${escape(card.id)}" aria-label="${i+1} of ${list.length}: ${escape(card.topic)}"><div class="refresh-body"><div class="refresh-meta"><span>${escape(unitOf(card).name)} / ${escape(card.topic)}</span><span>${String(i+1).padStart(2,"0")} / ${list.length}</span></div><h2>${escape(copy.headline)}</h2><p class="refresh-summary">${escape(copy.summary)}</p><div class="refresh-art"><canvas data-concept="${escape(card.id)}" role="img" aria-label="${escape(visualLabel(card))}"></canvas><small>Original illustrative example</small></div>${card.takeaway ? `<p class="refresh-takeaway">${escape(card.takeaway)}</p>` : ""}</div><footer class="refresh-actions"><button data-action="detail" data-id="${escape(card.id)}">${icon("plus")}Closer look</button><div>${[["save","bookmark","Save point",state.saved.includes(card.id)],["revisit","history","Revisit later",refreshState.revisit.includes(card.id)],["confusing","flag","Flag as confusing",refreshState.confusing.includes(card.id)]].map(([a,s,l,on])=>`<button class="icon-button" data-action="${a}" data-id="${escape(card.id)}" aria-label="${l}" title="${l}" aria-pressed="${on}">${icon(s)}</button>`).join("")}</div></footer></article>`;}).join("")}</div><footer class="refresh-controls"><span id="refreshPosition" aria-live="polite"></span><div><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
+    icons(); if(!list.length) return;
+    list.forEach(card=>drawConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
+    const current=list.find(c=>c.id===activeCard()?.id) || list[0];
+    session.index=session.ids.indexOf(current.id);
+    const scroller=$(".refresh-scroll"), node=document.querySelector(`[data-point="${CSS.escape(current.id)}"]`);
+    scroller.scrollTo({top:node.offsetTop,behavior:"instant"}); feedPosition();
+    feedObserver=new IntersectionObserver(entries=>{
+      for(const entry of entries) if(entry.isIntersecting && entry.intersectionRatio>=.65 && entry.target.isConnected && route==="feed") {
+        const id=entry.target.dataset.point;session.index=session.ids.indexOf(id);feedPosition();
+        if(!document.hidden){EconRefresh.open(refreshState,id);saveRefresh();}
+      }
+    },{root:scroller,threshold:.65});
+    scroller.querySelectorAll("[data-point]").forEach(el=>feedObserver.observe(el));
   }
   function visualLabel(card) {
     return (
@@ -301,10 +254,9 @@
       }[card.visual] || "Personal revision card"
     );
   }
-  function drawConcept(card) {
-    const canvas = $("#conceptCanvas");
+  function drawConcept(card, canvas = $("#conceptCanvas")) {
     if (!canvas) return;
-    const scale = devicePixelRatio || 1;
+    const scale = Math.max(2, devicePixelRatio || 1);
     canvas.width = 360 * scale;
     canvas.height = 170 * scale;
     const ctx = canvas.getContext("2d");
@@ -514,7 +466,7 @@
         20,
       );
       text(
-        card.visual === "custom" ? "Think." : "Revision",
+        card.visual === "custom" ? "Your" : "Revision",
         26,
         114,
         19,
@@ -522,7 +474,7 @@
         650,
       );
       text(
-        card.visual === "custom" ? "Recall." : "Football",
+        card.visual === "custom" ? "idea." : "Football",
         220,
         114,
         19,
@@ -543,7 +495,7 @@
     const card = findCard(id);
     if (!card) return;
     openModal(
-      `<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><span class="badge ${unitOf(card).color}">${unitOf(card).name}</span><p class="detail-answer">${escape(card.answer)}</p>${!connectionsOnly ? `<div class="detail-section"><h3>Watch the distinction</h3><p>${escape(card.trap)}</p></div><div class="detail-section"><h3>What a strong answer includes</h3><ul class="check-list">${card.rubric.map((point) => `<li>${icon("check")}${escape(point)}</li>`).join("") || "<li>Compare your answer with the reference explanation.</li>"}</ul></div>` : ""}<div class="detail-section"><h3>Connected ideas</h3><div class="related-links">${
+      `<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><span class="badge ${unitOf(card).color}">${unitOf(card).name}</span><p class="detail-answer">${escape(card.answer)}</p>${!connectionsOnly ? `<div class="detail-section"><h3>Watch the distinction</h3><p>${escape(card.trap)}</p></div><div class="detail-section"><h3>Key distinctions</h3><ul class="check-list">${card.rubric.map((point) => `<li>${icon("check")}${escape(point)}</li>`).join("") || "<li>Check the source and the explanation.</li>"}</ul></div>` : ""}<div class="detail-section"><h3>Connected ideas</h3><div class="related-links">${
         card.related
           .map((id) => findCard(id))
           .filter(Boolean)
@@ -552,7 +504,7 @@
               `<button data-action="detail" data-id="${c.id}">${escape(c.topic)}</button>`,
           )
           .join("") || "<p>No linked cards yet.</p>"
-      }</div></div><div class="detail-section"><h3>Content provenance</h3><p>${escape(card.source)}. ${card.id.startsWith("custom-") ? "Locally reviewed personal card; not teacher verified." : "Independent sample content; not an official IB question or teacher-verified explanation."}</p></div><div class="dialog-actions">${button("Study this card", "study", "arrow-right", `data-id="${escape(card.id)}"`)}</div>`,
+      }</div></div><div class="detail-section"><h3>Content provenance</h3><p>${escape(card.source)}. ${card.id.startsWith("custom-") ? "Locally reviewed personal card; not teacher verified." : "Independent sample content; not an official IB question or teacher-verified explanation."}</p></div><div class="dialog-actions">${button("Open in feed", "study", "arrow-right", `data-id="${escape(card.id)}"`)}</div>`,
     );
   }
   function renderStudio() {
@@ -560,7 +512,7 @@
       (s) => s.status === "pending",
     ).length;
     $("#main").innerHTML =
-      `${heading("Card studio", "Build a question worth coming back to.", '<span class="badge">Local workspace</span>')}<div class="studio-tabs" role="tablist" aria-label="Card studio views">${[
+      `${heading("Card studio", "Keep one useful idea worth coming back to.", '<span class="badge">Local workspace</span>')}<div class="studio-tabs" role="tablist" aria-label="Card studio views">${[
         ["create", "Create a card"],
         ["review", `Review queue (${pending})`],
         ["history", "My submissions"],
@@ -600,20 +552,15 @@
   }
   function settings() {
     openModal(
-      `<div class="detail-heading"><h2>Study settings</h2>${closeButton()}</div><form id="settingsForm"><div class="settings-row"><label for="dailyGoal">Daily recall goal<small>A manageable number of checks each day.</small></label><input id="dailyGoal" name="goal" type="number" min="1" max="30" step="1" required value="${state.goal}" /></div><div class="settings-row"><p>Your study data<small>Reviews, saved cards, and personal submissions.</small></p>${button("Export data", "export", "download", 'type="button"', "")}</div><div class="settings-row"><p>Review history<small>Reset scheduling. Keep saved cards and submissions.</small></p><button type="button" class="text-button danger-button" data-action="reset-confirm">Reset reviews</button></div><div class="dialog-actions"><button type="submit" class="btn primary">Save settings ${icon("check")}</button></div></form>`,
+      `<div class="detail-heading"><h2>Study settings</h2>${closeButton()}</div><form id="settingsForm"><div class="settings-row"><label for="dailyGoal">Legacy recall goal<small>Retained for your earlier review data; not used by the refresh feed.</small></label><input id="dailyGoal" name="goal" type="number" min="1" max="30" step="1" required value="${state.goal}" /></div><div class="settings-row"><p>Your study data<small>Reviews, saved cards, and personal submissions.</small></p>${button("Export data", "export", "download", 'type="button"', "")}</div><div class="settings-row"><p>Review history<small>Reset scheduling. Keep saved cards and submissions.</small></p><button type="button" class="text-button danger-button" data-action="reset-confirm">Reset reviews</button></div><div class="dialog-actions"><button type="submit" class="btn primary">Save settings ${icon("check")}</button></div></form>`,
     );
   }
   function advance(step) {
     if (!session) return;
-    session.index = Math.max(
-      0,
-      Math.min(session.ids.length, session.index + step),
-    );
-    revealed = false;
-    answerDraft = "";
-    assessment = null;
-    renderFeed();
-    icons();
+    const list=feedSelection(), current=list.findIndex(c=>c.id===activeCard()?.id), next=list[current+step];
+    if(!next) return;
+    const node=document.querySelector(`[data-point="${CSS.escape(next.id)}"]`);
+    $(".refresh-scroll").scrollTo({top:node.offsetTop,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
   }
   document.addEventListener("click", async (event) => {
     const nav = event.target.closest("[data-nav]");
@@ -633,6 +580,7 @@
     const { action, id } = target.dataset;
     if (action === "close") $("#modal").close();
     if (action === "start") {
+      feedFilter = "all";
       newSession();
       navigate("feed");
     }
@@ -657,7 +605,9 @@
     }
     if (action === "study") {
       $("#modal").close();
-      newSession([id]);
+      feedFilter = "all";
+      newSession();
+      session.index = session.ids.indexOf(id);
       navigate("feed");
     }
     if (action === "detail" || action === "connections")
@@ -668,9 +618,8 @@
         : [...state.saved, id];
       const persisted = save();
       if (route === "feed") {
-        answerDraft = $("#recallAnswer")?.value || answerDraft;
-        renderFeed();
-        icons();
+        target.setAttribute("aria-pressed", String(state.saved.includes(id)));
+        if (feedFilter === "saved" && !state.saved.includes(id)) renderFeed();
       } else renderLibraryResults();
       if (persisted)
         toast(
@@ -679,45 +628,13 @@
             : "Removed from saved cards",
         );
     }
-    if (action === "reveal" && !revealing) {
-      const card = activeCard(),
-        currentSession = session,
-        currentIndex = session.index;
-      answerDraft = $("#recallAnswer")?.value || "";
-      revealing = true;
-      target.disabled = true;
-      const result = await decisions.assessAnswer({
-        cardId: card.id,
-        cardVersion: card.version,
-        question: card.question,
-        answer: answerDraft,
-        referenceAnswer: card.answer,
-        rubric: card.rubric,
-      });
-      revealing = false;
-      if (
-        route === "feed" &&
-        session === currentSession &&
-        session.index === currentIndex
-      ) {
-        assessment = result;
-        revealed = true;
-        renderFeed();
-        icons();
-      }
-    }
-    if (
-      action === "rate" &&
-      revealed &&
-      activeCard() &&
-      !session.done.has(activeCard().id)
-    ) {
-      const card = activeCard();
-      L.rate(state, card.id, Number(target.dataset.rating));
-      session.done.add(card.id);
-      save();
-      advance(1);
-      $("#navDue").textContent = L.stats(state, cards()).due;
+    if (action === "feed-filter") { feedFilter=target.dataset.filter; renderFeed(); }
+    if (action === "revisit" || action === "confusing") {
+      EconRefresh.toggle(refreshState,action,id); saveRefresh();
+      target.setAttribute("aria-pressed", String(refreshState[action].includes(id)));
+      $("#navDue").textContent=refreshState.revisit.length;
+      if(feedFilter==="revisit" && action==="revisit") renderFeed();
+      toast(refreshState[action].includes(id) ? (action==="revisit" ? "Set aside to revisit" : "Flagged as confusing") : "Removed");
     }
     if (action === "next") advance(1);
     if (action === "previous") advance(-1);
@@ -758,7 +675,7 @@
     }
     if (action === "export") {
       const url = URL.createObjectURL(
-        new Blob([JSON.stringify(state, null, 2)], {
+        new Blob([JSON.stringify({ learning: state, browsing: refreshState }, null, 2)], {
           type: "application/json",
         }),
       );
@@ -788,7 +705,6 @@
       search = event.target.value;
       renderLibraryResults();
     }
-    if (event.target.id === "recallAnswer") answerDraft = event.target.value;
   });
   document.addEventListener("submit", async (event) => {
     if (!["cardForm", "reviewForm", "settingsForm"].includes(event.target.id))
@@ -873,43 +789,20 @@
       event.target.closest("input,textarea,select,button")
     )
       return;
-    if (event.key === "ArrowDown") {
+    if (["ArrowDown", "PageDown"].includes(event.key)) {
       event.preventDefault();
       advance(1);
     }
-    if (event.key === "ArrowUp") {
+    if (["ArrowUp", "PageUp"].includes(event.key)) {
       event.preventDefault();
       advance(-1);
     }
   });
-  let touchStart = null;
-  document.addEventListener(
-    "touchstart",
-    (event) => {
-      if (
-        event.target.closest("#studyCard") &&
-        !event.target.closest("textarea,button,input")
-      )
-        touchStart = {
-          x: event.touches[0].clientX,
-          y: event.touches[0].clientY,
-        };
-      else touchStart = null;
-    },
-    { passive: true },
-  );
-  document.addEventListener(
-    "touchend",
-    (event) => {
-      if (!touchStart || route !== "feed" || $("#modal").open) return;
-      const dx = event.changedTouches[0].clientX - touchStart.x,
-        dy = event.changedTouches[0].clientY - touchStart.y;
-      if (Math.abs(dy) > 95 && Math.abs(dy) > Math.abs(dx) * 1.5)
-        advance(dy < 0 ? 1 : -1);
-      touchStart = null;
-    },
-    { passive: true },
-  );
+  document.addEventListener("visibilitychange", () => {
+    if(!document.hidden && route==="feed" && activeCard() && $(".refresh-scroll")) {
+      EconRefresh.open(refreshState,activeCard().id); saveRefresh();
+    }
+  });
   window.addEventListener("hashchange", () => {
     render();
     window.scrollTo(0, 0);

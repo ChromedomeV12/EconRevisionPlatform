@@ -2,15 +2,16 @@
 
 ## Project Purpose
 
-This is a static prototype for an IBDP Economics revision platform. The product direction is a hybrid: a calm study dashboard for structure and progress, plus a TikTok-inspired swipe feed for short, high-attention revision.
+This is a static prototype for an IBDP Economics revision platform. The MVP is a swipe-first knowledge refresher: one point with an immediate explanation and visual per screen. The calm browsing dashboard is secondary; compulsory problem practice is out of the current MVP.
 
 ## Current Stack
 
-- `index.html`: application shell, navigation and dialogs. Opens the dashboard directly.
+- `index.html`: application shell, navigation and dialogs. Opens the refresh feed directly.
 - `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
 - `styles.css`: visual system and desktop/mobile layouts. The study feed has a dark workspace; other views are light.
 - `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
-- `app.js`: dashboard, feed, search, bookmarks, local submission and review workflows.
+- `app.js`: refresh feed, browsing overview, search, bookmarks, local submission and review workflows.
+- `refresh.js`: independent browsing state, opened timestamps and explicit revisit/confusing preferences.
 - `learning.js`: FSRS scheduling, review logs, local dates, persistence validation and legacy migration.
 - `decisions.js`: local checks and the future Jev service boundary; no live AI is enabled.
 - `vendor/`, `assets/`: pinned browser dependencies, licensed fonts, topic photographs and credits.
@@ -24,7 +25,7 @@ There is no build step, package manager, backend, database, or framework. The br
 - Keep the dashboard serious, readable, and teacher-friendly.
 - Let the actual learning feed feel more like a short-form social app.
 - Do not turn the whole site into a marketing landing page.
-- The first screen is the working study desk. Keep feature explanations out of the primary interface.
+- The first screen is the usable refresh feed. Keep explanations visible immediately; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
 - Avoid adding dependencies unless the project gains a clear need for them.
@@ -37,15 +38,17 @@ There is no build step, package manager, backend, database, or framework. The br
 - Preserve existing section anchors unless there is a strong reason to change them.
 - Add content in structured arrays/objects in `content.js`, not scattered through markup.
 - Use accessible labels and visible focus states for interactive controls.
-- New state lives in `econ-workspace-v2`. Keep legacy learned flags as previously seen, never as invented recall history.
+- Existing learning, saved cards and submission state lives in `econ-workspace-v2`; browsing/preferences live separately in `econ-refresh-v1`. Keep legacy learned flags as previously seen, never as invented recall history.
 - Only explicit recall ratings update FSRS. Swipes, bookmarks and viewing answers are not reviews.
-- Statistics must derive from stored reviews; do not fabricate activity to fill charts.
+- The current feed offers no recall ratings or practice gates. Opened counts are exposure only. Revisit is a manual list, not a mastery estimate or inferred schedule.
+- Recall statistics must derive from stored reviews; browsing statistics must be labelled as exposure/preferences. Do not fabricate activity to fill charts.
 - Submitted strings are untrusted. Escape them before rendering, and keep local approval labelled as personal review.
 - Never expose Jev credentials or private references in client code. AI results cannot bypass human approval or mutate the schedule.
 
 ## Verification
 
 - `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
+- `node --test tests/refresh.test.cjs` checks browsing state and preference validation separately from recall.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
 - `node scripts/serve.cjs 4181` starts a loopback-only, allowlisted preview. Add new public runtime assets to its allowlist. It must never serve the private source collection.

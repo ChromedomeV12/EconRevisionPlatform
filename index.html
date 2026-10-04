@@ -6,21 +6,22 @@
     <meta name="theme-color" content="#f7f8fa" />
     <meta
       name="description"
-      content="Your economics study desk. Short lessons, active recall, and spaced revision."
+      content="Quick economics refreshers. One knowledge point per swipe, with visual explanations and optional deeper notes."
     />
-    <title>Econ / Study desk</title>
+    <title>Econ / Refresh</title>
     <link rel="stylesheet" href="styles.css" />
     <script defer src="vendor/lucide.js"></script>
     <script defer src="vendor/fsrs.js"></script>
     <script defer src="content.js"></script>
     <script defer src="learning.js"></script>
+    <script defer src="refresh.js"></script>
     <script defer src="decisions.js"></script>
     <script defer src="app.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <aside class="sidebar">
-      <a class="brand" href="#progress" aria-label="Econ study desk"
+      <a class="brand" href="#feed" aria-label="Econ refresh feed"
         ><span class="brand-mark">e.</span
         ><span>econ<span class="brand-period">.</span></span></a
       >
@@ -31,12 +32,12 @@
       </div>
       <span class="nav-label">WORKSPACE</span>
       <nav class="primary-nav" aria-label="Workspace">
+        <a href="#feed" data-nav="feed"
+          ><i data-lucide="layers-2"></i><span>Refresh</span
+          ><span id="navDue" class="nav-count">0</span></a
+        >
         <a href="#progress" data-nav="progress"
           ><i data-lucide="layout-dashboard"></i><span>Overview</span></a
-        >
-        <a href="#feed" data-nav="feed"
-          ><i data-lucide="layers-2"></i><span>Study feed</span
-          ><span id="navDue" class="nav-count">0</span></a
         >
         <a href="#units" data-nav="units"
           ><i data-lucide="library"></i><span>Topic library</span></a
@@ -68,7 +69,7 @@
     <div class="shell">
       <header class="topbar">
         <div class="breadcrumb">
-          Workspace <span>/</span> <strong id="viewLabel">Overview</strong>
+          Economics <span>/</span> <strong id="viewLabel">Refresh</strong>
         </div>
         <div class="header-tools">
           <button class="search-trigger" data-action="search">
@@ -79,7 +80,7 @@
       </header>
       <main id="main" tabindex="-1"></main>
       <footer class="app-footer">
-        <span>Independent IB Economics practice</span
+        <span>Independent IB Economics revision</span
         ><span>Sample content · Not teacher verified</span>
       </footer>
     </div>

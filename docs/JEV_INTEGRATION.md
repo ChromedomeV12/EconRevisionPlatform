@@ -1,13 +1,20 @@
 # Jev integration plan
 
-The demo runs without AI or a backend. `decisions.js` is the application boundary for adding Jev later. It currently performs deterministic completeness and exact-duplicate checks; free-text answers are self-assessed. No model output, confidence, or teacher approval is simulated.
+The demo runs without AI or a backend. `decisions.js` is the application boundary for adding Jev later. It currently performs deterministic completeness and exact-duplicate checks on personal submissions. No model output, confidence, or teacher approval is simulated.
+
+## Refresh-first MVP
+
+The primary experience is immediate knowledge refresh, not answer assessment. `refresh.js` stores opened timestamps and explicit revisit/confusing preferences; bookmarks remain in the existing workspace state. The feed makes no `assessAnswer` call and writes no FSRS review. Old review histories are retained, not inferred from swipes.
+
+Future Jev experiments could suggest a related explanation for a confusing point or rank an explicitly selected revisit list. Suggestions must remain advisory and distinguish exposure/preferences from demonstrated recall. Do not introduce invisible answer grading, manufacture mastery scores, change FSRS schedules or approve submitted content through this boundary. A retrieval-practice mode, if added later, requires explicit learner participation and separate evaluation.
 
 ## Responsibilities
 
 | Decision | Owner | Integration point |
 | --- | --- | --- |
-| When a card is due | FSRS, based on the learner's explicit rating | `learning.js`: `rate`, `preview`, `queue` |
-| Whether a written answer meets a rubric | Future Jev service, advisory only | `assessAnswer` on answer reveal |
+| What appears in Revisit | Explicit learner choice in the current MVP | `refresh.js`: `toggle` |
+| When a recall card is due (optional future mode) | FSRS, based on an explicit rating; legacy state retained | `learning.js`: `rate`, `preview`, `queue` |
+| Whether a written answer meets a rubric (optional future mode) | Future Jev service, advisory only | `assessAnswer`, not invoked by the current feed |
 | Submission ambiguity, source support, level fit | Future Jev service with approved reference context | `screenSubmission` before entering the review queue |
 | Exact duplicate and missing fields | Local code today; server validation in production | Local screening provider |
 | Permission to publish and teacher approval | Authorized human reviewer | Future authenticated server action |

@@ -1,6 +1,6 @@
-# Econ / Study desk
+# Econ / Quick Refresh
 
-A working static economics revision app: a study dashboard, a focused card feed, spaced reviews, a searchable topic library, bookmarks, and a personal card submission/review workflow.
+A static economics refresher: one knowledge point per swipe, with the explanation immediately visible. Optional deeper notes, saved/revisit lists, a secondary overview, a searchable topic library, and personal card review support the feed.
 
 ## Try the demo
 
@@ -10,12 +10,13 @@ For local use, open `index.html` in a browser. No installation or build step is 
 
 ## Project files
 
-- `index.html`: dashboard-first application shell.
+- `index.html`: refresh-first application shell.
 - `TikTok Econ.html`: compatibility redirect for old links.
 - `styles.css`: responsive interface, light study desk and dark study feed.
-- `content.js`: ten original sample questions and answer rubrics.
-- `app.js`: views, active recall, bookmarks and card studio.
-- `learning.js`: FSRS scheduling, activity statistics and persistence.
+- `content.js`: ten original public examples, concise refresh copy, explanations and retained rubrics.
+- `app.js`: scroll-snap feed, browsing overview, bookmarks and card studio.
+- `refresh.js`: validated browsing state and revisit/confusing preferences.
+- `learning.js`: retained legacy FSRS state, scheduling helpers and persistence validation.
 - `decisions.js`: local screening and future Jev provider interface.
 - `vendor/`: pinned FSRS and Lucide browser bundles with licenses.
 - `assets/`: local fonts, photographs and credit information.
@@ -27,15 +28,17 @@ For local use, open `index.html` in a browser. No installation or build step is 
 
 This is an independent, unofficial educational prototype. Sample content needs teacher review and is not a complete or verified IB syllabus resource. All sample prompts are original demo content; the private source collection has not been republished.
 
-Reviews use the FSRS scheduler from `ts-fsrs` 5.4.2, with explicit Again/Hard/Good/Easy ratings. Skipping does not update progress. The dashboard computes due cards, recall, streaks and daily activity from actual logs. Previously marked learned topics are preserved as seen without inventing review dates.
+The MVP has no compulsory questions, answer reveals or recall ratings. Touch swipes, mouse-wheel scrolling, keyboard arrows/Page Up/Page Down and navigation buttons move through the feed. A Closer look opens full notes and provenance. Saved and Revisit filters use explicit user choices, not a retention algorithm.
+
+The overview reports unique points opened, points opened today, bookmarks and points set aside. An opened point means at least 65% of its panel entered the visible feed; it does not prove reading, understanding or mastery. Browsing state uses `econ-refresh-v1`. Existing recall history and personal submissions remain in `econ-workspace-v2`; browsing never adds FSRS reviews or changes scheduled dates. Existing scheduling helpers and tests are retained for a possible separate, optional recall mode.
 
 Card submissions are stored and reviewed on the current device. Approval makes a card available in that personal library; it does not publish it or claim teacher verification. Local checks identify missing sources, short text and exact duplicate questions. There are no accounts, shared submissions, backend, or live AI calls.
 
-Jev integration points exist for answer assessment and submission screening, with validation, timeouts and fallback. [The integration plan](docs/JEV_INTEGRATION.md) describes the backend still needed to activate them.
+Jev integration boundaries remain for future advisory assessment and submission screening, with validation, timeouts and fallback. The refresh feed does not call answer assessment. Browsing/preferences must not be relabelled as recall evidence or teacher approval. [The integration plan](docs/JEV_INTEGRATION.md) describes future work.
 
 ## Checks
 
-Run `node --test tests/learning.test.cjs` for scheduling and service tests. `node tests/browser.cjs` requires Playwright; it verifies the primary workflows and responsive layouts. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
+Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy scheduling, service and browsing-state tests. `node tests/browser.cjs` requires Playwright; it verifies feed navigation (including emulated touch), unchanged recall history, saved/revisit preferences, personal submissions, responsive layouts and private-source isolation. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
 
 ## Private reference collection
 
