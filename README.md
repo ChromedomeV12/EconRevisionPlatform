@@ -13,6 +13,7 @@ For local use, open `index.html` in a browser. No installation or build step is 
 - `index.html`: refresh-first application shell.
 - `TikTok Econ.html`: compatibility redirect for old links.
 - `styles.css`: responsive interface, light study desk and dark study feed.
+- `acrylic.css`: frosted surfaces, rounded controls, serif knowledge headlines and responsive acrylic styling.
 - `content.js`: ten original public examples, concise refresh copy, explanations and retained rubrics.
 - `app.js`: scroll-snap feed, browsing overview, bookmarks and card studio.
 - `refresh.js`: validated browsing state and revisit/confusing preferences.
@@ -49,3 +50,5 @@ Do not deploy the whole local workspace or serve its root publicly: Git ignore r
 ## Deployment
 
 GitHub Pages serves the root of the `main` branch. Push app changes to `main` to update the demo. Only committed files are available to the Pages build.
+
+See [Git, deployment and pull requests](docs/GIT_WORKFLOW.md) for the exact commit/push workflow, deployment checks, and instructions for opening or reviewing a PR. New files must be staged explicitly: committing changes to `index.html` alone does not include a new stylesheet it references.
