@@ -155,14 +155,15 @@
     const all = cards();
     const opened = all.filter(c => refreshState.opened[c.id]);
     const today = opened.filter(c => L.dayKey(refreshState.opened[c.id]) === L.dayKey()).length;
-    const stat = (label, value, symbol) => `<div class="stat"><div class="stat-top">${label}${icon(symbol)}</div><strong class="stat-value">${value}</strong></div>`;
+    const stat = (label, value, symbol) => `<div class="stat"><div class="stat-top"><span class="stat-symbol">${icon(symbol)}</span>${label}</div><strong class="stat-value">${value}</strong></div>`;
     $("#main").innerHTML = `${heading("Your overview", "Browsing activity, not a measure of recall.", button("Continue refreshing", "start", "play"))}
       <section class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</section>
       <section><div class="section-heading"><h2>Your topics</h2><a class="text-button" href="#units">Topic library ${icon("arrow-up-right")}</a></div><div class="topic-grid">${units.map(u => {
         const list=all.filter(c=>c.unit===u.id), seen=list.filter(c=>refreshState.opened[c.id]).length;
         return `<a href="#units" class="topic-card" data-unit-link="${u.id}"><img class="topic-photo" src="${u.image}" alt="${u.name} topic photograph"/><div class="topic-info"><span class="eyebrow">UNIT ${u.number}</span><h3>${u.name}</h3><p>${u.description}</p><div class="topic-meta"><span>${list.length} points</span><span>${seen} opened</span></div></div></a>`;
       }).join("")}</div></section>
-      <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span>${escape(refreshCopy(c).headline)}</span>${icon("arrow-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section>`;
+      <div class="overview-bottom"><section class="refresh-overview-list"><div class="section-heading"><h2>Recently opened</h2><span class="subtle">Your browsing</span></div>${opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id])).slice(0,4).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon(unitOf(c).icon)}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">Your opened points will appear here.</p>'}</section>
+      <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon("history")}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section></div>`;
   }
   function libraryCard(card) {
     const unit = unitOf(card),
@@ -214,12 +215,34 @@
     label.textContent=`${current+1} / ${list.length}${current===list.length-1 ? " · End of this set" : ""}`;
     $('[data-action="previous"]').disabled=current<=0;
     $('[data-action="next"]').disabled=current>=list.length-1;
+    document.querySelectorAll("[data-feed-jump]").forEach(button => {
+      if (button.dataset.id === activeCard()?.id) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
+    });
+    const progress = $(".set-progress");
+    if (progress) {
+      progress.style.setProperty("--position", `${((current + 1) / list.length) * 100}%`);
+      progress.setAttribute("aria-valuenow", String(current + 1));
+    }
+  }
+  function refreshPoint(card, index, count) {
+    const copy = refreshCopy(card), unit = unitOf(card);
+    return `<article class="refresh-point" data-point="${escape(card.id)}" aria-label="${index + 1} of ${count}: ${escape(card.topic)}">
+      <div class="refresh-body"><div class="refresh-meta"><span class="refresh-unit">${icon(unit.icon)}${escape(unit.name)}</span><span>${String(index + 1).padStart(2,"0")} / ${String(count).padStart(2,"0")}</span></div>
+        <h2>${escape(copy.headline)}</h2><p class="refresh-summary">${escape(copy.summary)}</p>
+        <div class="refresh-art"><div class="visual-label"><span>${escape(card.topic)}</span>${icon("chart-no-axes-combined")}</div><canvas data-concept="${escape(card.id)}" role="img" aria-label="${escape(visualLabel(card))}"></canvas><small>Original illustrative example</small></div>
+        ${card.takeaway ? `<p class="refresh-takeaway">${icon("lightbulb")}<span>${escape(card.takeaway)}</span></p>` : ""}
+      </div><footer class="refresh-actions"><button data-action="detail" data-id="${escape(card.id)}">${icon("book-open")}Closer look${icon("arrow-up-right")}</button><div>
+        ${[["save","bookmark","Save point",state.saved.includes(card.id)],["revisit","history","Revisit later",refreshState.revisit.includes(card.id)],["confusing","flag","Flag as confusing",refreshState.confusing.includes(card.id)]].map(([a,s,l,on])=>`<button class="icon-button" data-action="${a}" data-id="${escape(card.id)}" aria-label="${l}" title="${l}" aria-pressed="${on}">${icon(s)}</button>`).join("")}
+      </div></footer></article>`;
   }
   function renderFeed() {
     feedObserver?.disconnect();
     const list=feedSelection();
-    $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">A LITTLE, OFTEN</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
-    ${list.length ? `<div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>{const copy=refreshCopy(card);return `<article class="refresh-point" data-point="${escape(card.id)}" aria-label="${i+1} of ${list.length}: ${escape(card.topic)}"><div class="refresh-body"><div class="refresh-meta"><span>${escape(unitOf(card).name)} / ${escape(card.topic)}</span><span>${String(i+1).padStart(2,"0")} / ${list.length}</span></div><h2>${escape(copy.headline)}</h2><p class="refresh-summary">${escape(copy.summary)}</p><div class="refresh-art"><canvas data-concept="${escape(card.id)}" role="img" aria-label="${escape(visualLabel(card))}"></canvas><small>Original illustrative example</small></div>${card.takeaway ? `<p class="refresh-takeaway">${escape(card.takeaway)}</p>` : ""}</div><footer class="refresh-actions"><button data-action="detail" data-id="${escape(card.id)}">${icon("plus")}Closer look</button><div>${[["save","bookmark","Save point",state.saved.includes(card.id)],["revisit","history","Revisit later",refreshState.revisit.includes(card.id)],["confusing","flag","Flag as confusing",refreshState.confusing.includes(card.id)]].map(([a,s,l,on])=>`<button class="icon-button" data-action="${a}" data-id="${escape(card.id)}" aria-label="${l}" title="${l}" aria-pressed="${on}">${icon(s)}</button>`).join("")}</div></footer></article>`;}).join("")}</div><footer class="refresh-controls"><span id="refreshPosition" aria-live="polite"></span><div><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
+    $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">YOUR DAILY PERSPECTIVE</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
+    ${list.length ? `<div class="refresh-workspace"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div>
+      <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong>${escape(card.topic)}</strong><small>${escape(unitOf(card).name)}</small></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
+      <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
     icons(); if(!list.length) return;
     list.forEach(card=>drawConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
     const current=list.find(c=>c.id===activeCard()?.id) || list[0];
@@ -629,6 +652,10 @@
         );
     }
     if (action === "feed-filter") { feedFilter=target.dataset.filter; renderFeed(); }
+    if (action === "feed-jump") {
+      const point = document.querySelector(`[data-point="${CSS.escape(id)}"]`);
+      if (point) $(".refresh-scroll").scrollTo({top:point.offsetTop,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
+    }
     if (action === "revisit" || action === "confusing") {
       EconRefresh.toggle(refreshState,action,id); saveRefresh();
       target.setAttribute("aria-pressed", String(refreshState[action].includes(id)));

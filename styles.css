@@ -205,7 +205,7 @@ textarea {
   font-weight: 700;
   color: #9a9f9f;
   margin: 0 12px 13px;
-  letter-spacing: 1.7px;
+  letter-spacing: 0;
 }
 .primary-nav {
   display: grid;
@@ -385,7 +385,7 @@ main {
 .eyebrow {
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 1.4px;
+  letter-spacing: 0;
   color: var(--muted);
   text-transform: uppercase;
 }
@@ -1146,7 +1146,7 @@ main {
 .question-label {
   font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 1.3px;
+  letter-spacing: 0;
   font-weight: 700;
   opacity: 0.55;
   display: block;

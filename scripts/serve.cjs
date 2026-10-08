@@ -6,6 +6,7 @@ const publicFiles = new Set([
   "index.html",
   "TikTok Econ.html",
   "styles.css",
+  "acrylic.css",
   "app.js",
   "content.js",
   "learning.js",

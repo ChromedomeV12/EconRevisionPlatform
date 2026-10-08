@@ -9,6 +9,7 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `index.html`: application shell, navigation and dialogs. Opens the refresh feed directly.
 - `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
 - `styles.css`: visual system and desktop/mobile layouts. The study feed has a dark workspace; other views are light.
+- `acrylic.css`: acrylic surface layer, rounded controls, frosted navigation, dark reading surface and responsive adjustments. Loaded after the base styles; keep it in the public preview allowlist.
 - `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
 - `app.js`: refresh feed, browsing overview, search, bookmarks, local submission and review workflows.
 - `refresh.js`: independent browsing state, opened timestamps and explicit revisit/confusing preferences.
@@ -20,6 +21,8 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 
 There is no build step, package manager, backend, database, or framework. The browser loads vendored FSRS and Lucide directly.
 
+Private source-processing tools under `tools/ocr/` have their own locked Python dependencies. They are not app runtime or build dependencies.
+
 ## Design Rules
 
 - Keep the dashboard serious, readable, and teacher-friendly.
@@ -28,6 +31,8 @@ There is no build step, package manager, backend, database, or framework. The br
 - The first screen is the usable refresh feed. Keep explanations visible immediately; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
+- The current design uses a macOS-inspired acrylic treatment: translucent light navigation, subtle tinted surfaces, rounded controls and a dark reading workspace. Keep diagrams on a high-contrast light surface. Respect reduced motion/transparency preferences; use opaque fallbacks where needed.
+- Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
 - Avoid adding dependencies unless the project gains a clear need for them.
 
 ## Implementation Rules
@@ -63,6 +68,21 @@ There is no build step, package manager, backend, database, or framework. The br
 - Public-use permission and teacher approval are separate checks. Do not assume paraphrasing alone resolves all reuse questions.
 - The official full subject guide and applicable amendments are missing. Treat syllabus mapping as provisional until checked.
 - Do not serve the workspace root publicly: `.gitignore` is not HTTP access control. Deploy committed app files only.
+
+## Private OCR Workflow
+
+- Read `tools/ocr/README.md` before source-processing work. Pi instructions are in `.pi/skills/econ-transcription/SKILL.md`.
+- `.pi/` contains project-local Pi 1.0.0 settings, extension, skill and prompt. It is Git-ignored but must sync privately to the Omarchy machine.
+- `.ocr-runtime/` is disposable machine-local tooling. Do not commit it or reuse its Windows environment on Linux; the bootstrap creates platform/path-specific environments.
+- Exclude `.ocr-runtime/` from Syncthing on every device. The synced root is the parent Coding/Dev folder: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` there, not a nested project `.stignore`. Verify exclusion before deleting a foreign-platform runtime locally, or deletion could propagate to its owner.
+- Keep page images, OCR, visual evidence, drafts and transcripts under `private-sources/ocr-work/`, never public assets. Do not modify source PDFs.
+- Preserve textbook diagrams with `ocr_crop`: render a bounded original-PDF region, inspect the saved PNG, and attach its `asset_id` to the transcript figure. Keep axes, labels, legends and captions. Existing accepted pages can receive private `figures.md` backfills without rewriting their transcripts. Crops retain provenance hashes and are not publication-cleared or automatically verified.
+- Use one writer on one synced machine at a time. Local locks are not distributed locks. Check checkpoints after interruption; never clear a lock without checking active workers.
+- Prepare/transcribe bounded batches with the current Pi model. Session startup must never launch processes or send model prompts. Setup is explicit via `/ocr-setup`. No parallel inference or second model server.
+- Launch OCR with the standalone `node` executable on PATH, never `process.execPath`: standalone Pi may use its own harness executable there. Preserve the `ECON_OCR_CHILD` recursion guard.
+- Vision delegates through Pi 1.0.0's built-in `read` image pipeline, confirmed configured by the user on Omarchy. Preserve the text-only-model guard; never fabricate visual evidence or treat image delivery as comprehension.
+- Transcription acceptance validates schema and hashes, not accuracy or publication rights. Human review remains required; preserve uncertainties and SL/HL distinctions.
+- Run `node tools/ocr/run.mjs test` and `node --test tests/ocr-vision.test.mjs` after changes. The optional Pi loader smoke test is documented in the OCR README.
 
 ## Hosting
 

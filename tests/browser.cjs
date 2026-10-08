@@ -33,8 +33,19 @@ const path = require("node:path");
     });
     await page.reload();
     const oldReviews = await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem("econ-workspace-v2")).logs));
-    const position = async (n) => page.waitForFunction(n => document.querySelector("#refreshPosition")?.textContent.startsWith(n + " /"), n);
+    const position = async (n) => page.waitForFunction(n => {
+      const scroll = document.querySelector('.refresh-scroll');
+      return document.querySelector("#refreshPosition")?.textContent.startsWith(n + " /") &&
+        Math.abs(scroll.scrollTop - scroll.children[n - 1].offsetTop) <= 2;
+    }, n);
     await position(1);
+    await page.locator('[data-feed-jump]').nth(2).click();
+    await position(3);
+    assert.equal(await page.locator('[data-feed-jump][aria-current]').count(), 1);
+    assert.equal(await page.getByRole('progressbar', {name:'Position in this set'}).getAttribute('aria-valuenow'), '3');
+    await page.locator('[data-feed-jump]').first().click();
+    await position(1);
+    await page.locator('h1').hover();
     await page.screenshot({path:path.join(out,"feed-desktop.png")});
     const first = page.locator("[data-point]").first();
     assert.ok(await first.locator("canvas").evaluate(c => c.getContext("2d").getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0)));
@@ -120,7 +131,7 @@ const path = require("node:path");
       path: path.join(out, "studio-desktop.png"),
       fullPage: true,
     });
-    await page.getByRole("button", { name: "Study settings" }).click();
+    await page.getByRole("button", { name: "Study settings", exact: true }).click();
     await page.getByLabel("Legacy recall goal").fill("3");
     await page.getByRole("button", { name: "Save settings" }).click();
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("econ-workspace-v2")).goal), 3);
@@ -139,6 +150,7 @@ const path = require("node:path");
           view,
         );
         await page.evaluate(() => document.fonts.ready);
+        await page.locator('h1').hover();
         assert.ok(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth + 1,
@@ -160,6 +172,7 @@ const path = require("node:path");
       ).status(),
       404,
     );
+    const layoutFailures = [];
     for (const [width,height] of [[360,740],[390,844],[768,900],[1024,768],[1440,900]]) {
       await page.setViewportSize({width,height});
       await page.goto(`${base}/#feed`);
@@ -172,15 +185,16 @@ const path = require("node:path");
           const body=el.querySelector('.refresh-body'),actions=el.querySelector('footer').getBoundingClientRect();
           return {extra:body.scrollHeight-body.clientHeight,bottom:actions.bottom};
         });
-        assert.ok(metrics.extra<=1,`Internal scroll at ${width} card ${i}: ${metrics.extra}`);
-        assert.ok(metrics.bottom<=height-(width<=650?67:0),`Actions covered at ${width} card ${i}`);
+        if (metrics.extra > 1) layoutFailures.push(`Internal scroll at ${width} card ${i}: ${metrics.extra}`);
+        if (metrics.bottom > height-(width<=650?67:0)) layoutFailures.push(`Actions covered at ${width} card ${i}`);
         assert.ok(await page.locator('[data-point]').nth(i).locator('canvas').evaluate(c=>c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,j)=>j%4===3&&v>0)));
         if(i===0||i===4)await page.screenshot({path:path.join(out,`refresh-${i}-${width}.png`)});
       }
     }
+    assert.deepEqual(layoutFailures, [], "Every point must fit without hiding actions or requiring an inner scroll");
     await page.goto(`${base}/TikTok%20Econ.html#feed`);
     await page.waitForURL("**/index.html#feed");
-    await page.getByRole("button", { name: "Study settings" }).click();
+    await page.getByRole("button", { name: "Study settings", exact: true }).click();
     await page.getByRole("button", { name: "Reset reviews", exact: true }).click();
     await page.getByRole("button", { name: "Reset reviews", exact: true }).click();
     const reset = await page.evaluate(() => JSON.parse(localStorage.getItem("econ-workspace-v2")));

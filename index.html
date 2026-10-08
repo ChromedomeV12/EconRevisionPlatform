@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f7f8fa" />
+    <meta name="theme-color" content="#e7ecef" />
     <meta
       name="description"
       content="Quick economics refreshers. One knowledge point per swipe, with visual explanations and optional deeper notes."
     />
     <title>Econ / Refresh</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="acrylic.css" />
     <script defer src="vendor/lucide.js"></script>
     <script defer src="vendor/fsrs.js"></script>
     <script defer src="content.js"></script>
@@ -28,24 +29,23 @@
       <div class="course-label">
         <span class="course-icon">IB</span>
         <div><strong>Economics</strong><small>Diploma Programme</small></div>
-        <i data-lucide="chevrons-up-down"></i>
       </div>
       <span class="nav-label">WORKSPACE</span>
       <nav class="primary-nav" aria-label="Workspace">
-        <a href="#feed" data-nav="feed"
+        <a href="#feed" data-nav="feed" aria-label="Refresh" title="Refresh"
           ><i data-lucide="layers-2"></i><span>Refresh</span
           ><span id="navDue" class="nav-count">0</span></a
         >
-        <a href="#progress" data-nav="progress"
+        <a href="#progress" data-nav="progress" aria-label="Overview" title="Overview"
           ><i data-lucide="layout-dashboard"></i><span>Overview</span></a
         >
-        <a href="#units" data-nav="units"
+        <a href="#units" data-nav="units" aria-label="Topic library" title="Topic library"
           ><i data-lucide="library"></i><span>Topic library</span></a
         >
-        <a href="#saved" data-nav="saved"
+        <a href="#saved" data-nav="saved" aria-label="Saved cards" title="Saved cards"
           ><i data-lucide="bookmark"></i><span>Saved cards</span></a
         >
-        <a href="#studio" data-nav="studio"
+        <a href="#studio" data-nav="studio" aria-label="Card studio" title="Card studio"
           ><i data-lucide="square-pen"></i><span>Card studio</span></a
         >
       </nav>
@@ -74,8 +74,9 @@
         <div class="header-tools">
           <button class="search-trigger" data-action="search">
             <i data-lucide="search"></i><span>Find a topic</span></button
-          ><span class="sample-label">Sample course</span
-          ><span class="avatar small-avatar">S</span>
+          ><span class="sample-label">Sample course</span>
+          <button class="icon-button toolbar-settings" data-action="settings" aria-label="Open study settings" title="Study settings"><i data-lucide="settings-2"></i></button>
+          <span class="avatar small-avatar">S</span>
         </div>
       </header>
       <main id="main" tabindex="-1"></main>
