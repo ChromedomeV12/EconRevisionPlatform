@@ -10,6 +10,7 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
 - `styles.css`: visual system and desktop/mobile layouts. The study feed has a dark workspace; other views are light.
 - `acrylic.css`: acrylic surface layer, rounded controls, frosted navigation, dark reading surface and responsive adjustments. Loaded after the base styles; keep it in the public preview allowlist.
+- `theme.js`, `theme.css`: persistent light/dark switch and Catppuccin Mocha color overrides. Theme initializes before styles; preference uses `econ-theme-v1`, independently of study data. Keep both in the public preview allowlist.
 - `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
 - `app.js`: refresh feed, browsing overview, search, bookmarks, local submission and review workflows.
 - `refresh.js`: independent browsing state, opened timestamps and explicit revisit/confusing preferences.
@@ -33,6 +34,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - Keep deep explanations readable and academic.
 - The current design uses a macOS-inspired acrylic treatment: translucent light navigation, subtle tinted surfaces, rounded controls and a dark reading workspace. Keep diagrams on a high-contrast light surface. Respect reduced motion/transparency preferences; use opaque fallbacks where needed.
 - Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
+- Dark mode uses the official Catppuccin Mocha palette. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
 - Avoid adding dependencies unless the project gains a clear need for them.
 
 ## Implementation Rules
@@ -55,6 +57,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
 - `node --test tests/refresh.test.cjs` checks browsing state and preference validation separately from recall.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
+- `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
 - `node scripts/serve.cjs 4181` starts a loopback-only, allowlisted preview. Add new public runtime assets to its allowlist. It must never serve the private source collection.
 - Directly opening `index.html` also works; keep relative asset URLs for GitHub Pages project paths.

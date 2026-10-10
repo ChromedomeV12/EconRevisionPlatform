@@ -14,6 +14,7 @@ For local use, open `index.html` in a browser. No installation or build step is 
 - `TikTok Econ.html`: compatibility redirect for old links.
 - `styles.css`: responsive interface, light study desk and dark study feed.
 - `acrylic.css`: frosted surfaces, rounded controls, serif knowledge headlines and responsive acrylic styling.
+- `theme.js`, `theme.css`: light/dark toolbar switch, persistent appearance preference and Catppuccin Mocha color overrides. Uses the system preference until a mode is selected; keeps diagrams on light paper.
 - `content.js`: ten original public examples, concise refresh copy, explanations and retained rubrics.
 - `app.js`: scroll-snap feed, browsing overview, bookmarks and card studio.
 - `refresh.js`: validated browsing state and revisit/confusing preferences.
@@ -40,6 +41,8 @@ Jev integration boundaries remain for future advisory assessment and submission 
 ## Checks
 
 Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy scheduling, service and browsing-state tests. `node tests/browser.cjs` requires Playwright; it verifies feed navigation (including emulated touch), unchanged recall history, saved/revisit preferences, personal submissions, responsive layouts and private-source isolation. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
+
+Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, and captures both themes across all views. The dark colors follow the [Catppuccin Mocha palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
 
 ## Private reference collection
 

@@ -7,6 +7,8 @@ const publicFiles = new Set([
   "TikTok Econ.html",
   "styles.css",
   "acrylic.css",
+  "theme.css",
+  "theme.js",
   "app.js",
   "content.js",
   "learning.js",
