@@ -18,6 +18,8 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `decisions.js`: local checks and the future Jev service boundary; no live AI is enabled.
 - `vendor/`, `assets/`: pinned browser dependencies, licensed fonts, topic photographs and credits.
 - `docs/JEV_INTEGRATION.md`: contracts, backend requirements and evaluation plan.
+- `SECURITY.md`, `docs/REPOSITORY_SECURITY.md`: security boundaries, private reporting and GitHub repository controls. `.github/rulesets/main.json` records the live ruleset intent; changing the file does not apply it remotely.
+- `docs/DEPLOYMENT_PLAN.md`: phased hosting and backend decisions.
 - `docs/superpowers/`: historical planning notes, superseded where they describe a landing page.
 
 There is no build step, package manager, backend, database, or framework. The browser loads vendored FSRS and Lucide directly.
@@ -56,6 +58,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 
 - `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
 - `node --test tests/refresh.test.cjs` checks browsing state and preference validation separately from recall.
+- `node --test tests/diagram-data.test.cjs` checks numerical curve points and PED percentages; `node tests/diagrams.cjs` checks rendered guides, labels and accessible values using Playwright.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
@@ -94,8 +97,8 @@ The public repository is `ChromedomeV12/EconRevisionPlatform`; GitHub Pages is i
 This project can be hosted on GitHub Pages because it is static. The expected path is:
 
 1. Initialize a Git repository if one does not exist.
-2. Commit the static files.
-3. Push to a GitHub repository.
-4. Enable GitHub Pages from the repository settings, usually from the `main` branch root.
+2. Commit explicit public files on a feature branch and open a pull request.
+3. Pass the required `verify` check and resolve review conversations, then squash or rebase merge to `main`. Direct pushes, force pushes and deletion of the default branch are blocked by the repository ruleset.
+4. GitHub Pages deploys the merged `main` branch root automatically. Verify the successful deployment matches the merged commit.
 
 If the repository is named `<username>.github.io`, GitHub Pages can serve it at `https://<username>.github.io/`. Otherwise it will usually be served at `https://<username>.github.io/<repo-name>/`.

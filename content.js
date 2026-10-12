@@ -79,6 +79,20 @@ globalThis.EconData = {
       topic: "Price elasticity of demand",
       tag: "Elasticity",
       visual: "elasticity",
+      diagram: {
+        priceAxis: "Ticket price ($)",
+        quantityAxis: "Tickets demanded (/week)",
+        priceIntercept: 15,
+        quantityIntercept: 300,
+        priceRange: [8, 12],
+        quantityRange: [0, 160],
+        points: [
+          { label: "A", quantity: 100, price: 10 },
+          { label: "B", quantity: 80, price: 11 },
+        ],
+        assumption: "Other determinants unchanged",
+        method: "Initial-base PED",
+      },
       question:
         "Price rises by 10%. Quantity demanded falls by 20%. What is PED, and how responsive is demand?",
       answer:
@@ -106,6 +120,17 @@ globalThis.EconData = {
       topic: "Demand and quantity demanded",
       tag: "Demand & supply",
       visual: "demand",
+      diagram: {
+        priceAxis: "Price of coffee ($/cup)",
+        quantityAxis: "Coffee demanded (cups/week)",
+        priceIntercept: 20,
+        quantityIntercept: 200,
+        points: [
+          { label: "A", quantity: 60, price: 14 },
+          { label: "B", quantity: 120, price: 8 },
+        ],
+        assumption: "Other determinants unchanged",
+      },
       question:
         "The price of coffee falls. Other determinants are unchanged. Does its demand curve shift?",
       answer:

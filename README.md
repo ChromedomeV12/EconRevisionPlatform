@@ -24,11 +24,16 @@ For local use, open `index.html` in a browser. No installation or build step is 
 - `assets/`: local fonts, photographs and credit information.
 - `AGENTS.md`: guidance for future contributors and coding agents.
 - `docs/JEV_INTEGRATION.md`: future AI contracts and backend architecture.
+- `SECURITY.md`: vulnerability reporting, trust boundaries and security invariants.
+- `docs/REPOSITORY_SECURITY.md`: GitHub protection settings and ruleset maintenance.
+- `docs/DEPLOYMENT_PLAN.md`: hosting recommendation and phased backend migration.
 - `docs/superpowers/`: historical design and implementation notes.
 
 ## Current scope
 
 This is an independent, unofficial educational prototype. Sample content needs teacher review and is not a complete or verified IB syllabus resource. All sample prompts are original demo content; the private source collection has not been republished.
+
+The demand and PED cards include original numerical diagrams with market-specific units, consistent curve/point coordinates, labelled price/quantity guides, and accessible descriptions. The PED example explicitly uses initial-base percentage changes. These examples were checked against private reference material; they are not textbook reproductions or teacher-verified figures.
 
 The MVP has no compulsory questions, answer reveals or recall ratings. Touch swipes, mouse-wheel scrolling, keyboard arrows/Page Up/Page Down and navigation buttons move through the feed. A Closer look opens full notes and provenance. Saved and Revisit filters use explicit user choices, not a retention algorithm.
 
@@ -44,6 +49,8 @@ Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy sche
 
 Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, and captures both themes across all views. The light theme uses white reading surfaces with Latte Lavender selection/progress, Mauve actions and Sapphire accents; diagrams retain their high-contrast plot colors. The dark colors follow the [Catppuccin Mocha palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
 
+`node --test tests/diagram-data.test.cjs` checks curve and percentage consistency. `node tests/diagrams.cjs` uses Playwright to check actual drawn points, guides, label bounds and accessible descriptions, with screenshots in both themes. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
+
 ## Private reference collection
 
 Local research materials belong in `private-sources/Econ Revision App Sources/`, which is excluded from Git. They are not included in this repository or demo. Read that collection's `START_HERE.md` and `CONTENT_NOTES.md` before using it to draft content. Source attribution and teacher review do not establish permission to republish textbooks, diagrams, or exam questions.
@@ -52,6 +59,8 @@ Do not deploy the whole local workspace or serve its root publicly: Git ignore r
 
 ## Deployment
 
-GitHub Pages serves the root of the `main` branch. Push app changes to `main` to update the demo. Only committed files are available to the Pages build.
+GitHub Pages serves the root of the `main` branch. Open a feature-branch pull request, pass the required `verify` check, resolve review conversations, and merge to `main` to update the demo. Only committed files are available to the Pages build. The default branch blocks direct pushes, force pushes and deletion.
 
 See [Git, deployment and pull requests](docs/GIT_WORKFLOW.md) for the exact commit/push workflow, deployment checks, and instructions for opening or reviewing a PR. New files must be staged explicitly: committing changes to `index.html` alone does not include a new stylesheet it references.
+
+The [deployment plan](docs/DEPLOYMENT_PLAN.md) keeps GitHub Pages for the current public MVP and defines when accounts, synchronized progress, moderation and Jev justify a backend. Repository protections are described in [repository security](docs/REPOSITORY_SECURITY.md).
