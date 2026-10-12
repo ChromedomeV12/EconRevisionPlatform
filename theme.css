@@ -131,26 +131,30 @@
   :root[data-theme="light"] .refresh-actions .icon-button[aria-pressed="true"] { background: var(--ctp-surface0); color: var(--ctp-mauve); }
 }
 
-/* A pale lavender backdrop frames a white modal with violet highlights. */
+/* A pale lavender backdrop frames a white modal with sky-blue highlights. */
 :root[data-theme="light"] #modal {
-  --line: #8839ef33;
+  --line: #cfe3f1;
   background: #ffffff;
-  color: #302044;
-  border-color: #e4d5f7;
+  color: #293b4b;
+  border-color: #d9e7f2;
   box-shadow: 0 28px 90px #57338a1a, inset 0 1px 0 #fff;
 }
 :root[data-theme="light"] #modal::backdrop { background: #f2edf9d1; }
-:root[data-theme="light"] #modal :is(h2, h3) { color: #4c1d95; }
-:root[data-theme="light"] #modal :is(.detail-answer, .detail-section p, .check-list li, .settings-row, .settings-row small) { color: #302044; }
-:root[data-theme="light"] #modal .badge { background: #eee0ff; color: #4c1d95; }
+:root[data-theme="light"] #modal :is(h2, h3) { color: #2879a6; }
+:root[data-theme="light"] #modal :is(.detail-answer, .detail-section p, .check-list li, .settings-row, .settings-row small) { color: #293b4b; }
+:root[data-theme="light"] #modal .badge { background: #e5f4ff; color: #2879a6; }
 :root[data-theme="light"] #modal :is(.related-links button, .icon-button) {
-  background: #f5eeff;
-  color: #5b21a6;
-  border-color: #d4b5fa;
+  background: #f0f8ff;
+  color: #246c98;
+  border-color: #b9dff5;
   box-shadow: none;
 }
-:root[data-theme="light"] #modal :is(.related-links button:hover, .icon-button:hover) { background: #ead9ff; color: #3b146f; }
-:root[data-theme="light"] #modal :focus-visible { outline-color: var(--ctp-mauve); }
+:root[data-theme="light"] #modal :is(.related-links button:hover, .icon-button:hover) { background: #deeffc; color: #1d567a; }
+:root[data-theme="light"] #modal :focus-visible { outline-color: #2879a6; }
+
+:root[data-theme="light"] #modal .check-list .lucide { color: #3296c6; }
+:root[data-theme="light"] #modal :is(.btn.primary, .btn.dark, .btn.lime) { background: #e5f4ff; color: #246c98; border-color: #b9dff5; }
+:root[data-theme="light"] #modal :is(.btn.primary:hover, .btn.dark:hover, .btn.lime:hover) { background: #deeffc; color: #1d567a; }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
