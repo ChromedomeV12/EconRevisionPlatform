@@ -131,6 +131,27 @@
   :root[data-theme="light"] .refresh-actions .icon-button[aria-pressed="true"] { background: var(--ctp-surface0); color: var(--ctp-mauve); }
 }
 
+/* Saturated violet separates the modal from the blurred page without tinting its text. */
+:root[data-theme="light"] #modal {
+  --line: #8839ef33;
+  background: #f5edff;
+  color: #302044;
+  border-color: #c9a5fa;
+  box-shadow: 0 28px 90px #35106459, inset 0 1px 0 #fff;
+}
+:root[data-theme="light"] #modal::backdrop { background: #5116a8ad; }
+:root[data-theme="light"] #modal :is(h2, h3) { color: #4c1d95; }
+:root[data-theme="light"] #modal :is(.detail-answer, .detail-section p, .check-list li, .settings-row, .settings-row small) { color: #302044; }
+:root[data-theme="light"] #modal .badge { background: #e4cfff; color: #4c1d95; }
+:root[data-theme="light"] #modal :is(.related-links button, .icon-button) {
+  background: #ead9ff;
+  color: #5b21a6;
+  border-color: #bd91f5;
+  box-shadow: none;
+}
+:root[data-theme="light"] #modal :is(.related-links button:hover, .icon-button:hover) { background: #ddc0ff; color: #3b146f; }
+:root[data-theme="light"] #modal :focus-visible { outline-color: var(--ctp-mauve); }
+
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ctp-base: #1e1e2e;
