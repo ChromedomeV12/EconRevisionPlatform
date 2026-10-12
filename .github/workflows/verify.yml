@@ -48,7 +48,12 @@ jobs:
             assert.ok(!fs.lstatSync(file).isSymbolicLink(), `Review linked publication input: ${file}`);
           }
           const publicFiles = tracked.filter(file => /^(assets|vendor)\//.test(file) || /^[^/]+\.(html|css|js)$/.test(file) || file === '.nojekyll');
-          for (const file of ['index.html', 'app.js', 'content.js', 'styles.css', 'acrylic.css', 'theme.js', 'theme.css', 'learning.js', 'refresh.js', 'decisions.js', '.nojekyll']) {
+          const privateReference = /(?:^|[^a-z0-9_$])(?:private-sources|\.ocr-runtime|\.pi)[/\\]/i;
+          assert.ok(!privateReference.test('const radians = Math.PI/180;'));
+          for (const sample of ['"private-sources/book.pdf"', '"/.PI/settings.json"', '"C:\\work\\.ocr-runtime\\file"']) {
+            assert.ok(privateReference.test(sample), `Private-path regression: ${sample}`);
+          }
+          for (const file of ['index.html', 'app.js', 'content.js', 'styles.css', 'acrylic.css', 'theme.js', 'theme.css', 'graph.js', 'graph.css', 'vendor/d3.min.js', 'vendor/d3.LICENSE', 'learning.js', 'refresh.js', 'decisions.js', '.nojekyll']) {
             assert.ok(publicFiles.includes(file), `Missing tracked public runtime file: ${file}`);
           }
           const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'econ-public-check-'));
@@ -56,7 +61,7 @@ jobs:
             for (const file of publicFiles) {
               if (/\.(html|css|js)$/i.test(file)) {
                 const text = fs.readFileSync(file, 'utf8');
-                assert.ok(!/(?:private-sources|\.ocr-runtime|\.pi)[/\\]/i.test(text), `Private path in runtime: ${file}`);
+                assert.ok(!privateReference.test(text), `Private path in runtime: ${file}`);
               }
               const destination = path.join(staging, file);
               fs.mkdirSync(path.dirname(destination), { recursive: true });

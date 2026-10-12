@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Graph reconstruction review</title>
+  <link rel="stylesheet" href="graph.css">
+  <script src="vendor/d3.min.js"></script>
+  <script src="graph.js"></script>
+  <style>
+    :root { color-scheme:light; --paper:#eff1f5; --ink:#4c4f69; --line:#bcc0cc; --accent:#8839ef; }
+    :root[data-theme="dark"] { color-scheme:dark; --paper:#1e1e2e; --ink:#cdd6f4; --line:#585b70; --accent:#cba6f7; }
+    * { box-sizing:border-box; letter-spacing:0; }
+    body { margin:0; padding:24px; background:var(--paper); color:var(--ink); font:15px system-ui,sans-serif; }
+    header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; border-bottom:1px solid var(--line); padding-bottom:18px; }
+    h1 { font:28px Georgia,serif; margin:0 0 8px; } h2 { font-size:16px; }
+    nav { display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+    button { border:0; padding:10px 16px; background:transparent; color:inherit; cursor:pointer; }
+    button[aria-pressed="true"] { background:var(--accent); color:var(--paper); }
+    button:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
+    main { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; }
+    section { min-width:0; } #native { min-height:300px; } #native svg { width:100%; height:auto; display:block; }
+    #original { display:block; max-width:100%; height:auto; background:white; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--ink); border-top:1px solid var(--line); padding-top:18px; }
+    @media(max-width:800px) { body { padding:16px; } main { grid-template-columns:1fr; gap:12px; } }
+  </style>
+</head>
+<body>
+  <header><div><h1 id="title">Graph reconstruction</h1><span id="status">Draft / not approved</span></div><nav aria-label="Appearance"><button data-mode="light" aria-pressed="true">Light</button><button data-mode="dark" aria-pressed="false">Dark</button></nav></header>
+  <main><section><h2>Source figure</h2><img id="original" src="source.png" alt="Original textbook figure for comparison"></section><section><h2>Native reconstruction</h2><div id="native"></div></section></main>
+  <pre id="validation" role="status"></pre>
+  <script>
+    document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
+      document.documentElement.dataset.theme = button.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    }));
+    fetch('spec.json').then(response => {
+      if (!response.ok) throw new Error('Draft file unavailable.');
+      return response.json();
+    }).then(spec => {
+      const result = EconGraphs.validate(spec);
+      document.querySelector('#validation').textContent = result.valid ? 'Structural checks passed. Economic fidelity and publication approval remain unverified.' : result.errors.join('\n');
+      if (!result.valid) return;
+      document.querySelector('#title').textContent = spec.title;
+      document.querySelector('#native').append(EconGraphs.render(spec, document));
+    }).catch(error => { document.querySelector('#validation').textContent = error.message; });
+  </script>
+</body>
+</html>

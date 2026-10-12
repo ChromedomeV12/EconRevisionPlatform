@@ -1,0 +1,63 @@
+/* Scoped diagram tokens. Paper remains light in both application themes. */
+.econ-graph {
+  --graph-paper: #eff1f5;
+  --graph-ink: #4c4f69;
+  --graph-demand: #1e66f5;
+  --graph-supply: #28751c;
+  --graph-cost: #8839ef;
+  --graph-reference: #5c5f77;
+  --graph-guide: #6c6f85;
+  --graph-arrow: #d20f39;
+  --graph-welfare: #df8e1d;
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  aspect-ratio: 16 / 9;
+  background: var(--graph-paper);
+  color: var(--graph-ink);
+  color-scheme: light;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 18px;
+  letter-spacing: 0;
+  isolation: isolate;
+}
+:root[data-theme="dark"] .econ-graph {
+  /* Darker companions to Mocha blue/green/mauve/red for light-paper contrast. */
+  --graph-demand: #2855a0;
+  --graph-supply: #316b35;
+  --graph-cost: #7543a0;
+  --graph-reference: #45475a;
+  --graph-arrow: #a12d50;
+  --graph-welfare: #f9e2af;
+}
+.econ-graph .graph-paper { fill: var(--graph-paper); }
+.econ-graph text {
+  fill: var(--graph-ink);
+  font-family: inherit;
+  font-size: 18px;
+  letter-spacing: 0;
+  stroke: var(--graph-paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
+.econ-graph .graph-axis-label { font-size: 20px; }
+.econ-graph :is(.graph-axis, .graph-guide, .graph-curve, .graph-arrow) {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.econ-graph .graph-axis { stroke: var(--graph-ink); stroke-width: 2; }
+.econ-graph .graph-guide { stroke: var(--graph-guide); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.econ-graph .graph-curve { stroke-width: 3; }
+.econ-graph .graph-curve-demand { stroke: var(--graph-demand); }
+.econ-graph .graph-curve-supply { stroke: var(--graph-supply); }
+.econ-graph .graph-curve-cost { stroke: var(--graph-cost); }
+.econ-graph .graph-curve-reference { stroke: var(--graph-reference); stroke-dasharray: 9 5; }
+.econ-graph .graph-arrow { stroke: var(--graph-arrow); stroke-width: 2.5; }
+.econ-graph .graph-arrowhead { fill: var(--graph-ink); }
+.econ-graph .graph-point { fill: var(--graph-ink); stroke: var(--graph-paper); stroke-width: 1.5; }
+.econ-graph .graph-area { fill: var(--graph-welfare); fill-opacity: 0.3; stroke: var(--graph-guide); stroke-width: 1; }
