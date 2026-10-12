@@ -140,7 +140,7 @@
   box-shadow: 0 28px 90px #57338a1a, inset 0 1px 0 #fff;
 }
 :root[data-theme="light"] #modal::backdrop { background: #f2edf9d1; }
-:root[data-theme="light"] #modal :is(h2, h3) { color: #2879a6; }
+:root[data-theme="light"] #modal :is(h2, h3) { color: #17466e; }
 :root[data-theme="light"] #modal :is(.detail-answer, .detail-section p, .check-list li, .settings-row, .settings-row small) { color: #293b4b; }
 :root[data-theme="light"] #modal .badge { background: #e5f4ff; color: #2879a6; }
 :root[data-theme="light"] #modal :is(.related-links button, .icon-button) {
