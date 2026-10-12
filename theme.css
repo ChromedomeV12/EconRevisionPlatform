@@ -11,6 +11,7 @@
   --ctp-teal: #179299;
   --ctp-sky: #04a5e5;
   --ctp-sapphire: #209fb5;
+  --latte-sapphire: #209fb5;
   --ctp-blue: #1e66f5;
   --ctp-lavender: #7287fd;
   --ctp-text: #4c4f69;
@@ -93,9 +94,14 @@
   --ctp-mantle: #181825;
   --ctp-crust: #11111b;
   color-scheme: dark;
-  --page: var(--ctp-base);
-  --panel: var(--ctp-base);
-  --secondary: var(--ctp-mantle);
+  --page: color-mix(in srgb, var(--ctp-surface0) 70%, var(--ctp-base));
+  --panel: var(--ctp-surface0);
+  --secondary: color-mix(in srgb, var(--latte-sapphire) 8%, var(--ctp-surface0));
+  --raised: color-mix(in srgb, var(--ctp-surface1) 65%, var(--ctp-surface0));
+  --edge: var(--ctp-surface1);
+  --border: var(--ctp-surface1);
+  --border-hover: color-mix(in srgb, var(--latte-sapphire) 45%, var(--ctp-surface2));
+  --sapphire-detail: color-mix(in srgb, var(--latte-sapphire) 65%, var(--ctp-text));
   --scrim: color-mix(in srgb, var(--ctp-crust) 60%, transparent);
 }
 /* Components consume the same semantic tokens in both themes. */
@@ -186,10 +192,12 @@ h1 { font-size: 36px; }
 /* One fixed dialog frame; only the content viewport scrolls. */
 #modal { padding: 0; max-width: 720px; max-height: 85vh; overflow: hidden; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
 #modal::backdrop { background: var(--scrim); backdrop-filter: none; }
-#modalContent { max-height: 85vh; overflow-y: auto; padding: 28px; scrollbar-width: thin; scrollbar-color: var(--border) var(--panel); }
-#modal > .modal-close { position: absolute; z-index: 2; top: 16px; right: 16px; border-radius: 50%; background: var(--border); color: var(--text); width: 36px; height: 36px; }
-#modal > .modal-close:hover { background: var(--border-hover); }
-#modal .detail-heading { padding-right: 44px; margin-bottom: 24px; }
+#modal[open] { display: flex; flex-direction: column; }
+#modalContent { min-height: 0; overflow-y: auto; padding: 0 28px 28px; scrollbar-width: thin; scrollbar-color: var(--border) var(--panel); }
+#modal .modal-close { position: static; flex-shrink: 0; border-radius: 50%; background: var(--border); color: var(--text); width: 36px; height: 36px; }
+#modal .modal-close:hover { background: var(--border-hover); }
+#modal .modal-header { flex: 0 0 auto; display: flex; align-items: flex-start; gap: 16px; padding: 24px 28px; margin: 0; background: inherit; }
+#modal .modal-header h2 { flex: 1; min-width: 0; overflow-wrap: anywhere; margin: 0; }
 #modal .detail-heading h2 { font-family: var(--reading-serif); font-size: 24px; font-weight: 400; line-height: 1.3; color: var(--text); }
 #modal :is(.detail-answer, .detail-section p, .check-list li) { font-size: 16px; line-height: 1.7; color: var(--text); }
 #modal .detail-answer { margin-block: 24px; }
@@ -212,7 +220,8 @@ h1 { font-size: 36px; }
   .refresh-actions > button { font-size: 14px; padding-inline: 10px; }
   .refresh-actions .icon-button { width: 36px; height: 36px; }
   .refresh-controls { padding-block: 8px; }
-  #modalContent { padding: 24px 20px; }
+  #modalContent { padding: 0 20px 24px; }
+  #modal .modal-header { padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
@@ -230,4 +239,38 @@ h1 { font-size: 36px; }
   .refresh-summary { margin-block: 12px; line-height: 1.5; }
   .refresh-art :is(canvas, img[data-diagram]) { height: 180px; }
   .refresh-takeaway { margin-block: 12px; padding-block: 8px; }
+}
+
+/* Lift dark reading surfaces while keeping the existing purple emphasis. */
+:root[data-theme="dark"] :is(.stat, .topic-card, .library-card, .refresh-art, .concept-visual, .library-art) {
+  background: var(--raised);
+}
+:root[data-theme="dark"] #modal { background: var(--raised); }
+:root[data-theme="dark"] :is(.refresh-heading .eyebrow, .queue-heading > span:first-child, .queue-library, .refresh-takeaway > .lucide) {
+  color: var(--sapphire-detail);
+}
+:root[data-theme="dark"] :is(.refresh-art, .concept-visual, .library-art) {
+  border-color: var(--border-hover);
+}
+
+/* Sapphire adds secondary structure without competing with purple actions. */
+:root:not([data-theme="dark"]) {
+  --sapphire-detail: color-mix(in srgb, var(--latte-sapphire) 65%, var(--ctp-text));
+  --sapphire-border: color-mix(in srgb, var(--latte-sapphire) 30%, var(--border));
+}
+:root:not([data-theme="dark"]) :is(.refresh-heading .eyebrow, .queue-heading > span:first-child, .queue-library, .refresh-takeaway > .lucide) { color: var(--sapphire-detail); }
+:root:not([data-theme="dark"]) :is(.refresh-art, .concept-visual, .library-art) { border-color: var(--sapphire-border); }
+.topbar-leading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.menu-toggle { flex-shrink: 0; width: 36px; height: 36px; color: var(--sapphire-detail); }
+:root[data-menu-hidden="true"] .sidebar { display: none; }
+:root[data-menu-hidden="true"] .shell { margin-left: 16px; }
+@media (min-width: 651px) and (max-width: 900px) {
+  :root[data-menu-hidden="true"] .shell { margin-left: 12px; }
+}
+@media (max-width: 650px) {
+  .topbar-leading { gap: 8px; }
+  .topbar-leading .breadcrumb { gap: 6px; }
+  .topbar-leading .breadcrumb > span, .topbar-leading .breadcrumb > strong { display: none; }
+  :root[data-menu-hidden="true"] .shell { margin-left: 0; padding-bottom: 0; }
+  :root[data-menu-hidden="true"] .feed-mode main { height: calc(100dvh - 52px); }
 }

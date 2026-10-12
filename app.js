@@ -102,10 +102,15 @@
     $("#modalContent").innerHTML = content;
     icons();
     const modal = $("#modal"), contentNode = $("#modalContent");
-    modal.querySelector(":scope > .modal-close")?.remove();
+    modal.querySelector(":scope > .modal-header")?.remove();
     const close = contentNode.querySelector('[data-action="close"]');
-    if (close) { close.classList.add("modal-close"); modal.append(close); }
-    const title = contentNode.querySelector("h2");
+    const heading = contentNode.querySelector(".detail-heading");
+    if (heading) {
+      heading.classList.add("modal-header");
+      modal.prepend(heading);
+    }
+    close?.classList.add("modal-close");
+    const title = modal.querySelector("h2");
     if (title) { title.id = "modalTitle"; modal.setAttribute("aria-labelledby", title.id); }
     if (!modal.open) modal.showModal();
     contentNode.scrollTop = 0;
