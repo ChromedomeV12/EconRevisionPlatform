@@ -7,38 +7,31 @@ const context = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../content.js"), "utf8"), context);
 const cards = context.EconData.cards;
 
-test("Numerical diagram points belong to their stated demand curve and visible window", () => {
-  for (const card of cards.filter(card => card.diagram)) {
-    const graph = card.diagram;
-    assert.ok(graph.priceIntercept > 0 && graph.quantityIntercept > 0, card.id);
-    assert.ok(graph.priceAxis && graph.quantityAxis && graph.assumption, card.id);
-    assert.equal(graph.points.length, 2, card.id);
-    for (const point of graph.points) {
-      const priceOnCurve = graph.priceIntercept * (1 - point.quantity / graph.quantityIntercept);
-      assert.ok(Math.abs(point.price - priceOnCurve) < 1e-9, `${card.id}: ${point.label} is off its curve`);
-      assert.ok(point.price >= 0 && point.quantity >= 0, card.id);
-      for (const [range, value] of [[graph.priceRange, point.price], [graph.quantityRange, point.quantity]]) {
-        if (range) assert.ok(range[0] <= value && value <= range[1], `${card.id}: point outside plotted range`);
-      }
-    }
+test("Selected image configs match PNG dimensions and accessible descriptions", () => {
+  const selected = cards.filter(card => card.diagramImage);
+  assert.equal(selected.length, 2);
+  for (const card of selected) {
+    const image = card.diagramImage;
+    assert.match(image.src, /^assets\/diagrams\/(demand-figure-3-2|ped-figure-7-1)\.png$/);
+    const png = fs.readFileSync(path.join(__dirname, "..", image.src));
+    assert.equal(png.subarray(1, 4).toString(), "PNG");
+    assert.equal(png.readUInt32BE(16), image.width);
+    assert.equal(png.readUInt32BE(20), image.height);
+    assert.match(image.alt, /Vertical axis:.*horizontal axis:/);
+    assert.match(image.alt, /[Nn]o numerical values/);
+    assert.match(image.credit, /Hodder Education \(2020\)/);
+    assert.equal(card.diagram, undefined);
   }
 });
-
-test("Demand price-fall example moves to a larger quantity on the same curve", () => {
-  const [start, end] = cards.find(card => card.id === "demand").diagram.points;
-  assert.ok(end.price < start.price);
-  assert.ok(end.quantity > start.quantity);
+test("Demand copy follows the carrot price-rise figure", () => {
+  const card = cards.find(card => card.id === "demand");
+  assert.match(card.refresh.summary, /rise.*carrots.*P1 to P2.*Q1 to Q2/);
+  assert.match(card.answer, /higher carrot price P2 reduces quantity demanded to Q2/);
+  assert.doesNotMatch(JSON.stringify(card), /coffee|cups|60|120/);
 });
-
-test("PED diagram demonstrates the public card's initial-base percentage calculation", () => {
+test("PED copy follows the qualitative Pepsi Cola price-fall figure", () => {
   const card = cards.find(card => card.id === "price-elasticity");
-  const [start, end] = card.diagram.points;
-  const priceChange = 100 * (end.price - start.price) / start.price;
-  const quantityChange = 100 * (end.quantity - start.quantity) / start.quantity;
-  assert.equal(priceChange, 10);
-  assert.equal(quantityChange, -20);
-  assert.equal(quantityChange / priceChange, -2);
-  assert.equal(card.diagram.method, "Initial-base PED");
-  assert.match(card.refresh.summary, /10% price rise and 20% fall/);
-  assert.match(card.answer, /-20% \/ 10% = -2/);
+  assert.match(card.refresh.summary, /Pepsi Cola.*falls.*P1 to P2.*Q1 to Q2.*greater proportion/);
+  assert.match(card.answer, /exact PED cannot be calculated.*slope alone/);
+  assert.doesNotMatch(JSON.stringify(card), /10%|20%|= -2|tickets/);
 });

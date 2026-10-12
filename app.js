@@ -244,7 +244,7 @@
       <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong>${escape(card.topic)}</strong><small>${escape(unitOf(card).name)}</small></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
       <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
     icons(); if(!list.length) return;
-    list.forEach(card=>drawConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
+    list.forEach(card=>renderConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
     const current=list.find(c=>c.id===activeCard()?.id) || list[0];
     session.index=session.ids.indexOf(current.id);
     const scroller=$(".refresh-scroll"), node=document.querySelector(`[data-point="${CSS.escape(current.id)}"]`);
@@ -257,7 +257,70 @@
     },{root:scroller,threshold:.65});
     scroller.querySelectorAll("[data-point]").forEach(el=>feedObserver.observe(el));
   }
+  function textbookImage(card) {
+    const image = card.diagramImage;
+    const allowed = new Set(["assets/diagrams/demand-figure-3-2.png", "assets/diagrams/ped-figure-7-1.png"]);
+    return image && allowed.has(image.src) && typeof image.alt === "string" && image.alt.trim() &&
+      typeof image.fallback === "string" && typeof image.credit === "string" &&
+      Number.isInteger(image.width) && image.width > 0 && Number.isInteger(image.height) && image.height > 0 ? image : null;
+  }
+  function renderConcept(card, canvas) {
+    drawConcept(card, canvas);
+    const source = textbookImage(card);
+    if (!source || !canvas) return;
+    const image = document.createElement("img");
+    image.dataset.diagram = card.id;
+    image.alt = source.alt;
+    image.width = source.width;
+    image.height = source.height;
+    image.style.cssText = "display:none;width:100%;object-fit:contain;background:#fff;";
+    const zoom = document.createElement("button");
+    zoom.className = "icon-button";
+    zoom.type = "button";
+    zoom.title = "Enlarge diagram";
+    zoom.setAttribute("aria-label", `Enlarge ${card.topic} diagram`);
+    zoom.innerHTML = icon("zoom-in");
+    zoom.style.cssText = "position:absolute;top:-10px;right:6px;width:28px;height:28px;min-height:0;z-index:1;";
+    zoom.hidden = true;
+    zoom.addEventListener("click", () => {
+      openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2><button type="button" class="icon-button" data-diagram-size aria-label="Show original size" title="Show original size" aria-pressed="false">${icon("maximize")}</button>${closeButton()}</div><div tabindex="0" role="region" aria-label="Diagram image" style="overflow:auto;background:#fff;max-height:65dvh;"><img src="${escape(source.src)}" alt="${escape(source.alt)}" width="${source.width}" height="${source.height}" style="display:block;width:100%;max-width:${source.width}px;height:auto;" /></div><p>${escape(source.credit)}</p>`);
+      const toggle = $("[data-diagram-size]");
+      const enlarged = $("#modal img");
+      toggle.addEventListener("click", () => {
+        const full = toggle.getAttribute("aria-pressed") !== "true";
+        toggle.setAttribute("aria-pressed", String(full));
+        toggle.setAttribute("aria-label", full ? "Fit diagram to width" : "Show original size");
+        toggle.title = full ? "Fit diagram to width" : "Show original size";
+        enlarged.style.width = full ? `${source.width}px` : "100%";
+        enlarged.style.maxWidth = full ? "none" : `${source.width}px`;
+        toggle.innerHTML = icon(full ? "minimize" : "maximize");
+        icons();
+      });
+    });
+    const caption = canvas.parentElement.querySelector("small");
+    const fallbackCaption = "Textbook diagram unavailable; conceptual fallback";
+    if (caption) caption.textContent = fallbackCaption;
+    image.onload = () => {
+      canvas.hidden = true;
+      canvas.style.display = "none";
+      image.style.display = "block";
+      zoom.hidden = false;
+      if (caption) caption.textContent = source.credit;
+    };
+    image.onerror = () => {
+      image.style.display = "none";
+      zoom.hidden = true;
+      canvas.hidden = false;
+      canvas.style.display = "block";
+      if (caption) caption.textContent = fallbackCaption;
+    };
+    canvas.after(image);
+    canvas.parentElement.style.position = "relative";
+    canvas.parentElement.append(zoom);
+    image.src = source.src;
+  }
   function visualLabel(card) {
+    if (textbookImage(card)) return card.diagramImage.fallback;
     if (card.visual === "elasticity" && card.diagram) {
       const [a, b] = card.diagram.points;
       const quantityChange = (b.quantity - a.quantity) / a.quantity * 100;
@@ -294,6 +357,15 @@
     canvas.height = 170 * scale;
     const ctx = canvas.getContext("2d");
     ctx.scale(scale, scale);
+    if (textbookImage(card)) {
+      ctx.fillStyle = "#35513c";
+      ctx.font = "14px sans-serif";
+      const lines = card.visual === "demand"
+        ? ["Carrot price: P1 to P2 (rises)", "Quantity demanded: Q1 to Q2 (falls)", "Movement along the same demand curve"]
+        : ["Pepsi Cola price: P1 to P2 (falls)", "Quantity demanded: Q1 to Q2 (rises)", "Quantity changes proportionately more"];
+      lines.forEach((line, i) => ctx.fillText(line, 18, 48 + i * 32));
+      return;
+    }
     const unit = unitOf(card),
       ink = {
         green: "#436445",

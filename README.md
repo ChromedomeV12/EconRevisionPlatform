@@ -31,9 +31,9 @@ For local use, open `index.html` in a browser. No installation or build step is 
 
 ## Current scope
 
-This is an independent, unofficial educational prototype. Sample content needs teacher review and is not a complete or verified IB syllabus resource. All sample prompts are original demo content; the private source collection has not been republished.
+This is an independent, unofficial educational prototype. Sample content needs teacher review and is not a complete or verified IB syllabus resource. The selected demand/PED textbook extracts have owner-confirmed public reuse permission; the remaining source collection stays private.
 
-The demand and PED cards include original numerical diagrams with market-specific units, consistent curve/point coordinates, labelled price/quantity guides, and accessible descriptions. The PED example explicitly uses initial-base percentage changes. These examples were checked against private reference material; they are not textbook reproductions or teacher-verified figures.
+The demand and PED cards use selected textbook figures with complete axes, labels and captions, accessible descriptions, and an enlarge control. Their explanations follow the figures' symbolic values rather than inventing numerical coordinates or an exact PED. See [diagram provenance and permission record](assets/diagrams/README.md). Other diagrams remain app-generated illustrations; none is teacher verified. [Python-based reconstruction](docs/DIAGRAM_RECONSTRUCTION.md) is planned, not implemented.
 
 The MVP has no compulsory questions, answer reveals or recall ratings. Touch swipes, mouse-wheel scrolling, keyboard arrows/Page Up/Page Down and navigation buttons move through the feed. A Closer look opens full notes and provenance. Saved and Revisit filters use explicit user choices, not a retention algorithm.
 
@@ -47,13 +47,13 @@ Jev integration boundaries remain for future advisory assessment and submission 
 
 Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy scheduling, service and browsing-state tests. `node tests/browser.cjs` requires Playwright; it verifies feed navigation (including emulated touch), unchanged recall history, saved/revisit preferences, personal submissions, responsive layouts and private-source isolation. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
 
-Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, and captures both themes across all views. The light theme uses white reading surfaces with Latte Lavender selection/progress, Mauve actions and Sapphire accents; diagrams retain their high-contrast plot colors. The dark colors follow the [Catppuccin Mocha palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
+Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, composited text contrast, interaction states and reduced transparency, and captures both themes across all views. The light theme uses Latte Base/Mantle/Crust surfaces and text roles throughout the feed and dashboard, with Mauve actions and Blue focus indicators. Diagrams retain light paper in both modes. Both themes follow the official [Catppuccin palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
 
-`node --test tests/diagram-data.test.cjs` checks curve and percentage consistency. `node tests/diagrams.cjs` uses Playwright to check actual drawn points, guides, label bounds and accessible descriptions, with screenshots in both themes. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
+`node --test tests/diagram-data.test.cjs` checks image dimensions, attribution and figure/copy consistency. `node tests/diagrams.cjs` checks image loading, uncropped contain fitting, accessible descriptions, enlargement and failure fallbacks across five widths in both themes. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
 
 ## Private reference collection
 
-Local research materials belong in `private-sources/Econ Revision App Sources/`, which is excluded from Git. They are not included in this repository or demo. Read that collection's `START_HERE.md` and `CONTENT_NOTES.md` before using it to draft content. Source attribution and teacher review do not establish permission to republish textbooks, diagrams, or exam questions.
+Local research materials belong in `private-sources/Econ Revision App Sources/`, which is excluded from Git. Only the explicitly approved selected copies in `assets/diagrams/` are included in the app; source PDFs, transcripts and other crops remain private. Read the collection's `START_HERE.md` and `CONTENT_NOTES.md` before drafting content. Source attribution and teacher review do not establish permission to republish textbooks, diagrams, or exam questions.
 
 Do not deploy the whole local workspace or serve its root publicly: Git ignore rules do not restrict HTTP access. Publish only the committed app files. Never force-add the private source directory.
 

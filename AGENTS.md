@@ -36,7 +36,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - Keep deep explanations readable and academic.
 - The current design uses a macOS-inspired acrylic treatment: translucent light navigation, subtle tinted surfaces, rounded controls and a dark reading workspace. Keep diagrams on a high-contrast light surface. Respect reduced motion/transparency preferences; use opaque fallbacks where needed.
 - Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
-- Dark mode uses the official Catppuccin Mocha palette. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
+- Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
 - Avoid adding dependencies unless the project gains a clear need for them.
 
 ## Implementation Rules
@@ -58,7 +58,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 
 - `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
 - `node --test tests/refresh.test.cjs` checks browsing state and preference validation separately from recall.
-- `node --test tests/diagram-data.test.cjs` checks numerical curve points and PED percentages; `node tests/diagrams.cjs` checks rendered guides, labels and accessible values using Playwright.
+- `node --test tests/diagram-data.test.cjs` checks selected textbook image dimensions and figure/copy consistency; `node tests/diagrams.cjs` checks image rendering, enlargement and failure fallbacks using Playwright. `node --test tests/preview.test.cjs` checks the image allowlist and private-source isolation.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
@@ -70,7 +70,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - The local reference collection is `private-sources/Econ Revision App Sources/`. It is intentionally Git-ignored and absent from the public repository.
 - Read its `START_HERE.md`, `CONTENT_NOTES.md`, and `SOURCE_INDEX.md` before drafting sourced content.
 - Keep source IDs, exact PDF/slide pages, assumptions, SL/HL boundaries, and teacher-review status with new draft content.
-- The collection is not cleared for public distribution. Do not commit, force-add, publish, or expose its PDFs, extracted text, diagrams, or draft briefs through the app.
+- The collection as a whole is not cleared for public distribution. Do not commit, force-add, publish, or expose its PDFs, extracted text, diagrams, or draft briefs through the app. The owner confirmed public reuse permission for the selected textbook diagram extracts on 2026-10-12; only the files documented in `assets/diagrams/README.md` may be published. This does not clear any other source material.
 - Public-use permission and teacher approval are separate checks. Do not assume paraphrasing alone resolves all reuse questions.
 - The official full subject guide and applicable amendments are missing. Treat syllabus mapping as provisional until checked.
 - Do not serve the workspace root publicly: `.gitignore` is not HTTP access control. Deploy committed app files only.
@@ -82,7 +82,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - `.ocr-runtime/` is disposable machine-local tooling. Do not commit it or reuse its Windows environment on Linux; the bootstrap creates platform/path-specific environments.
 - Exclude `.ocr-runtime/` from Syncthing on every device. The synced root is the parent Coding/Dev folder: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` there, not a nested project `.stignore`. Verify exclusion before deleting a foreign-platform runtime locally, or deletion could propagate to its owner.
 - Keep page images, OCR, visual evidence, drafts and transcripts under `private-sources/ocr-work/`, never public assets. Do not modify source PDFs.
-- Preserve textbook diagrams with `ocr_crop`: render a bounded original-PDF region, inspect the saved PNG, and attach its `asset_id` to the transcript figure. Keep axes, labels, legends and captions. Existing accepted pages can receive private `figures.md` backfills without rewriting their transcripts. Crops retain provenance hashes and are not publication-cleared or automatically verified.
+- Preserve textbook diagrams with `ocr_crop`: render a bounded original-PDF region, inspect the saved PNG, and attach its `asset_id` to the transcript figure. Keep axes, labels, legends and captions. Existing accepted pages can receive private `figures.md` backfills without rewriting their transcripts. Crops retain provenance hashes and are not automatically publication-cleared or verified; explicitly approved public copies require a separate asset record.
 - Use one writer on one synced machine at a time. Local locks are not distributed locks. Check checkpoints after interruption; never clear a lock without checking active workers.
 - Prepare/transcribe bounded batches with the current Pi model. Session startup must never launch processes or send model prompts. Setup is explicit via `/ocr-setup`. No parallel inference or second model server.
 - Launch OCR with the standalone `node` executable on PATH, never `process.execPath`: standalone Pi may use its own harness executable there. Preserve the `ECON_OCR_CHILD` recursion guard.
