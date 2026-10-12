@@ -33,6 +33,8 @@ For local use, open `index.html` in a browser. No installation or build step is 
 
 This is an independent, unofficial educational prototype. Sample content needs teacher review and is not a complete or verified IB syllabus resource. All sample prompts are original demo content; the private source collection has not been republished.
 
+The demand and PED cards include original numerical diagrams with market-specific units, consistent curve/point coordinates, labelled price/quantity guides, and accessible descriptions. The PED example explicitly uses initial-base percentage changes. These examples were checked against private reference material; they are not textbook reproductions or teacher-verified figures.
+
 The MVP has no compulsory questions, answer reveals or recall ratings. Touch swipes, mouse-wheel scrolling, keyboard arrows/Page Up/Page Down and navigation buttons move through the feed. A Closer look opens full notes and provenance. Saved and Revisit filters use explicit user choices, not a retention algorithm.
 
 The overview reports unique points opened, points opened today, bookmarks and points set aside. An opened point means at least 65% of its panel entered the visible feed; it does not prove reading, understanding or mastery. Browsing state uses `econ-refresh-v1`. Existing recall history and personal submissions remain in `econ-workspace-v2`; browsing never adds FSRS reviews or changes scheduled dates. Existing scheduling helpers and tests are retained for a possible separate, optional recall mode.
@@ -46,6 +48,8 @@ Jev integration boundaries remain for future advisory assessment and submission 
 Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy scheduling, service and browsing-state tests. `node tests/browser.cjs` requires Playwright; it verifies feed navigation (including emulated touch), unchanged recall history, saved/revisit preferences, personal submissions, responsive layouts and private-source isolation. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
 
 Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, and captures both themes across all views. The light theme uses white reading surfaces with Latte Lavender selection/progress, Mauve actions and Sapphire accents; diagrams retain their high-contrast plot colors. The dark colors follow the [Catppuccin Mocha palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
+
+`node --test tests/diagram-data.test.cjs` checks curve and percentage consistency. `node tests/diagrams.cjs` uses Playwright to check actual drawn points, guides, label bounds and accessible descriptions, with screenshots in both themes. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
 
 ## Private reference collection
 

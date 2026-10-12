@@ -46,9 +46,10 @@ node scripts/serve.cjs 4181
 Open <http://127.0.0.1:4181>. Then run the checks:
 
 ```sh
-node --test tests/learning.test.cjs tests/refresh.test.cjs
+node --test tests/*.test.cjs
 node tests/browser.cjs
 node tests/theme.cjs
+node tests/diagrams.cjs
 git diff --check
 git status --short
 git diff

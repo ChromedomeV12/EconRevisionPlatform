@@ -258,6 +258,16 @@
     scroller.querySelectorAll("[data-point]").forEach(el=>feedObserver.observe(el));
   }
   function visualLabel(card) {
+    if (card.visual === "elasticity" && card.diagram) {
+      const [a, b] = card.diagram.points;
+      const quantityChange = (b.quantity - a.quantity) / a.quantity * 100;
+      const priceChange = (b.price - a.price) / a.price * 100;
+      return `${card.diagram.priceAxis}; ${card.diagram.quantityAxis}. Original illustrative ticket market: A (${a.quantity} tickets per week at $${a.price}) to B (${b.quantity} tickets per week at $${b.price}) on P = 15 - Q/20. Price rises ${priceChange} percent; quantity demanded changes ${quantityChange} percent. ${card.diagram.method}, using A as base: ${quantityChange}% / +${priceChange}% = ${quantityChange / priceChange}; magnitude 2, price elastic. Price axis starts at $${card.diagram.priceRange[0]}. ${card.diagram.assumption}.`;
+    }
+    if (card.visual === "demand" && card.diagram) {
+      const [a, b] = card.diagram.points;
+      return `${card.diagram.priceAxis}; ${card.diagram.quantityAxis}. Original illustrative demand curve: price intercept ${card.diagram.priceIntercept}, quantity intercept ${card.diagram.quantityIntercept}. Movement from ${a.label} (${a.quantity} cups per week at $${a.price} per cup) to ${b.label} (${b.quantity} cups per week at $${b.price} per cup) on the same curve. ${card.diagram.assumption}.`;
+    }
     return (
       {
         externality:
@@ -311,7 +321,48 @@
       ctx.fillStyle = ink;
       ctx.fill();
     };
-    if (["externality", "demand"].includes(card.visual)) {
+    if (card.visual === "demand" && card.diagram) {
+      const graph = card.diagram;
+      const left = 48, right = 314, top = 30, bottom = 126;
+      const position = ({ quantity, price }) => [
+        left + quantity / graph.quantityIntercept * (right - left),
+        bottom - price / graph.priceIntercept * (bottom - top),
+      ];
+      const arrow = (start, end, color = ink) => {
+        line([start, end], color, 2);
+        const angle = Math.atan2(end[1] - start[1], end[0] - start[0]);
+        line([
+          [end[0] - 7 * Math.cos(angle - .5), end[1] - 7 * Math.sin(angle - .5)],
+          end,
+          [end[0] - 7 * Math.cos(angle + .5), end[1] - 7 * Math.sin(angle + .5)],
+        ], color, 2);
+      };
+      text(graph.priceAxis, left, 12, 11, ink, 650);
+      text(graph.assumption, 180, 26, 9);
+      arrow([left, bottom], [left, top - 5], `${ink}99`);
+      arrow([left, bottom], [right + 12, bottom], `${ink}99`);
+      line([[left, top], [right, bottom]], ink, 2.5);
+      text("D", right + 7, bottom - 8, 12, ink, 650);
+      text(String(graph.priceIntercept), left - 22, top + 3, 10);
+      text("0", left - 12, bottom + 14, 10);
+      text(String(graph.quantityIntercept), right - 9, bottom + 14, 10);
+      graph.points.forEach(point => {
+        const [x, y] = position(point);
+        line([[left, y], [x, y], [x, bottom]], `${ink}88`, 1, [3, 3]);
+        dot(x, y);
+        text(String(point.price), left - 22, y + 3, 10);
+        text(String(point.quantity), x - 7, bottom + 14, 10);
+        text(point.label, x + 6, y - 7, 11, ink, 650);
+      });
+      // All guides, points and the movement arrow use the same linear model.
+      const [start, end] = graph.points.map(position);
+      const along = fraction => [
+        start[0] + fraction * (end[0] - start[0]),
+        start[1] + fraction * (end[1] - start[1]),
+      ];
+      arrow(along(.3), along(.72));
+      text(graph.quantityAxis, 108, 163, 11, ink, 650);
+    } else if (["externality", "demand"].includes(card.visual)) {
       line(
         [
           [35, 12],
@@ -412,6 +463,37 @@
         `${ink}55`,
         1,
       );
+    } else if (card.visual === "elasticity" && card.diagram) {
+      const graph = card.diagram;
+      const left = 48, right = 314, top = 30, bottom = 110;
+      const position = ({ quantity, price }) => [
+        left + (quantity - graph.quantityRange[0]) / (graph.quantityRange[1] - graph.quantityRange[0]) * (right - left),
+        bottom - (price - graph.priceRange[0]) / (graph.priceRange[1] - graph.priceRange[0]) * (bottom - top),
+      ];
+      text(graph.priceAxis, left, 12, 11, ink, 650);
+      text(graph.assumption, 174, 23, 9);
+      line([[left, top - 5], [left, bottom], [right + 10, bottom]], `${ink}99`, 1);
+      // Clip the original linear model to the labelled price window, not a false origin.
+      const quantityAt = price => graph.quantityIntercept * (1 - price / graph.priceIntercept);
+      line(graph.priceRange.slice().reverse().map(price => position({ price, quantity: quantityAt(price) })), ink, 2.5);
+      text("D", 288, 102, 11, ink, 650);
+      graph.priceRange.forEach(price => text(String(price), left - 22, position({ price, quantity: 0 })[1] + 3, 10));
+      text("0", left - 3, bottom + 13, 10);
+      graph.points.forEach(point => {
+        const [x, y] = position(point);
+        line([[left, y], [x, y], [x, bottom]], `${ink}88`, 1, [3, 3]);
+        dot(x, y);
+        text(String(point.price), left - 22, y + 3, 10);
+        text(String(point.quantity), x - 8, bottom + 13, 10);
+        text(point.label, x + 6, y - 6, 11, ink, 650);
+      });
+      const [a, b] = graph.points;
+      const priceChange = (b.price - a.price) / a.price * 100;
+      const quantityChange = (b.quantity - a.quantity) / a.quantity * 100;
+      const ped = quantityChange / priceChange;
+      text(graph.quantityAxis, 104, 137, 11, ink, 650);
+      text(`Price axis starts at $${graph.priceRange[0]}; P = 15 - Q/20`, left, 151, 9);
+      text(`${graph.method}: (${quantityChange}%)/(+${priceChange}%) = ${ped}`, left, 165, 11, ink, 650);
     } else if (card.visual === "elasticity") {
       text("PRICE", 35, 38, 10);
       text("QUANTITY DEMANDED", 168, 38, 10);

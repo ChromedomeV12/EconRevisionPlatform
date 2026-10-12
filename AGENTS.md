@@ -58,6 +58,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 
 - `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
 - `node --test tests/refresh.test.cjs` checks browsing state and preference validation separately from recall.
+- `node --test tests/diagram-data.test.cjs` checks numerical curve points and PED percentages; `node tests/diagrams.cjs` checks rendered guides, labels and accessible values using Playwright.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.

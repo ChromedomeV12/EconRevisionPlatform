@@ -21,12 +21,22 @@ The packaging check rejects tracked private/local directories, environment files
 
 ## Main Branch Ruleset
 
-The planned ruleset payload is maintained in `.github/rulesets/main.json`. Remote activation is a separate integration step after the `verify` check has succeeded; the existence of that JSON file alone does not enforce protection. At initial inspection there was no remote ruleset.
+The active [Protect main ruleset](https://github.com/ChromedomeV12/EconRevisionPlatform/rules/24907180) has ID `24907180`. It was created on 2026-10-12 after the first GitHub Actions `verify` run passed. Its payload is maintained in `.github/rulesets/main.json`; changing that file alone does not update GitHub.
 
-The agreed protection requires a pull request, the GitHub Actions `verify` check on an up-to-date branch, resolved review threads, and linear history. It blocks force pushes and branch deletion and has no bypass actors. Zero mandatory approvals allows the solo owner to merge a checked PR; it does not constitute independent review. The integrating maintainer should record the applied ruleset ID/link and verify its live enforcement after activation.
+The protection requires a pull request, the GitHub Actions `verify` check on an up-to-date branch, resolved review threads, and linear history. It blocks force pushes and branch deletion and has no bypass actors. Zero mandatory approvals allows the solo owner to merge a checked PR; it does not constitute independent review. Extra approval for unattributed changes is disabled so it does not unexpectedly require another reviewer. The required status is restricted to GitHub Actions integration ID `15368`.
+
+After reviewing any configuration change, an administrator can apply it with:
+
+```sh
+gh api --method PUT repos/ChromedomeV12/EconRevisionPlatform/rulesets/24907180 --input .github/rulesets/main.json
+gh api repos/ChromedomeV12/EconRevisionPlatform/rulesets/24907180
+gh api repos/ChromedomeV12/EconRevisionPlatform/rules/branches/main
+```
+
+Keep the remote response and committed intent consistent. Normal release work uses a feature branch and PR; do not disable the ruleset just to push directly. An administrator can repair a misconfigured check through repository settings after inspecting the configuration.
 
 ## Publishing and Review Boundaries
 
-GitHub Pages currently publishes the `main` branch root. Branch-based Pages publishing is independent of this verification workflow, so a workflow failure alone does not stop deployment. Enforcing the required check before merging is the current planned gate. A future allowlisted Pages artifact workflow can provide a narrower publication boundary; browser checks can be added there or to verification with explicit dependencies.
+GitHub Pages currently publishes the `main` branch root. Branch-based Pages publishing is independent of this verification workflow, so a workflow failure alone does not stop deployment. The active ruleset requires the check before merging. A future allowlisted Pages artifact workflow can provide a narrower publication boundary; browser checks can be added there or to verification with explicit dependencies.
 
 Before merging, review the diff for private reference material, credentials, new external requests, dependency changes, and rendering of untrusted strings. CI does not automatically enforce teacher review, textbook reuse rights, graph accuracy, or Jev backend authorization. Public diagrams and explanations need their own content/provenance review. Future shared submissions, accounts, or AI services require a backend security design before enabling those features.
