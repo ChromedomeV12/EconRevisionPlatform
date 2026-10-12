@@ -22,6 +22,16 @@ const path = require("node:path");
     });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    const assertVisual = async point => {
+      const image = point.locator("img[data-diagram]");
+      if (await image.count()) {
+        await image.evaluate(img => img.decode());
+        assert.ok(await image.isVisible(), "Textbook extract must be visible");
+        assert.ok(await image.evaluate(img => img.naturalWidth > 0 && img.naturalHeight > 0));
+      } else {
+        assert.ok(await point.locator("canvas").evaluate(c => c.getContext("2d").getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0)));
+      }
+    };
     await page.goto(base);
     await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.locator("h1").textContent(), "Economics, refreshed.");
@@ -48,7 +58,7 @@ const path = require("node:path");
     await page.locator('h1').hover();
     await page.screenshot({path:path.join(out,"feed-desktop.png")});
     const first = page.locator("[data-point]").first();
-    assert.ok(await first.locator("canvas").evaluate(c => c.getContext("2d").getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0)));
+    await assertVisual(first);
     await first.getByRole("button",{name:"Save point",exact:true}).click();
     await first.getByRole("button",{name:"Revisit later",exact:true}).click();
     await first.getByRole("button",{name:"Flag as confusing",exact:true}).click();
@@ -187,7 +197,7 @@ const path = require("node:path");
         });
         if (metrics.extra > 1) layoutFailures.push(`Internal scroll at ${width} card ${i}: ${metrics.extra}`);
         if (metrics.bottom > height-(width<=650?67:0)) layoutFailures.push(`Actions covered at ${width} card ${i}`);
-        assert.ok(await page.locator('[data-point]').nth(i).locator('canvas').evaluate(c=>c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,j)=>j%4===3&&v>0)));
+        await assertVisual(page.locator('[data-point]').nth(i));
         if(i===0||i===4)await page.screenshot({path:path.join(out,`refresh-${i}-${width}.png`)});
       }
     }

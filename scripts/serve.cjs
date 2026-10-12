@@ -21,12 +21,15 @@ const publicFiles = new Set([
   "assets/trade.jpg",
   "assets/dm-sans.ttf",
   "assets/manrope.ttf",
+  "assets/diagrams/demand-figure-3-2.png",
+  "assets/diagrams/ped-figure-7-1.png",
 ]);
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css",
   ".js": "text/javascript",
   ".jpg": "image/jpeg",
+  ".png": "image/png",
   ".ttf": "font/ttf",
 };
 function createServer() {

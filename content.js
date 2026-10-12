@@ -1,5 +1,4 @@
-/* Original demo prompts. No private textbook excerpts or diagrams are shipped. */
-/* All cards remain original-demo content, not teacher verified; refresh copy uses only their existing content. */
+/* Demo content is not teacher verified. Selected permitted textbook figures have explicit credits. */
 globalThis.EconData = {
   units: [
     {
@@ -72,40 +71,34 @@ globalThis.EconData = {
       refresh: {
         headline: "Demand is price elastic when PED magnitude exceeds one",
         summary:
-          "A 10% price rise and 20% fall in quantity demanded give PED = -2. Its magnitude is 2, so quantity demanded changes proportionately more than price: demand is price elastic.",
+          "As Pepsi Cola's price falls from P1 to P2, quantity demanded rises from Q1 to Q2 by a greater proportion. Demand is price elastic: PED magnitude exceeds one, with other determinants unchanged.",
       },
       unit: "micro",
       title: "How much is too much?",
       topic: "Price elasticity of demand",
       tag: "Elasticity",
       visual: "elasticity",
-      diagram: {
-        priceAxis: "Ticket price ($)",
-        quantityAxis: "Tickets demanded (/week)",
-        priceIntercept: 15,
-        quantityIntercept: 300,
-        priceRange: [8, 12],
-        quantityRange: [0, 160],
-        points: [
-          { label: "A", quantity: 100, price: 10 },
-          { label: "B", quantity: 80, price: 11 },
-        ],
-        assumption: "Other determinants unchanged",
-        method: "Initial-base PED",
+      diagramImage: {
+        src: "assets/diagrams/ped-figure-7-1.png",
+        width: 600,
+        height: 360,
+        alt: "Figure 7.1, price elastic demand for Pepsi Cola. Vertical axis: price ($); horizontal axis: quantity ('000 cans). Price falls from P1 to P2 and quantity demanded rises from Q1 to Q2 along the same demand curve. The quantity response is proportionately greater; no numerical values are supplied.",
+        fallback: "Pepsi Cola price falls from P1 to P2; quantity demanded rises from Q1 to Q2 by a greater proportion, other determinants unchanged.",
+        credit: "Hoang, Wray & Chakraborty / Hodder Education (2020), Fig. 7.1",
       },
       question:
-        "Price rises by 10%. Quantity demanded falls by 20%. What is PED, and how responsive is demand?",
+        "Pepsi Cola's price falls and quantity demanded rises by a greater proportion. What does this imply about PED?",
       answer:
-        "PED is -20% / 10% = -2. Its magnitude is 2, greater than 1, so demand is price elastic: quantity demanded changes proportionately more than price.",
-      takeaway: "|PED| = 2  /  Elastic demand",
+        "The magnitude of PED exceeds one, so demand is price elastic. Other determinants are held constant. The schematic figure supplies no numerical values, so an exact PED cannot be calculated from it; slope alone does not establish elasticity.",
+      takeaway: "|PED| > 1  /  Elastic demand",
       trap: "The negative sign describes the direction. The magnitude describes responsiveness.",
       rubric: [
-        "Divides percentage quantity change by percentage price change",
-        "Calculates -2, or states magnitude 2",
+        "Compares percentage quantity change with percentage price change",
+        "States that PED magnitude exceeds one",
         "Interprets demand as price elastic",
       ],
       related: ["demand", "market-failure"],
-      source: "Original demo calculation",
+      source: "Economics for the IB Diploma (2020), Hodder Education, Figure 7.1; PDF page 214",
       version: 1,
     },
     {
@@ -113,37 +106,34 @@ globalThis.EconData = {
       refresh: {
         headline: "Own-price changes cause movement along the demand curve",
         summary:
-          "With other determinants unchanged, a fall in coffee's own price causes movement along its existing demand curve, not a shift. With ordinary downward-sloping demand, quantity demanded increases.",
+          "With other determinants unchanged, a rise in the price of carrots from P1 to P2 reduces quantity demanded from Q1 to Q2. This is movement along the existing demand curve, not a shift.",
       },
       unit: "micro",
       title: "A move, not a shift",
       topic: "Demand and quantity demanded",
       tag: "Demand & supply",
       visual: "demand",
-      diagram: {
-        priceAxis: "Price of coffee ($/cup)",
-        quantityAxis: "Coffee demanded (cups/week)",
-        priceIntercept: 20,
-        quantityIntercept: 200,
-        points: [
-          { label: "A", quantity: 60, price: 14 },
-          { label: "B", quantity: 120, price: 8 },
-        ],
-        assumption: "Other determinants unchanged",
+      diagramImage: {
+        src: "assets/diagrams/demand-figure-3-2.png",
+        width: 1301,
+        height: 843,
+        alt: "Figure 3.2, the demand curve for carrots. Vertical axis: price of carrots ($); horizontal axis: quantity of carrots demanded (kg). A rise from P1 to P2 causes movement up the same downward-sloping demand curve, reducing quantity demanded from Q1 to Q2. No numerical values are supplied.",
+        fallback: "Carrot price rises from P1 to P2; quantity demanded falls from Q1 to Q2 along the same demand curve, other determinants unchanged.",
+        credit: "Hoang, Wray & Chakraborty / Hodder Education (2020), Fig. 3.2",
       },
       question:
-        "The price of coffee falls. Other determinants are unchanged. Does its demand curve shift?",
+        "The price of carrots rises. Other determinants are unchanged. Does its demand curve shift?",
       answer:
-        "No. A change in the good's own price causes a movement along the existing demand curve. With ordinary downward-sloping demand, the lower price increases quantity demanded.",
+        "No. A change in the good's own price causes movement along the existing demand curve. In this figure, the higher carrot price P2 reduces quantity demanded to Q2, with other determinants unchanged.",
       takeaway: "Own-price change = movement along demand",
       trap: "An income or preference change can shift demand. A change in the good's own price does not.",
       rubric: [
         "States that the curve does not shift",
         "Identifies a movement along the curve",
-        "States that quantity demanded increases",
+        "States that quantity demanded decreases",
       ],
       related: ["price-elasticity"],
-      source: "Original demo scenario",
+      source: "Economics for the IB Diploma (2020), Hodder Education, Figure 3.2; PDF page 114",
       version: 1,
     },
     {
