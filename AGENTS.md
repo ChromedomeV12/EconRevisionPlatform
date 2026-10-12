@@ -39,6 +39,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - The current design uses a macOS-inspired acrylic treatment: translucent light navigation, subtle tinted surfaces, rounded controls and a dark reading workspace. Keep diagrams on a high-contrast light surface. Respect reduced motion/transparency preferences; use opaque fallbacks where needed.
 - Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
 - Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
+- Owner-approved light dialogs are an exception: white surfaces, navy text, sky-blue controls and a pale lavender backdrop, with larger detail-reading typography. Preserve this deliberate treatment when checking Latte consistency elsewhere.
 - Avoid adding dependencies unless the project gains a clear need for them.
 
 ## Implementation Rules

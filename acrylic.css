@@ -366,3 +366,15 @@ dialog::backdrop { background: #172c3a54; backdrop-filter: blur(7px); -webkit-ba
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Detail dialogs use a clearer reading hierarchy in both themes. */
+#modal:has(.detail-answer) .detail-heading h2 { font-size: 30px; line-height: 1.25; }
+#modal:has(.detail-answer) .detail-section h3 { font-size: 21px; line-height: 1.4; margin-bottom: 12px; }
+#modal:has(.detail-answer) :is(.detail-answer, .detail-section p, .check-list li) { font-size: 17px; line-height: 1.75; }
+#modal:has(.detail-answer) :is(.badge, .related-links button, .dialog-actions .btn) { font-size: 14px; }
+#modal:has(.detail-answer) .check-list .lucide { flex-shrink: 0; margin-top: 5px; }
+@media (max-width: 650px) {
+  #modal:has(.detail-answer) .detail-heading h2 { font-size: 26px; }
+  #modal:has(.detail-answer) .detail-section h3 { font-size: 20px; }
+  #modal:has(.detail-answer) :is(.detail-answer, .detail-section p, .check-list li) { font-size: 16px; }
+}

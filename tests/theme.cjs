@@ -139,8 +139,9 @@ const path = require("node:path");
     await toggle.focus();
     assert.equal(await color('.theme-toggle', "outlineColor"), "rgb(30, 102, 245)");
     await page.getByRole("button", { name: "Open study settings" }).click();
-    assert.equal(await color("dialog"), "rgb(76, 79, 105)");
-    assert.equal(await color("dialog", "backgroundColor"), "rgba(230, 233, 239, 0.92)");
+    // Owner-approved light dialogs deliberately use white/navy instead of Latte surfaces.
+    assert.equal(await color("dialog"), "rgb(41, 59, 75)");
+    assert.equal(await color("dialog", "backgroundColor"), "rgb(255, 255, 255)");
     await page.getByRole("button", { name: "Close dialog" }).click();
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-transparency", value: "reduce" }] });
