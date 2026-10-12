@@ -24,6 +24,9 @@ For local use, open `index.html` in a browser. No installation or build step is 
 - `assets/`: local fonts, photographs and credit information.
 - `AGENTS.md`: guidance for future contributors and coding agents.
 - `docs/JEV_INTEGRATION.md`: future AI contracts and backend architecture.
+- `SECURITY.md`: vulnerability reporting, trust boundaries and security invariants.
+- `docs/REPOSITORY_SECURITY.md`: GitHub protection settings and ruleset maintenance.
+- `docs/DEPLOYMENT_PLAN.md`: hosting recommendation and phased backend migration.
 - `docs/superpowers/`: historical design and implementation notes.
 
 ## Current scope
@@ -52,6 +55,8 @@ Do not deploy the whole local workspace or serve its root publicly: Git ignore r
 
 ## Deployment
 
-GitHub Pages serves the root of the `main` branch. Push app changes to `main` to update the demo. Only committed files are available to the Pages build.
+GitHub Pages serves the root of the `main` branch. Open a feature-branch pull request, pass the required `verify` check, resolve review conversations, and merge to `main` to update the demo. Only committed files are available to the Pages build. The default branch blocks direct pushes, force pushes and deletion.
 
 See [Git, deployment and pull requests](docs/GIT_WORKFLOW.md) for the exact commit/push workflow, deployment checks, and instructions for opening or reviewing a PR. New files must be staged explicitly: committing changes to `index.html` alone does not include a new stylesheet it references.
+
+The [deployment plan](docs/DEPLOYMENT_PLAN.md) keeps GitHub Pages for the current public MVP and defines when accounts, synchronized progress, moderation and Jev justify a backend. Repository protections are described in [repository security](docs/REPOSITORY_SECURITY.md).

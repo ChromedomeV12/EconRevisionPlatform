@@ -24,7 +24,9 @@ gh auth status
 
 Use the interactive browser login. Authentication is stored by GitHub CLI, not in the repository.
 
-## Commit, Push and Deploy Directly
+## Commit and Propose a Deployment
+
+The protected default branch uses pull requests and the required `verify` check. Direct pushes to `main` are blocked. The policy is recorded in `.github/rulesets/main.json`; editing that file alone does not update GitHub's live ruleset. See `REPOSITORY_SECURITY.md` for the settings and maintenance commands.
 
 Before starting edits, update your branch. Commit or otherwise preserve any existing tracked work before switching branches or pulling.
 
@@ -32,6 +34,7 @@ Before starting edits, update your branch. Commit or otherwise preserve any exis
 git status --short --branch
 git switch main
 git pull --ff-only origin main
+git switch -c codex/my-change
 ```
 
 Make the changes and check them locally. Opening `index.html` works, or run the loopback-only preview below and stop it with Ctrl+C when finished:
@@ -45,6 +48,7 @@ Open <http://127.0.0.1:4181>. Then run the checks:
 ```sh
 node --test tests/learning.test.cjs tests/refresh.test.cjs
 node tests/browser.cjs
+node tests/theme.cjs
 git diff --check
 git status --short
 git diff
@@ -65,20 +69,23 @@ git add index.html styles.css acrylic.css app.js scripts/serve.cjs tests/browser
 git diff --cached --stat
 git diff --cached
 git commit -m "Refine the acrylic refresh interface"
-git push origin main
+git push -u origin codex/my-change
+gh pr create --base main --head codex/my-change --title "Refine the acrylic refresh interface" --body "Explain the change and how it was tested."
 ```
 
 `git diff` shows unstaged edits; `git diff --cached` shows what the commit will contain. New files appear as `??` in `git status` and are not included by `git commit -am`. Remember to add new stylesheets, scripts, fonts or images and update the preview server's public allowlist when needed. Stage changed documentation explicitly too.
 
 The local checkout also contains private references and OCR tooling. Use explicit public-file staging instead of `git add .`. Keep `private-sources/`, `.pi/`, `.ocr-runtime/`, credentials and generated screenshots out of commits. Local OCR tooling is maintained separately from this public app release.
 
-If `git push` is rejected because someone updated `main`, fetch and inspect the incoming changes. Do not force-push over them.
+After CI passes, inspect the PR diff and merge with `gh pr merge PR_NUMBER --squash --delete-branch`. A feature-branch push does not deploy the public app; merging to `main` does. If the branch falls behind `main`, bring in the current base and rerun checks. Do not force-push to `main`.
 
 ## Verify the Deployment
 
-Pushing starts deployment automatically. Get your commit hash and locate the Pages run for that commit:
+Merging to `main` starts deployment automatically. Switch back to `main`, pull the merged commit, and locate the Pages run for it:
 
 ```sh
+git switch main
+git pull --ff-only origin main
 git rev-parse HEAD
 gh run list --branch main --limit 5
 ```
@@ -132,7 +139,7 @@ git switch main
 git pull --ff-only origin main
 ```
 
-Merging updates `main` and starts Pages deployment. A repository without PR check workflows may report no checks; run the local tests and inspect the change yourself. Approval and merging are separate actions.
+Merging updates `main` and starts Pages deployment. The `verify` workflow must pass and review conversations must be resolved. There is currently no mandatory second-person approval because this is a solo-maintained repository; approval and merging remain separate actions. Run browser tests locally as well as checking CI.
 
 ## Review Someone Else's Pull Request
 
