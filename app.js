@@ -266,6 +266,20 @@
   }
   function renderConcept(card, canvas) {
     drawConcept(card, canvas);
+    const spec = card.graphSpec;
+    // Only curated built-in cards may opt in after human review; local submissions cannot.
+    if (canvas && EconData.cards.includes(card) && spec?.review?.status === "reviewed" &&
+        typeof spec.review.reviewer === "string" && spec.review.reviewer.trim() &&
+        typeof EconGraphs !== "undefined" && EconGraphs.validate(spec).valid) {
+      const graph = EconGraphs.render(spec, document);
+      graph.dataset.graph = card.id;
+      canvas.hidden = true;
+      canvas.style.display = "none";
+      canvas.after(graph);
+      const caption = canvas.parentElement.querySelector("small");
+      if (caption) caption.textContent = "Reconstructed schematic";
+      return;
+    }
     const source = textbookImage(card);
     if (!source || !canvas) return;
     const image = document.createElement("img");
