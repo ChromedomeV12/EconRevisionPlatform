@@ -36,10 +36,10 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - The first screen is the usable refresh feed. Keep explanations visible immediately; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
-- The current design uses a macOS-inspired acrylic treatment: translucent light navigation, subtle tinted surfaces, rounded controls and a dark reading workspace. Keep diagrams on a high-contrast light surface. Respect reduced motion/transparency preferences; use opaque fallbacks where needed.
+- The current design uses the owner-approved PR #5 treatment: bright white light-mode reading surfaces, layered Mocha dark surfaces, restrained Sapphire accents and rounded controls. Prefer semantic theme tokens to hard-coded component colors. Keep textbook images and native SVG diagrams on high-contrast light paper. Respect reduced motion/transparency preferences.
 - Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
 - Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
-- Owner-approved light dialogs are an exception: white surfaces, navy text, sky-blue controls and a pale lavender backdrop, with larger detail-reading typography. Preserve this deliberate treatment when checking Latte consistency elsewhere.
+- PR #5 replaces PR #4's white/navy/sky-blue dialog overrides. Dialogs use a fixed serif-title header and close button, independently scrolling content, neutral theme text and backdrop. Do not restore the superseded PR #4 overrides.
 - Avoid adding dependencies unless the project gains a clear need for them.
 
 ## Implementation Rules
@@ -65,6 +65,7 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - `node --test tests/diagram-data.test.cjs` checks selected textbook image dimensions and figure/copy consistency; `node tests/diagrams.cjs` checks image rendering, enlargement and failure fallbacks using Playwright. `node --test tests/preview.test.cjs` checks the image allowlist and private-source isolation.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
+- `node tests/navigation.cjs` checks persistent menu collapse/recovery and fixed dialog headers, focus restoration, keyboard/backdrop closing in both themes across five viewport sizes.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
 - `node scripts/serve.cjs 4181` starts a loopback-only, allowlisted preview. Add new public runtime assets to its allowlist. It must never serve the private source collection.
 - Directly opening `index.html` also works; keep relative asset URLs for GitHub Pages project paths.
