@@ -280,6 +280,20 @@
   }
   function renderConcept(card, canvas) {
     drawConcept(card, canvas);
+    const spec = card.graphSpec;
+    // Only curated built-in cards may opt in after human review; local submissions cannot.
+    if (canvas && EconData.cards.includes(card) && spec?.review?.status === "reviewed" &&
+        typeof spec.review.reviewer === "string" && spec.review.reviewer.trim() &&
+        typeof EconGraphs !== "undefined" && EconGraphs.validate(spec).valid) {
+      const graph = EconGraphs.render(spec, document);
+      graph.dataset.graph = card.id;
+      canvas.hidden = true;
+      canvas.style.display = "none";
+      canvas.after(graph);
+      const caption = canvas.parentElement.querySelector("small");
+      if (caption) caption.textContent = "Reconstructed schematic";
+      return;
+    }
     const source = textbookImage(card);
     if (!source || !canvas) return;
     const image = document.createElement("img");
@@ -287,7 +301,7 @@
     image.alt = source.alt;
     image.width = source.width;
     image.height = source.height;
-    image.style.cssText = "display:none;width:100%;object-fit:contain;background:var(--panel);";
+    image.style.cssText = "display:none;width:100%;object-fit:contain;background:#fff;";
     const zoom = document.createElement("button");
     zoom.className = "icon-button";
     zoom.type = "button";
@@ -297,7 +311,7 @@
     zoom.style.cssText = "position:absolute;top:-10px;right:6px;width:28px;height:28px;min-height:0;z-index:1;";
     zoom.hidden = true;
     zoom.addEventListener("click", () => {
-      openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2><button type="button" class="icon-button" data-diagram-size aria-label="Show original size" title="Show original size" aria-pressed="false">${icon("maximize")}</button>${closeButton()}</div><div tabindex="0" role="region" aria-label="Diagram image" style="overflow:auto;background:var(--panel);max-height:65dvh;"><img src="${escape(source.src)}" alt="${escape(source.alt)}" width="${source.width}" height="${source.height}" style="display:block;width:100%;max-width:${source.width}px;height:auto;" /></div><p>${escape(source.credit)}</p>`);
+      openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2><button type="button" class="icon-button" data-diagram-size aria-label="Show original size" title="Show original size" aria-pressed="false">${icon("maximize")}</button>${closeButton()}</div><div tabindex="0" role="region" aria-label="Diagram image" style="overflow:auto;background:#fff;max-height:65dvh;"><img src="${escape(source.src)}" alt="${escape(source.alt)}" width="${source.width}" height="${source.height}" style="display:block;width:100%;max-width:${source.width}px;height:auto;" /></div><p>${escape(source.credit)}</p>`);
       const toggle = $("[data-diagram-size]");
       const enlarged = $("#modal img");
       toggle.addEventListener("click", () => {

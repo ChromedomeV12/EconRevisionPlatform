@@ -189,7 +189,7 @@ dialog::backdrop { background: var(--ctp-text);   }
 .refresh-art { background: var(--panel); border-radius: var(--radius-sm); padding: 14px 19px 12px; border: 1px solid var(--ctp-base); box-shadow: none; }
 .visual-label { display: flex; align-items: center; justify-content: space-between; color: var(--ctp-subtext0); font-size: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--ctp-text); margin-bottom: 12px; }
 .visual-label .lucide { width: 14px; height: 14px; }
-.refresh-art :is(canvas, img[data-diagram]) { height: clamp(145px, 21dvh, 210px); }
+.refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(145px, 21dvh, 210px); }
 .refresh-art small { color: var(--ctp-overlay2); font-size: 12px; margin-top: 8px; }
 .refresh-takeaway { display: flex; align-items: flex-start; gap: 10px; color: var(--ctp-surface1); font-size: 12px; line-height: 1.65; border-left: 0; padding-left: 0; margin: 19px 0 4px; }
 .refresh-takeaway > .lucide { width: 15px; height: 15px; margin-top: 3px; color: var(--ctp-surface2); }
@@ -320,7 +320,7 @@ dialog::backdrop { background: var(--ctp-text);   }
   .refresh-summary { font-size: 12px; line-height: 1.6; margin: 12px 0 17px; }
   .refresh-art { padding: 11px 12px 10px; border-radius: var(--radius-sm); }
   .visual-label { font-size: 12px; padding-bottom: 8px; margin-bottom: 9px; }
-  .refresh-art :is(canvas, img[data-diagram]) { height: 145px; }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 145px; }
   .refresh-art small { font-size: 12px; margin-top: 4px; }
   .refresh-takeaway { margin: 14px 0 8px; font-size: 12px; line-height: 1.55; gap: 8px; }
   .refresh-takeaway > .lucide { width: 13px; height: 13px; margin-top: 2px; }
@@ -341,7 +341,7 @@ dialog::backdrop { background: var(--ctp-text);   }
   .refresh-summary { font-size: 12px; line-height: 1.55; margin: 10px 0 13px; }
   .refresh-meta { margin-bottom: 11px; }
   .refresh-art { padding-block: 10px; }
-  .refresh-art :is(canvas, img[data-diagram]) { height: 145px; }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 145px; }
   .visual-label { display: none; }
   .refresh-takeaway { font-size: 12px; margin: 12px 0 8px; }
   .refresh-actions { padding-block: 9px; }
@@ -353,7 +353,7 @@ dialog::backdrop { background: var(--ctp-text);   }
   .refresh-heading h1 { margin-top: 0; }
   .refresh-point h2 { font-size: 24px; }
   .refresh-summary { font-size: 12px; line-height: 1.55; }
-  .refresh-art :is(canvas, img[data-diagram]) { height: 130px; }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 130px; }
   .refresh-takeaway { margin-top: 10px; }
   .refresh-controls { padding-bottom: 2px; }
 }
@@ -362,7 +362,4 @@ dialog::backdrop { background: var(--ctp-text);   }
   .shell { background: var(--ctp-base); }
   .feed-mode .shell { background: var(--ctp-text);  }
   dialog { background: var(--ctp-base);  }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {   }
 }

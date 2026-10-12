@@ -17,6 +17,7 @@ For local use, open `index.html` in a browser. No installation or build step is 
 - `theme.js`, `theme.css`: light/dark toolbar switch, persistent appearance preference and Catppuccin Latte light and Mocha dark color overrides. Uses the system preference until a mode is selected; keeps diagrams on light paper.
 - `content.js`: ten original public examples, concise refresh copy, explanations and retained rubrics.
 - `app.js`: scroll-snap feed, browsing overview, bookmarks and card studio.
+- `graph.js`, `graph.css`: bounded D3/SVG graph specifications, economic geometry checks and theme-aware diagram colors. Existing textbook images remain active until reconstructions pass human review.
 - `refresh.js`: validated browsing state and revisit/confusing preferences.
 - `learning.js`: retained legacy FSRS state, scheduling helpers and persistence validation.
 - `decisions.js`: local screening and future Jev provider interface.
@@ -24,6 +25,7 @@ For local use, open `index.html` in a browser. No installation or build step is 
 - `assets/`: local fonts, photographs and credit information.
 - `AGENTS.md`: guidance for future contributors and coding agents.
 - `docs/JEV_INTEGRATION.md`: future AI contracts and backend architecture.
+- `docs/GRAPH_WORKFLOW.md`: native graph architecture and the synced local Pi reconstruction task.
 - `SECURITY.md`: vulnerability reporting, trust boundaries and security invariants.
 - `docs/REPOSITORY_SECURITY.md`: GitHub protection settings and ruleset maintenance.
 - `docs/DEPLOYMENT_PLAN.md`: hosting recommendation and phased backend migration.
@@ -52,6 +54,8 @@ Run `node tests/theme.cjs` with the same Playwright configuration to check the k
 `node --test tests/diagram-data.test.cjs` checks image dimensions, attribution and figure/copy consistency. `node tests/diagrams.cjs` checks image loading, uncropped contain fitting, accessible descriptions, enlargement and failure fallbacks across five widths in both themes. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
 
 ## Private reference collection
+
+For diagram reconstruction, see [the native graph workflow](docs/GRAPH_WORKFLOW.md). On the synced Omarchy machine, `/graph-reconstruct 1` uses the current Pi model to produce one private JSON draft, inspect source/rendered evidence, and save a resumable checkpoint. It cannot approve or publish its output. Run `node --test tests/graph.test.cjs tests/graph-work.test.cjs` for the renderer/workflow checks and `node tests/graphs.cjs` plus `node tests/graph-review.cjs` for Playwright rendering/integration checks.
 
 Local research materials belong in `private-sources/Econ Revision App Sources/`, which is excluded from Git. Only the explicitly approved selected copies in `assets/diagrams/` are included in the app; source PDFs, transcripts and other crops remain private. Read the collection's `START_HERE.md` and `CONTENT_NOTES.md` before drafting content. Source attribution and teacher review do not establish permission to republish textbooks, diagrams, or exam questions.
 

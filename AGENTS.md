@@ -13,6 +13,7 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `theme.js`, `theme.css`: persistent light/dark switch and Catppuccin Mocha color overrides. Theme initializes before styles; preference uses `econ-theme-v1`, independently of study data. Keep both in the public preview allowlist.
 - `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
 - `app.js`: refresh feed, browsing overview, search, bookmarks, local submission and review workflows.
+- `graph.js`, `graph.css`, `vendor/d3.min.js`: bounded declarative native SVG diagrams using pinned D3 scales. Colors are semantic CSS tokens; geometry never includes executable expressions or styles. Only reviewed built-in `graphSpec` content may opt into the app renderer; existing image cards remain unchanged pending reconstruction review.
 - `refresh.js`: independent browsing state, opened timestamps and explicit revisit/confusing preferences.
 - `learning.js`: FSRS scheduling, review logs, local dates, persistence validation and legacy migration.
 - `decisions.js`: local checks and the future Jev service boundary; no live AI is enabled.
@@ -20,9 +21,10 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `docs/JEV_INTEGRATION.md`: contracts, backend requirements and evaluation plan.
 - `SECURITY.md`, `docs/REPOSITORY_SECURITY.md`: security boundaries, private reporting and GitHub repository controls. `.github/rulesets/main.json` records the live ruleset intent; changing the file does not apply it remotely.
 - `docs/DEPLOYMENT_PLAN.md`: phased hosting and backend decisions.
+- `docs/GRAPH_WORKFLOW.md`: local Pi graph reconstruction, private review previews and human promotion requirements.
 - `docs/superpowers/`: historical planning notes, superseded where they describe a landing page.
 
-There is no build step, package manager, backend, database, or framework. The browser loads vendored FSRS and Lucide directly.
+There is no build step, app package manager, backend, database, or framework. The browser loads vendored FSRS, Lucide and D3 directly. Optional local Playwright tooling is separate from app dependencies.
 
 Private source-processing tools under `tools/ocr/` have their own locked Python dependencies. They are not app runtime or build dependencies.
 
@@ -34,9 +36,10 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - The first screen is the usable refresh feed. Keep explanations visible immediately; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
-- The current design uses a macOS-inspired acrylic treatment: translucent light navigation, subtle tinted surfaces, rounded controls and a dark reading workspace. Keep diagrams on a high-contrast light surface. Respect reduced motion/transparency preferences; use opaque fallbacks where needed.
+- The current design uses the owner-approved PR #5 treatment: bright white light-mode reading surfaces, layered Mocha dark surfaces, restrained Sapphire accents and rounded controls. Prefer semantic theme tokens to hard-coded component colors. Keep textbook images and native SVG diagrams on high-contrast light paper. Respect reduced motion/transparency preferences.
 - Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
 - Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
+- PR #5 replaces PR #4's white/navy/sky-blue dialog overrides. Dialogs use a fixed serif-title header and close button, independently scrolling content, neutral theme text and backdrop. Do not restore the superseded PR #4 overrides.
 - Avoid adding dependencies unless the project gains a clear need for them.
 
 ## Implementation Rules
@@ -58,9 +61,11 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 
 - `node --test tests/learning.test.cjs` checks scheduling, migration, stats and provider fallbacks.
 - `node --test tests/refresh.test.cjs` checks browsing state and preference validation separately from recall.
+- `node --test tests/graph.test.cjs tests/graph-work.test.cjs` checks native diagram geometry and resumable private draft validation; `node tests/graphs.cjs` and `node tests/graph-review.cjs` check SVG rendering and private review/app boundaries with Playwright.
 - `node --test tests/diagram-data.test.cjs` checks selected textbook image dimensions and figure/copy consistency; `node tests/diagrams.cjs` checks image rendering, enlargement and failure fallbacks using Playwright. `node --test tests/preview.test.cjs` checks the image allowlist and private-source isolation.
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
+- `node tests/navigation.cjs` checks persistent menu collapse/recovery and fixed dialog headers, focus restoration, keyboard/backdrop closing in both themes across five viewport sizes.
 - Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
 - `node scripts/serve.cjs 4181` starts a loopback-only, allowlisted preview. Add new public runtime assets to its allowlist. It must never serve the private source collection.
 - Directly opening `index.html` also works; keep relative asset URLs for GitHub Pages project paths.
@@ -76,6 +81,8 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 - Do not serve the workspace root publicly: `.gitignore` is not HTTP access control. Deploy committed app files only.
 
 ## Private OCR Workflow
+
+Graph reconstruction has independent checkpoints but runs sequentially within `/ocr-work` by default. After acceptance, the Pi extension registers only final referenced diagram crops. `scripts/graph-work.cjs sync-ocr <book>` recovers interrupted registration; `next <book>` resumes OCR graph drafts before advancing pages. Read `.pi/skills/econ-graphs/SKILL.md`; maximum three reconstructions per OCR turn, no new model/session. Unsupported diagrams may be deferred with a reason; browser/vision failures leave pending tasks. `/graph-reconstruct 1` remains available separately. Drafts/evidence/screenshots stay in `private-sources/graph-work/`; submissions remain `drafted_needs_review`. Never auto-activate drafts, alter OCR checkpoints, or run concurrent inference. See `docs/GRAPH_WORKFLOW.md` for validation and publication boundaries.
 
 - Read `tools/ocr/README.md` before source-processing work. Pi instructions are in `.pi/skills/econ-transcription/SKILL.md`.
 - `.pi/` contains project-local Pi 1.0.0 settings, extension, skill and prompt. It is Git-ignored but must sync privately to the Omarchy machine.

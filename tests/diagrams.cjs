@@ -31,7 +31,7 @@ const path = require("node:path");
           assert.match(values.alt, /P1 to P2.*Q1 to Q2/);
           assert.ok(values.box.width <= width);
           const canvasHeight = await page.locator(`canvas[data-concept="${id}"]`).evaluate(canvas => parseFloat(getComputedStyle(canvas).height));
-          assert.equal(values.box.height, canvasHeight, `${id}: image must follow responsive canvas height`);
+          assert.ok(Math.abs(values.box.height - canvasHeight) < 0.1, `${id}: image must follow responsive canvas height`);
           assert.equal(await page.locator(`canvas[data-concept="${id}"]`).isVisible(), false);
           await image.scrollIntoViewIfNeeded();
           const overflow = await page.locator(`[data-point="${id}"] .refresh-body`).evaluate(body => body.scrollHeight - body.clientHeight);

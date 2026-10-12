@@ -89,6 +89,7 @@ const path = require("node:path");
       fullPage: true,
     });
     await page.getByRole("link", { name: "Saved cards" }).click();
+    await page.locator('[data-nav="saved"][aria-current="page"]').waitFor();
     assert.equal(await page.locator(".library-card").count(), 1);
     assert.match(await page.locator(".library-card h3").textContent(), /Negative externalities/);
     await page.getByRole("link", { name: "Card studio" }).click();

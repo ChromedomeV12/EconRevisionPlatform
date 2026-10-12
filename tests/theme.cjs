@@ -20,23 +20,39 @@ const path = require("node:path");
     await page.goto(base);
     await page.evaluate(() => document.fonts.ready);
     const toggle = page.getByRole("switch", { name: "Dark mode" });
-    const color = (selector, property = "color") => page.locator(selector).first().evaluate((el, property) => getComputedStyle(el)[property], property);
-    const checkLatte = async view => {
-      assert.equal(await page.locator('meta[name="theme-color"]').getAttribute("content"), "#eff1f5");
-      assert.equal(await color("body", "backgroundColor"), "rgb(220, 224, 232)", `${view}: Latte Crust backdrop`);
-      assert.equal(await color(".shell", "backgroundColor"), "rgba(239, 241, 245, 0.93)", `${view}: Latte Base workspace`);
-      assert.equal(await color(".shell", "backgroundImage"), "none", `${view}: no legacy dark feed gradient`);
-      assert.equal(await color(".breadcrumb strong"), "rgb(76, 79, 105)");
-      assert.equal(await color(".sample-label"), "rgb(92, 95, 119)");
-      assert.equal(await color(".topbar", "backgroundColor"), "rgba(230, 233, 239, 0.5)");
-      if (view === "feed") {
-        assert.equal(await color(".refresh-point h2"), "rgb(76, 79, 105)");
-        assert.equal(await color(".refresh-summary"), "rgb(92, 95, 119)");
-        assert.equal(await color(".refresh-art", "backgroundColor"), "rgb(239, 241, 245)");
-        assert.equal(await color('.refresh-filters button[aria-pressed="true"]', "backgroundColor"), "rgb(136, 57, 239)");
+    const color = (selector, property = "color") => page.locator(selector).first().evaluate((el, property) => {
+      const value = getComputedStyle(el)[property];
+      if (!value.startsWith("color(")) return value;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = value; ctx.fillRect(0, 0, 1, 1);
+      return `rgb(${[...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3).join(", ")})`;
+    }, property);
+    const checkPalette = async view => {
+      const theme = await page.locator("html").getAttribute("data-theme");
+      assert.equal(await page.locator('meta[name="theme-color"]').getAttribute("content"), theme === "dark" ? "#1e1e2e" : "#eff1f5");
+      if (theme === "light") {
+        assert.equal(await color("body", "backgroundColor"), "rgb(250, 251, 252)", `${view}: bright Latte backdrop`);
+        assert.equal(await color(".shell", "backgroundColor"), "rgb(255, 255, 255)", `${view}: white reading workspace`);
+        assert.equal(await color(".shell", "backgroundImage"), "none", `${view}: no legacy dark feed gradient`);
+        assert.equal(await color(".breadcrumb strong"), "rgb(76, 79, 105)");
+        assert.equal(await color(".sample-label"), "rgb(92, 95, 119)");
+        assert.equal(await color(".topbar", "backgroundColor"), "rgb(244, 245, 248)");
+        if (view === "feed") {
+          assert.equal(await color(".refresh-point h2"), "rgb(76, 79, 105)");
+          assert.equal(await color(".refresh-summary"), "rgb(92, 95, 119)");
+          assert.equal(await color(".refresh-art", "backgroundColor"), "rgb(255, 255, 255)");
+          assert.equal(await color('.refresh-filters button[aria-pressed="true"]', "backgroundColor"), "rgb(136, 57, 239)");
+        }
       }
       const failures = await page.evaluate(() => {
-        const rgb = value => value.match(/[\d.]+/g).map(Number);
+        const rgb = value => {
+          const canvas = document.createElement("canvas"); canvas.width = canvas.height = 1;
+          const ctx = canvas.getContext("2d"); ctx.fillStyle = value; ctx.fillRect(0, 0, 1, 1);
+          const pixel = [...ctx.getImageData(0, 0, 1, 1).data];
+          return [...pixel.slice(0, 3), pixel[3] / 255];
+        };
         const over = (front, back) => {
           const alpha = front[3] ?? 1;
           return front.slice(0, 3).map((v, i) => v * alpha + back[i] * (1 - alpha));
@@ -90,7 +106,7 @@ const path = require("node:path");
           await page.waitForFunction(view => document.querySelector(`[data-nav="${view}"]`).getAttribute("aria-current") === "page", view);
           assert.ok(await toggle.isVisible());
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${theme}/${view}: overflow at ${width}`);
-          if (theme === "light") await checkLatte(view);
+          await checkPalette(view);
           if (view === "feed") {
             const geometry = await page.evaluate(() => {
               const root = document.documentElement;
@@ -139,13 +155,14 @@ const path = require("node:path");
     await toggle.focus();
     assert.equal(await color('.theme-toggle', "outlineColor"), "rgb(30, 102, 245)");
     await page.getByRole("button", { name: "Open study settings" }).click();
+    // Light dialogs use neutral Latte text on a white reading surface.
     assert.equal(await color("dialog"), "rgb(76, 79, 105)");
-    assert.equal(await color("dialog", "backgroundColor"), "rgba(230, 233, 239, 0.92)");
+    assert.equal(await color("dialog", "backgroundColor"), "rgb(255, 255, 255)");
     await page.getByRole("button", { name: "Close dialog" }).click();
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-transparency", value: "reduce" }] });
-    assert.equal(await color(".sidebar", "backgroundColor"), "rgb(230, 233, 239)");
-    assert.equal(await color(".shell", "backgroundColor"), "rgb(239, 241, 245)");
+    assert.equal(await color(".sidebar", "backgroundColor"), "rgb(244, 245, 248)");
+    assert.equal(await color(".shell", "backgroundColor"), "rgb(255, 255, 255)");
     assert.equal(await color(".sidebar", "backdropFilter"), "none");
     assert.equal(await color(".shell", "backdropFilter"), "none");
     await cdp.send("Emulation.setEmulatedMedia", { features: [] });

@@ -156,10 +156,11 @@ h1 { font-size: 36px; }
 .refresh-meta { font-size: 12px; }
 .refresh-filters button { font-size: 14px; color: var(--muted); }
 .refresh-filters button:hover { color: var(--text); }
+.refresh-filters button[aria-pressed="true"]:hover { background: var(--accent); color: var(--on-accent); }
 .refresh-art { padding: 8px; }
 .refresh-art canvas { width: 100%; height: auto; aspect-ratio: 360 / 170; max-height: 280px; object-fit: contain; }
 .visual-label { color: var(--subtle); font-size: 12px; border: 0; margin-bottom: 0; padding-bottom: 0; }
-.refresh-art small { text-align: left; color: var(--disabled); font-size: 12px; margin-top: 4px; }
+.refresh-art small { text-align: left; color: var(--muted); font-size: 12px; margin-top: 4px; }
 .review-warning { background: var(--warning-bg); border: 0; border-left: 3px solid var(--warning); border-radius: var(--radius-sm); color: var(--text); padding: 12px 16px; font-size: 14px; }
 .refresh-takeaway { background: var(--clear); border: 0; color: var(--muted); padding: 0; font-size: 14px; }
 .refresh-takeaway > .lucide { color: var(--subtle); flex-shrink: 0; }
@@ -230,15 +231,35 @@ h1 { font-size: 36px; }
 .queue-list .queue-title { display: flex; align-items: center; gap: 8px; }
 #modal .badge[data-subject] { background: color-mix(in srgb, var(--subject) 12%, var(--panel)); color: var(--subject); }
 #modal .distinction-note { border: 0; }
-.refresh-art :is(canvas, img[data-diagram]) { height: clamp(180px, 27vh, 280px); max-height: none; }
+.refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(145px, 21dvh, 210px); max-height: none; }
 .refresh-unit .lucide { color: var(--subtle); }
 @media (max-height: 820px) and (min-width: 651px) {
   .refresh-heading { padding-block: 12px; }
   .refresh-point { padding-top: 12px; }
   .refresh-point h2 { font-size: 24px; }
   .refresh-summary { margin-block: 12px; line-height: 1.5; }
-  .refresh-art :is(canvas, img[data-diagram]) { height: 180px; }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 145px; }
   .refresh-takeaway { margin-block: 12px; padding-block: 8px; }
+}
+
+/* Keep each refresh point within the viewport, including its complete diagram. */
+@media (max-width: 650px) {
+  .refresh-heading { flex-wrap: nowrap; padding-block: 10px; }
+  .refresh-heading h1 { font-size: 16px; margin: 0; }
+  .refresh-filters { flex-shrink: 0; }
+  .refresh-filters button { font-size: 12px; }
+  .refresh-point { padding-top: 10px; }
+  .refresh-meta { margin-bottom: 8px; }
+  .refresh-summary { font-size: 14px; line-height: 1.5; margin-block: 10px; }
+  .refresh-art { padding: 8px; }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 145px; }
+  .refresh-takeaway { font-size: 12px; line-height: 1.45; margin-block: 8px; }
+  .refresh-actions { padding-block: 8px; }
+}
+@media (max-width: 650px) and (max-height: 780px) {
+  .refresh-summary { font-size: 13px; line-height: 1.45; margin-block: 8px; }
+  .refresh-point h2 { font-size: 24px; line-height: 1.15; }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 130px; }
 }
 
 /* Lift dark reading surfaces while keeping the existing purple emphasis. */

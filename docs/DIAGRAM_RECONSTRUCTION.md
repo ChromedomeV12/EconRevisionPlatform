@@ -1,10 +1,16 @@
-# Diagram Reconstruction Backlog
+# Diagram Reconstruction Plan
 
 ## Current Assets
 
 The selected textbook extracts listed in `assets/diagrams/README.md` are used temporarily. The owner confirmed public reuse permission on 2026-10-12. They remain textbook extracts, not app-authored drawings, and are not teacher verified. The remaining private source collection is not cleared by this decision.
 
-## Future Task: Python Reconstructions
+## Current Direction: Native JavaScript / SVG
+
+The native D3/SVG architecture and local Pi draft workflow are described in [Graph workflow](GRAPH_WORKFLOW.md). Use `/graph-reconstruct 1` on the synced Omarchy project to begin a bounded figure reconstruction. The renderer is implemented; the textbook reconstructions themselves remain pending local-agent work and human review. The app continues to show the approved original extracts.
+
+## Previous Proposal: Python Reconstructions
+
+The earlier proposal below is retained as a reference for possible offline export. Native SVG now replaces Matplotlib as the planned website rendering path; do not build both pipelines without a concrete need.
 
 Replace the selected extracts with reproducible Python-generated diagrams, preserving their economics rather than relying on screenshot tracing or OCR guesses.
 
@@ -15,4 +21,4 @@ Replace the selected extracts with reproducible Python-generated diagrams, prese
 5. Obtain content review and document the reuse basis and attribution for the reconstructions. A redraw does not automatically remove source rights obligations or establish teacher approval.
 6. Switch the cards to the generated files, update credits/provenance and remove unused extracts from current publication inputs. Previously published originals remain in Git history unless a separate history-removal decision is made.
 
-This is a backlog task, not an implemented reconstruction pipeline. Do not describe the current extracts as reconstructed or original app content.
+The original image assets have not yet been replaced. Do not describe them as reconstructed or original app content.
