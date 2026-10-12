@@ -10,7 +10,7 @@
 
   function apply(theme) {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#1e1e2e" : "#eff1f5";
+    document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue("--ctp-base").trim();
     const toggle = document.querySelector('[data-action="theme-toggle"]');
     if (!toggle) return;
     const dark = theme === "dark";

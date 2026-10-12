@@ -34,6 +34,7 @@
     );
   const icon = (name) => `<i data-lucide="${name}" aria-hidden="true"></i>`;
   const unitOf = (card) => units.find((u) => u.id === card.unit) || units[0];
+  const subjectOf = card => card.visual === "development" ? "development" : ({ micro: "micro", macro: "macro", global: "global" }[card.unit] || "intro");
   const cards = () => [
     ...EconData.cards,
     ...state.submissions
@@ -100,7 +101,15 @@
   function openModal(content) {
     $("#modalContent").innerHTML = content;
     icons();
-    if (!$("#modal").open) $("#modal").showModal();
+    const modal = $("#modal"), contentNode = $("#modalContent");
+    modal.querySelector(":scope > .modal-close")?.remove();
+    const close = contentNode.querySelector('[data-action="close"]');
+    if (close) { close.classList.add("modal-close"); modal.append(close); }
+    const title = contentNode.querySelector("h2");
+    if (title) { title.id = "modalTitle"; modal.setAttribute("aria-labelledby", title.id); }
+    if (!modal.open) modal.showModal();
+    contentNode.scrollTop = 0;
+    close?.focus({ preventScroll: true });
   }
   const closeButton = () =>
     `<button class="icon-button" data-action="close" aria-label="Close dialog" title="Close">${icon("x")}</button>`;
@@ -241,7 +250,7 @@
     const list=feedSelection();
     $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">YOUR DAILY PERSPECTIVE</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
     ${list.length ? `<div class="refresh-workspace"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div>
-      <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong>${escape(card.topic)}</strong><small>${escape(unitOf(card).name)}</small></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
+      <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong class="queue-title"><span class="subject-dot" data-subject="${subjectOf(card)}" title="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}" aria-label="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}"></span>${escape(card.topic)}</strong></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
       <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
     icons(); if(!list.length) return;
     list.forEach(card=>renderConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
@@ -273,7 +282,7 @@
     image.alt = source.alt;
     image.width = source.width;
     image.height = source.height;
-    image.style.cssText = "display:none;width:100%;object-fit:contain;background:#fff;";
+    image.style.cssText = "display:none;width:100%;object-fit:contain;background:var(--panel);";
     const zoom = document.createElement("button");
     zoom.className = "icon-button";
     zoom.type = "button";
@@ -283,7 +292,7 @@
     zoom.style.cssText = "position:absolute;top:-10px;right:6px;width:28px;height:28px;min-height:0;z-index:1;";
     zoom.hidden = true;
     zoom.addEventListener("click", () => {
-      openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2><button type="button" class="icon-button" data-diagram-size aria-label="Show original size" title="Show original size" aria-pressed="false">${icon("maximize")}</button>${closeButton()}</div><div tabindex="0" role="region" aria-label="Diagram image" style="overflow:auto;background:#fff;max-height:65dvh;"><img src="${escape(source.src)}" alt="${escape(source.alt)}" width="${source.width}" height="${source.height}" style="display:block;width:100%;max-width:${source.width}px;height:auto;" /></div><p>${escape(source.credit)}</p>`);
+      openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2><button type="button" class="icon-button" data-diagram-size aria-label="Show original size" title="Show original size" aria-pressed="false">${icon("maximize")}</button>${closeButton()}</div><div tabindex="0" role="region" aria-label="Diagram image" style="overflow:auto;background:var(--panel);max-height:65dvh;"><img src="${escape(source.src)}" alt="${escape(source.alt)}" width="${source.width}" height="${source.height}" style="display:block;width:100%;max-width:${source.width}px;height:auto;" /></div><p>${escape(source.credit)}</p>`);
       const toggle = $("[data-diagram-size]");
       const enlarged = $("#modal img");
       toggle.addEventListener("click", () => {
@@ -352,13 +361,16 @@
   }
   function drawConcept(card, canvas = $("#conceptCanvas")) {
     if (!canvas) return;
+    const styles = getComputedStyle(document.documentElement);
+    const palette = name => styles.getPropertyValue(`--ctp-${name}`).trim();
+    const axis = palette("overlay1"), demand = palette("blue"), privateCost = palette("green"), socialCost = palette("mauve");
     const scale = Math.max(2, devicePixelRatio || 1);
     canvas.width = 360 * scale;
     canvas.height = 170 * scale;
     const ctx = canvas.getContext("2d");
     ctx.scale(scale, scale);
     if (textbookImage(card)) {
-      ctx.fillStyle = "#35513c";
+      ctx.fillStyle = palette("text");
       ctx.font = "14px sans-serif";
       const lines = card.visual === "demand"
         ? ["Carrot price: P1 to P2 (rises)", "Quantity demanded: Q1 to Q2 (falls)", "Movement along the same demand curve"]
@@ -368,10 +380,10 @@
     }
     const unit = unitOf(card),
       ink = {
-        green: "#436445",
-        blue: "#486786",
-        pink: "#9b6857",
-        yellow: "#8d7b45",
+        green: palette("mauve"),
+        blue: palette("teal"),
+        pink: palette("blue"),
+        yellow: palette("yellow"),
       }[unit.color];
     const line = (points, color = ink, width = 2, dash = []) => {
       ctx.beginPath();
@@ -382,9 +394,9 @@
       ctx.stroke();
       ctx.setLineDash([]);
     };
-    const text = (label, x, y, size = 11, color = ink, weight = 500) => {
+    const text = (label, x, y, size = 12, color = ink, weight = 500) => {
       ctx.fillStyle = color;
-      ctx.font = `${weight} ${size}px 'DM Sans', sans-serif`;
+      ctx.font = `${weight} ${[12, 14, 16, 24, 36].reduce((a, b) => Math.abs(b - size) < Math.abs(a - size) ? b : a)}px 'DM Sans', sans-serif`;
       ctx.fillText(label, x, y);
     };
     const dot = (x, y) => {
@@ -411,8 +423,8 @@
       };
       text(graph.priceAxis, left, 12, 11, ink, 650);
       text(graph.assumption, 180, 26, 9);
-      arrow([left, bottom], [left, top - 5], `${ink}99`);
-      arrow([left, bottom], [right + 12, bottom], `${ink}99`);
+      arrow([left, bottom], [left, top - 5], axis);
+      arrow([left, bottom], [right + 12, bottom], axis);
       line([[left, top], [right, bottom]], ink, 2.5);
       text("D", right + 7, bottom - 8, 12, ink, 650);
       text(String(graph.priceIntercept), left - 22, top + 3, 10);
@@ -420,7 +432,7 @@
       text(String(graph.quantityIntercept), right - 9, bottom + 14, 10);
       graph.points.forEach(point => {
         const [x, y] = position(point);
-        line([[left, y], [x, y], [x, bottom]], `${ink}88`, 1, [3, 3]);
+        line([[left, y], [x, y], [x, bottom]], axis, 1, [3, 3]);
         dot(x, y);
         text(String(point.price), left - 22, y + 3, 10);
         text(String(point.quantity), x - 7, bottom + 14, 10);
@@ -441,39 +453,39 @@
           [35, 142],
           [318, 142],
         ],
-        `${ink}66`,
+        axis,
         1,
       );
-      text("P", 15, 22, 10);
-      text("Q", 322, 146, 10);
+      text("P", 15, 22, 12, axis);
+      text("Q", 322, 146, 12, axis);
       line(
         [
           [47, 25],
           [285, 122],
         ],
-        ink,
+        demand,
         2.5,
       );
-      text("D", 293, 126, 10);
+      text("D", 293, 126, 12, demand);
       if (card.visual === "externality") {
         line(
           [
             [70, 145],
             [254, 22],
           ],
-          "#698d60",
+          socialCost,
           2.5,
         );
-        text("MSC", 254, 17, 10);
+        text("MSC", 254, 17, 12, socialCost);
         line(
           [
             [106, 146],
             [286, 30],
           ],
-          "#a28a58",
+          privateCost,
           2.5,
         );
-        text("MPC", 294, 31, 10);
+        text("MPC", 294, 31, 12, privateCost);
         // Intersections of the displayed linear curves, not an empirical dataset.
         const intersect = (x1, y1, x2, y2) => {
           const a = 97 / 238,
@@ -485,7 +497,7 @@
         };
         const qS = intersect(70, 145, 254, 22),
           qM = intersect(106, 146, 286, 30);
-        ctx.fillStyle = "#ba8d5538";
+        ctx.fillStyle = styles.getPropertyValue("--plot-loss").trim();
         ctx.beginPath();
         ctx.moveTo(...qS);
         ctx.lineTo(...qM);
@@ -493,17 +505,17 @@
         ctx.closePath();
         ctx.fill();
         [qS, qM].forEach((p) => {
-          line([p, [p[0], 142]], `${ink}77`, 1, [4, 4]);
+          line([p, [p[0], 142]], axis, 1, [4, 4]);
           dot(...p);
         });
-        text("Qs", qS[0] - 8, 158, 10);
-        text("Qm", qM[0] - 7, 158, 10);
+        text("Qs", qS[0] - 8, 158, 12, socialCost);
+        text("Qm", qM[0] - 7, 158, 12, privateCost);
       } else {
         [
           [114, 52],
           [226, 98],
         ].forEach((p) => {
-          line([[35, p[1]], p, [p[0], 142]], `${ink}66`, 1, [4, 4]);
+          line([[35, p[1]], p, [p[0], 142]], axis, 1, [4, 4]);
           dot(...p);
         });
         text("Lower price", 195, 37, 12);
@@ -515,7 +527,7 @@
       values.forEach((v, i) => {
         const x = 47 + i * 98,
           height = 55 + (v - 100) * 4;
-        ctx.fillStyle = i === 2 ? ink : `${ink}66`;
+        ctx.fillStyle = i === 2 ? ink : axis;
         ctx.fillRect(x, 135 - height, 52, height);
         text(String(v), x + 3, 125 - height, 15, ink, 650);
         text(
@@ -532,7 +544,7 @@
           [30, 135],
           [325, 135],
         ],
-        `${ink}55`,
+        axis,
         1,
       );
     } else if (card.visual === "elasticity" && card.diagram) {
@@ -544,7 +556,7 @@
       ];
       text(graph.priceAxis, left, 12, 11, ink, 650);
       text(graph.assumption, 174, 23, 9);
-      line([[left, top - 5], [left, bottom], [right + 10, bottom]], `${ink}99`, 1);
+      line([[left, top - 5], [left, bottom], [right + 10, bottom]], axis, 1);
       // Clip the original linear model to the labelled price window, not a false origin.
       const quantityAt = price => graph.quantityIntercept * (1 - price / graph.priceIntercept);
       line(graph.priceRange.slice().reverse().map(price => position({ price, quantity: quantityAt(price) })), ink, 2.5);
@@ -553,7 +565,7 @@
       text("0", left - 3, bottom + 13, 10);
       graph.points.forEach(point => {
         const [x, y] = position(point);
-        line([[left, y], [x, y], [x, bottom]], `${ink}88`, 1, [3, 3]);
+        line([[left, y], [x, y], [x, bottom]], axis, 1, [3, 3]);
         dot(x, y);
         text(String(point.price), left - 22, y + 3, 10);
         text(String(point.quantity), x - 8, bottom + 13, 10);
@@ -576,7 +588,7 @@
           [35, 120],
           [134, 120],
         ],
-        `${ink}66`,
+        axis,
         4,
       );
       line(
@@ -672,7 +684,7 @@
     const card = findCard(id);
     if (!card) return;
     openModal(
-      `<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><span class="badge ${unitOf(card).color}">${unitOf(card).name}</span><p class="detail-answer">${escape(card.answer)}</p>${!connectionsOnly ? `<div class="detail-section"><h3>Watch the distinction</h3><p>${escape(card.trap)}</p></div><div class="detail-section"><h3>Key distinctions</h3><ul class="check-list">${card.rubric.map((point) => `<li>${icon("check")}${escape(point)}</li>`).join("") || "<li>Check the source and the explanation.</li>"}</ul></div>` : ""}<div class="detail-section"><h3>Connected ideas</h3><div class="related-links">${
+      `<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><span class="badge" data-subject="${subjectOf(card)}">${card.visual === "development" ? "Economic development" : unitOf(card).name}</span><p class="detail-answer">${escape(card.answer)}</p>${!connectionsOnly ? `<div class="detail-section distinction-note"><h3>Watch the distinction</h3><p>${escape(card.trap)}</p></div><div class="detail-section"><h3>Key distinctions</h3><ul class="check-list">${card.rubric.map((point) => `<li>${escape(point)}</li>`).join("") || "<li>Check the source and the explanation.</li>"}</ul></div>` : ""}<div class="detail-section"><h3>Connected ideas</h3><div class="related-links">${
         card.related
           .map((id) => findCard(id))
           .filter(Boolean)
@@ -702,7 +714,7 @@
     if (studioTab === "create") {
       const draft = state.submissions.find((s) => s.id === editing) || {};
       $("#studioContent").innerHTML =
-        `<div class="studio-layout"><form id="cardForm"><div class="form-grid"><label class="field">Card title<input name="title" maxlength="80" required placeholder="e.g. When a tax changes a market" value="${escape(draft.title || "")}" /></label><label class="field">Unit<select name="unit">${units.map((u) => `<option value="${u.id}" ${draft.unit === u.id ? "selected" : ""}>${u.name}</option>`).join("")}</select></label></div><label class="field">Recall question<textarea name="question" maxlength="600" required placeholder="Ask one clear question.">${escape(draft.question || "")}</textarea></label><label class="field">Reference answer<textarea name="answer" maxlength="1600" required placeholder="Give the answer, then explain the reasoning.">${escape(draft.answer || "")}</textarea></label><label class="field">Source &amp; page reference<input name="source" maxlength="300" placeholder="Original scenario, or a source with a page reference" value="${escape(draft.source || "")}"/><small>Keep private textbook extracts and personal information out of the card.</small></label>${draft.feedback ? `<div class="review-warning">Review note: ${escape(draft.feedback)}</div>` : ""}<div class="form-actions"><button type="submit" class="btn primary">${editing ? "Resubmit for review" : "Submit for review"}${icon("arrow-right")}</button><span class="screening-label">Saved on this device only</span></div></form><aside class="form-aside"><h3>A useful revision card</h3><p>One idea. One question. Enough context to answer without guessing what the author meant.</p><h3>Before it joins your library</h3><ul class="check-list"><li>${icon("check")}Check for an existing question</li><li>${icon("check")}Include a traceable source</li><li>${icon("check")}Review the economics and wording</li></ul><div class="note">Automated checks cover completeness and exact duplicates. Accuracy still needs a human review.</div></aside></div>`;
+        `<div class="studio-layout"><form id="cardForm"><div class="form-grid"><label class="field">Card title<input name="title" maxlength="80" required placeholder="e.g. When a tax changes a market" value="${escape(draft.title || "")}" /></label><label class="field">Unit<select name="unit">${units.map((u) => `<option value="${u.id}" ${draft.unit === u.id ? "selected" : ""}>${u.name}</option>`).join("")}</select></label></div><label class="field">Recall question<textarea name="question" maxlength="600" required placeholder="Ask one clear question.">${escape(draft.question || "")}</textarea></label><label class="field">Reference answer<textarea name="answer" maxlength="1600" required placeholder="Give the answer, then explain the reasoning.">${escape(draft.answer || "")}</textarea></label><label class="field">Source &amp; page reference<input name="source" maxlength="300" placeholder="Original scenario, or a source with a page reference" value="${escape(draft.source || "")}"/><small>Keep private textbook extracts and personal information out of the card.</small></label>${draft.feedback ? `<div class="review-warning">Review note: ${escape(draft.feedback)}</div>` : ""}<div class="form-actions"><button type="submit" class="btn primary">${editing ? "Resubmit for review" : "Submit for review"}${icon("arrow-right")}</button><span class="screening-label">Saved on this device only</span></div></form><aside class="form-aside"><h3>A useful revision card</h3><p>One idea. One question. Enough context to answer without guessing what the author meant.</p><h3>Before it joins your library</h3><ul class="check-list"><li>Check for an existing question</li><li>Include a traceable source</li><li>Review the economics and wording</li></ul><div class="note">Automated checks cover completeness and exact duplicates. Accuracy still needs a human review.</div></aside></div>`;
     } else {
       const list = [...state.submissions]
         .reverse()
@@ -737,7 +749,7 @@
     const list=feedSelection(), current=list.findIndex(c=>c.id===activeCard()?.id), next=list[current+step];
     if(!next) return;
     const node=document.querySelector(`[data-point="${CSS.escape(next.id)}"]`);
-    $(".refresh-scroll").scrollTo({top:node.offsetTop,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
+    $(".refresh-scroll").scrollTo({top:node.offsetTop,behavior:"instant"});
   }
   document.addEventListener("click", async (event) => {
     const nav = event.target.closest("[data-nav]");
@@ -808,7 +820,7 @@
     if (action === "feed-filter") { feedFilter=target.dataset.filter; renderFeed(); }
     if (action === "feed-jump") {
       const point = document.querySelector(`[data-point="${CSS.escape(id)}"]`);
-      if (point) $(".refresh-scroll").scrollTo({top:point.offsetTop,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
+      if (point) $(".refresh-scroll").scrollTo({top:point.offsetTop,behavior:"instant"});
     }
     if (action === "revisit" || action === "confusing") {
       EconRefresh.toggle(refreshState,action,id); saveRefresh();
@@ -989,5 +1001,17 @@
     window.scrollTo(0, 0);
     $("#main").focus({ preventScroll: true });
   });
+  // Native dialog handles Escape and focus restoration. Only actual backdrop clicks close it.
+  const modal = $("#modal");
+  let backdropDown = false;
+  const outsideModal = event => {
+    const rect = modal.getBoundingClientRect();
+    return event.target === modal && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom);
+  };
+  modal.addEventListener("pointerdown", event => { backdropDown = outsideModal(event); });
+  modal.addEventListener("click", event => { if (backdropDown && outsideModal(event)) modal.close(); backdropDown = false; });
+  new MutationObserver(() => {
+    document.querySelectorAll("canvas[data-concept]").forEach(canvas => drawConcept(findCard(canvas.dataset.concept), canvas));
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   render();
 })();
