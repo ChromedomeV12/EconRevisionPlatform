@@ -39,6 +39,8 @@ The demand and PED cards use selected textbook figures with complete axes, label
 
 The MVP has no compulsory questions, answer reveals or recall ratings. Touch swipes, mouse-wheel scrolling, keyboard arrows/Page Up/Page Down and navigation buttons move through the feed. A Closer look opens full notes and provenance. Saved and Revisit filters use explicit user choices, not a retention algorithm.
 
+Feed headlines use the compact 24px size when the reading column is at most 650px wide, including columns narrowed by the sidebar or topic queue. Wider columns retain the existing desktop sizing and short-viewport rules; diagrams and actions keep their existing sizes.
+
 The overview reports unique points opened, points opened today, bookmarks and points set aside. An opened point means at least 65% of its panel entered the visible feed; it does not prove reading, understanding or mastery. Browsing state uses `econ-refresh-v1`. Existing recall history and personal submissions remain in `econ-workspace-v2`; browsing never adds FSRS reviews or changes scheduled dates. Existing scheduling helpers and tests are retained for a possible separate, optional recall mode.
 
 Card submissions are stored and reviewed on the current device. Approval makes a card available in that personal library; it does not publish it or claim teacher verification. Local checks identify missing sources, short text and exact duplicate questions. There are no accounts, shared submissions, backend, or live AI calls.
@@ -51,7 +53,7 @@ Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy sche
 
 Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, composited text contrast, interaction states and reduced transparency, and captures both themes across all views. The light theme uses Latte Base/Mantle/Crust surfaces and text roles throughout the feed and dashboard, with Mauve actions and Blue focus indicators. Diagrams retain light paper in both modes. Both themes follow the official [Catppuccin palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
 
-`node --test tests/diagram-data.test.cjs` checks image dimensions, attribution and figure/copy consistency. `node tests/diagrams.cjs` checks image loading, uncropped contain fitting, accessible descriptions, enlargement and failure fallbacks across five widths in both themes. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
+`node --test tests/diagram-data.test.cjs` checks image dimensions, attribution and figure/copy consistency. `node tests/diagrams.cjs` checks image loading, uncropped contain fitting, accessible descriptions, enlargement and failure fallbacks across eleven viewport sizes in both themes, including both sides of the navigation and queue layout breakpoints. It and `node tests/browser.cjs` assert that feed content fits without inner scrolling or covered actions. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
 
 ## Private reference collection
 

@@ -17,7 +17,7 @@ const path = require("node:path");
     fs.mkdirSync(out, { recursive: true });
     const url = `http://127.0.0.1:${server.address().port}/`;
     for (const theme of ["light", "dark"]) {
-      for (const [width, height] of [[360, 740], [390, 844], [768, 900], [1024, 768], [1440, 900]]) {
+      for (const [width, height] of [[360, 740], [390, 844], [650, 900], [651, 900], [768, 900], [900, 900], [901, 900], [1024, 768], [1199, 900], [1200, 900], [1440, 900]]) {
         await page.setViewportSize({ width, height });
         await page.goto(url);
         if (await page.locator("html").getAttribute("data-theme") !== theme) await page.getByRole("switch", { name: "Dark mode" }).click();
@@ -60,7 +60,7 @@ const path = require("node:path");
       assert.match(await canvas.getAttribute("aria-label"), /P1 to P2/);
     }
     assert.deepEqual(errors, []);
-    console.log("Textbook diagrams: load, contain fit, alt text, original-size zoom and canvas fallback; both themes at five widths.");
+    console.log("Textbook diagrams: load, contain fit, alt text, original-size zoom and canvas fallback; both themes at eleven viewport sizes, including feed breakpoint boundaries.");
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

@@ -210,6 +210,9 @@ h1 { font-size: 36px; }
 #modal .dialog-actions { border: 0; margin-top: 24px; }
 #modal :is(.badge, .related-links button, .dialog-actions .btn) { font-size: 14px; }
 .toast { background: var(--text); color: var(--panel); border-color: var(--border); box-shadow: var(--shadow); }
+@container (max-width: 650px) {
+  .refresh-point h2 { font-size: 24px; }
+}
 @media (max-width: 650px) {
   .primary-nav a > span:not(.nav-count) { font-size: 12px; }
   .primary-nav a { gap: 2px; }

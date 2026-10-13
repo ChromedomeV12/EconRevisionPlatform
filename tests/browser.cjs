@@ -184,7 +184,7 @@ const path = require("node:path");
       404,
     );
     const layoutFailures = [];
-    for (const [width,height] of [[360,740],[390,844],[768,900],[1024,768],[1440,900]]) {
+    for (const [width,height] of [[360,740],[390,844],[650,900],[651,900],[768,900],[900,900],[901,900],[1024,768],[1199,900],[1200,900],[1440,900]]) {
       await page.setViewportSize({width,height});
       await page.goto(`${base}/#feed`);
       await page.locator('.refresh-scroll').waitFor();

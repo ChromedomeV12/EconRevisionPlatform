@@ -179,7 +179,7 @@ dialog::backdrop { background: var(--ctp-text);   }
 .refresh-scroll { border-top: 1px solid var(--ctp-base); }
 .refresh-scroll:focus-visible { outline: 2px solid var(--ctp-surface1); outline-offset: 5px; }
 .refresh-point { padding: 24px 0 0; }
-.refresh-body { max-width: 720px; padding: 0 2px; }
+.refresh-body { max-width: 720px; padding: 0 2px; container-type: inline-size; }
 .refresh-meta { align-items: center; color: var(--ctp-surface1); font-size: 12px; margin-bottom: 18px; }
 .refresh-unit { display: inline-flex; align-items: center; gap: 8px; }
 .refresh-unit .lucide { width: 15px; height: 15px; color: var(--ctp-surface1); }
