@@ -2,6 +2,8 @@
 
 Run these commands from the EconRevisionPlatform project root. Git and the GitHub CLI (`gh`) must be installed. The Git commands work in PowerShell and Linux shells; replace example branch names, messages, PR numbers and run IDs with your own.
 
+For local setup and choosing checks, see [Contributing](../CONTRIBUTING.md) and [Testing](TESTING.md). Commands below are terminal commands, not Pi slash commands. Run one line at a time; placeholders such as `PR_NUMBER` must be replaced before execution.
+
 ## What Each Step Does
 
 - `git add` selects the files for the next commit, including new files.
@@ -50,6 +52,9 @@ node --test tests/*.test.cjs
 node tests/browser.cjs
 node tests/theme.cjs
 node tests/diagrams.cjs
+node tests/navigation.cjs
+node tests/graphs.cjs
+node tests/graph-review.cjs
 git diff --check
 git status --short
 git diff
@@ -78,7 +83,27 @@ gh pr create --base main --head codex/my-change --title "Refine the acrylic refr
 
 The local checkout also contains private references and OCR tooling. Use explicit public-file staging instead of `git add .`. Keep `private-sources/`, `.pi/`, `.ocr-runtime/`, credentials and generated screenshots out of commits. Local OCR tooling is maintained separately from this public app release.
 
-After CI passes, inspect the PR diff and merge with `gh pr merge PR_NUMBER --squash --delete-branch`. A feature-branch push does not deploy the public app; merging to `main` does. If the branch falls behind `main`, bring in the current base and rerun checks. Do not force-push to `main`.
+Root-level Pi session exports (`pi-session-*.html` and `pi-session-*.jsonl`) are private too: they can contain source excerpts and tool results. They are ignored locally and rejected by the publication-boundary CI check; do not force-add them.
+
+After CI passes, inspect the PR diff and merge using the guarded workflow below. A feature-branch push does not deploy the public app; merging to `main` does. If the branch falls behind `main`, bring in the current base and rerun checks. Do not force-push to `main`.
+
+### Merge the Reviewed Revision
+
+For a draft PR, mark it ready only after the work is ready for review. Replace `123` consistently with the actual PR number:
+
+```sh
+gh pr ready 123
+gh pr checks 123 --watch --interval 10
+gh pr view 123 --json headRefOid --jq .headRefOid
+```
+
+Use the returned **full** SHA, not its abbreviated form, in the merge command:
+
+```sh
+gh pr merge 123 --squash --delete-branch --match-head-commit FULL_REVIEWED_HEAD_SHA
+```
+
+This guards against merging a different revision if the branch changes after review. If it fails because the head changed, inspect the new commits and rerun the relevant checks. Do not bypass protections with an admin merge. Squashing changes commit IDs; do not use old branch SHAs as the expected deployment SHA.
 
 ## Verify the Deployment
 
@@ -99,7 +124,7 @@ gh run watch RUN_ID --exit-status --interval 10
 gh api repos/ChromedomeV12/EconRevisionPlatform/pages/builds/latest
 ```
 
-Confirm the run succeeded and its commit matches the commit you pushed. A successful push alone does not establish that deployment finished. If the run fails:
+Confirm the run succeeded and the latest Pages build has `status: "built"`, no error, and `commit` equal to the merged `main` SHA from `git rev-parse HEAD`. An older successful build is not enough. A successful push alone does not establish that deployment finished. If the run fails:
 
 ```sh
 gh run view RUN_ID --log-failed
@@ -134,13 +159,24 @@ Use `--draft` on `gh pr create` for unfinished work, or `gh pr create --web` to 
 A feature-branch push does not update this site's Pages deployment. Once the PR is reviewed and ready, replace `123` with its number:
 
 ```sh
-gh pr checks 123
-gh pr merge 123 --squash --delete-branch
+gh pr checks 123 --watch --interval 10
+gh pr view 123 --json headRefOid --jq .headRefOid
+gh pr merge 123 --squash --delete-branch --match-head-commit FULL_REVIEWED_HEAD_SHA
 git switch main
 git pull --ff-only origin main
 ```
 
 Merging updates `main` and starts Pages deployment. The `verify` workflow must pass and review conversations must be resolved. There is currently no mandatory second-person approval because this is a solo-maintained repository; approval and merging remain separate actions. Run browser tests locally as well as checking CI.
+
+## Clean Up Completed Branches
+
+```sh
+git fetch origin --prune
+git branch -avv
+git ls-remote --heads origin
+```
+
+`--prune` removes stale remote-tracking references; it does not delete local branches. `--delete-branch` during merge removes the completed GitHub branch. Keep branches with unique or unreviewed work. For a normally merged local branch, use `git branch -d BRANCH_NAME` from another branch. A squash merge may fail this ancestry check even when its changes were integrated: verify the merged PR and resulting content before considering forced local deletion. Never delete `main` or use branch cleanup as a reason to discard working files.
 
 ## Review Someone Else's Pull Request
 
@@ -160,11 +196,11 @@ For local testing, preserve your current work first. Read the changed code and s
 
 ```sh
 gh pr checkout 123
-node --test tests/learning.test.cjs tests/refresh.test.cjs
+node --test tests/*.test.cjs
 node tests/browser.cjs
 ```
 
-Check the requested behavior, regressions, mobile layout, keyboard access, state persistence and whether private files were accidentally included. Then submit **one** appropriate review:
+Check the requested behavior, regressions, mobile layout, keyboard access, state persistence and whether private files were accidentally included. Run additional suites from [Testing](TESTING.md) for the changed surface. Then submit **one** appropriate review:
 
 ```sh
 gh pr review 123 --approve --body "Checked the diff and verified desktop/mobile behavior. Tests pass."

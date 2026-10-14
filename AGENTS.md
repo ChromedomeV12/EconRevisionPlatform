@@ -2,9 +2,11 @@
 
 ## Project Purpose
 
-This is a static prototype for an IBDP Economics revision platform. The MVP is a swipe-first knowledge refresher: one point with an immediate explanation and visual per screen. The calm browsing dashboard is secondary; compulsory problem practice is out of the current MVP.
+Build a static IBDP Economics revision prototype. The MVP opens a swipe-first refresher: one knowledge point, explanation and visual per screen. Keep the browsing dashboard secondary. Compulsory problem practice is outside the MVP.
 
 ## Current Stack
+
+Start with `docs/README.md`. Read `CONTRIBUTING.md` for setup, `docs/ARCHITECTURE.md` for runtime and state ownership, `docs/TESTING.md` for checks, and `docs/OCR_OPERATIONS.md` for private operator onboarding. Update these guides when you change commands, state keys, runtime assets or review/publication boundaries.
 
 - `index.html`: application shell, navigation and dialogs. Opens the refresh feed directly.
 - `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
@@ -12,8 +14,9 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `acrylic.css`: acrylic surface layer, rounded controls, frosted navigation, dark reading surface and responsive adjustments. Loaded after the base styles; keep it in the public preview allowlist.
 - `theme.js`, `theme.css`: persistent light/dark switch and Catppuccin Mocha color overrides. Theme initializes before styles; preference uses `econ-theme-v1`, independently of study data. Keep both in the public preview allowlist.
 - `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
+- `card-model.js`, `content-bootstrap.js`, `content/*.js`: versioned card contract, replaceable repository/provider adapter and modular editorial demo packs. Use `scripts/card-work.cjs` for private drafts, immutable submissions and operator-selected public projections. Read `docs/CONTENT_PIPELINE.md`. Version 1.0.0 requires backend moderation; the current tools provide no authentication.
 - `app.js`: refresh feed, browsing overview, search, bookmarks, local submission and review workflows.
-- `graph.js`, `graph.css`, `vendor/d3.min.js`: bounded declarative native SVG diagrams using pinned D3 scales. Colors are semantic CSS tokens; geometry never includes executable expressions or styles. Only reviewed built-in `graphSpec` content may opt into the app renderer; existing image cards remain unchanged pending reconstruction review.
+- `graph.js`, `graph.css`, `vendor/d3.min.js`: bounded declarative SVG diagrams with pinned D3 scales. Use semantic CSS color tokens. Do not put executable expressions or styles in geometry. Enable the app renderer only for reviewed built-in `graphSpec` content; keep image cards unchanged until reconstruction review.
 - `refresh.js`: independent browsing state, opened timestamps and explicit revisit/confusing preferences.
 - `learning.js`: FSRS scheduling, review logs, local dates, persistence validation and legacy migration.
 - `decisions.js`: local checks and the future Jev service boundary; no live AI is enabled.
@@ -24,37 +27,36 @@ This is a static prototype for an IBDP Economics revision platform. The MVP is a
 - `docs/GRAPH_WORKFLOW.md`: local Pi graph reconstruction, private review previews and human promotion requirements.
 - `docs/superpowers/`: historical planning notes, superseded where they describe a landing page.
 
-There is no build step, app package manager, backend, database, or framework. The browser loads vendored FSRS, Lucide and D3 directly. Optional local Playwright tooling is separate from app dependencies.
+The app has no build step, package manager, backend, database or framework. The browser loads vendored FSRS, Lucide and D3. Keep optional Playwright tooling separate from app dependencies.
 
-Private source-processing tools under `tools/ocr/` have their own locked Python dependencies. They are not app runtime or build dependencies.
+Keep the locked Python dependencies in `tools/ocr/` separate from the app runtime and build.
 
 ## Design Rules
 
 - Keep the dashboard serious, readable, and teacher-friendly.
-- Let the actual learning feed feel more like a short-form social app.
-- Do not turn the whole site into a marketing landing page.
-- The first screen is the usable refresh feed. Keep explanations visible immediately; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
+- Give the learning feed the pace of a short-form social app.
+- Open the refresh feed, not a marketing landing page. Show explanations on each card; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
-- The current design uses the owner-approved PR #5 treatment: bright white light-mode reading surfaces, layered Mocha dark surfaces, restrained Sapphire accents and rounded controls. Prefer semantic theme tokens to hard-coded component colors. Keep textbook images and native SVG diagrams on high-contrast light paper. Respect reduced motion/transparency preferences.
-- Typography has distinct roles: Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero and avoid adding remote font dependencies.
+- Preserve the owner-approved PR #5 design: bright white light-mode reading surfaces, layered Mocha dark surfaces, restrained Sapphire accents and rounded controls. Use semantic theme tokens over hard-coded component colors. Keep textbook images and native SVG diagrams on high-contrast light paper. Respect reduced motion/transparency preferences.
+- Use Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero. Do not add remote font dependencies.
 - Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
 - PR #5 replaces PR #4's white/navy/sky-blue dialog overrides. Dialogs use a fixed serif-title header and close button, independently scrolling content, neutral theme text and backdrop. Do not restore the superseded PR #4 overrides.
-- Avoid adding dependencies unless the project gains a clear need for them.
+- Add dependencies only for a demonstrated project need.
 
 ## Implementation Rules
 
 - Keep the demo static and GitHub Pages friendly.
-- Use vanilla JavaScript unless a future requirement clearly justifies a framework.
+- Use vanilla JavaScript unless a requirement justifies a framework.
 - Store local demo progress in `localStorage`.
 - Preserve existing section anchors unless there is a strong reason to change them.
 - Add content in structured arrays/objects in `content.js`, not scattered through markup.
 - Use accessible labels and visible focus states for interactive controls.
-- Existing learning, saved cards and submission state lives in `econ-workspace-v2`; browsing/preferences live separately in `econ-refresh-v1`. Keep legacy learned flags as previously seen, never as invented recall history.
+- Store learning, saved cards and submissions in `econ-workspace-v2`; store browsing/preferences in `econ-refresh-v1`. Interpret legacy learned flags as previously seen. Do not convert them into recall history.
 - Only explicit recall ratings update FSRS. Swipes, bookmarks and viewing answers are not reviews.
 - The current feed offers no recall ratings or practice gates. Opened counts are exposure only. Revisit is a manual list, not a mastery estimate or inferred schedule.
-- Recall statistics must derive from stored reviews; browsing statistics must be labelled as exposure/preferences. Do not fabricate activity to fill charts.
-- Submitted strings are untrusted. Escape them before rendering, and keep local approval labelled as personal review.
+- Derive recall statistics from stored reviews. Label browsing statistics as exposure/preferences. Do not fabricate activity to fill charts.
+- Treat submitted strings as untrusted: escape them before rendering. Label local approval as personal review.
 - Never expose Jev credentials or private references in client code. AI results cannot bypass human approval or mutate the schedule.
 
 ## Verification
@@ -72,17 +74,46 @@ Private source-processing tools under `tools/ocr/` have their own locked Python 
 
 ## Private Source Materials
 
-- The local reference collection is `private-sources/Econ Revision App Sources/`. It is intentionally Git-ignored and absent from the public repository.
+- Keep the local reference collection, `private-sources/Econ Revision App Sources/`, Git-ignored and outside the public repository.
 - Read its `START_HERE.md`, `CONTENT_NOTES.md`, and `SOURCE_INDEX.md` before drafting sourced content.
 - Keep source IDs, exact PDF/slide pages, assumptions, SL/HL boundaries, and teacher-review status with new draft content.
-- The collection as a whole is not cleared for public distribution. Do not commit, force-add, publish, or expose its PDFs, extracted text, diagrams, or draft briefs through the app. The owner confirmed public reuse permission for the selected textbook diagram extracts on 2026-10-12; only the files documented in `assets/diagrams/README.md` may be published. This does not clear any other source material.
+- Do not commit, force-add, publish or expose the collection's PDFs, extracted text, diagrams or draft briefs through the app. The owner confirmed public reuse permission on 2026-10-12 for selected textbook diagram extracts listed in `assets/diagrams/README.md`. Publish only those extracts; the permission does not cover the rest of the collection.
 - Public-use permission and teacher approval are separate checks. Do not assume paraphrasing alone resolves all reuse questions.
 - The official full subject guide and applicable amendments are missing. Treat syllabus mapping as provisional until checked.
 - Do not serve the workspace root publicly: `.gitignore` is not HTTP access control. Deploy committed app files only.
 
 ## Private OCR Workflow
 
-Graph reconstruction has independent checkpoints but runs sequentially within `/ocr-work` by default. After acceptance, the Pi extension registers only final referenced diagram crops. `scripts/graph-work.cjs sync-ocr <book>` recovers interrupted registration; `next <book>` resumes OCR graph drafts before advancing pages. Read `.pi/skills/econ-graphs/SKILL.md`; maximum three reconstructions per OCR turn, no new model/session. Unsupported diagrams may be deferred with a reason; browser/vision failures leave pending tasks. `/graph-reconstruct 1` remains available separately. Drafts/evidence/screenshots stay in `private-sources/graph-work/`; submissions remain `drafted_needs_review`. Never auto-activate drafts, alter OCR checkpoints, or run concurrent inference. See `docs/GRAPH_WORKFLOW.md` for validation and publication boundaries.
+### Cross-Platform Filenames
+
+Use Linux- and Windows-compatible names for new files and directories in the synced workspace, including recovery archives and authoring outputs. Prefer ASCII letters, digits, `-`, `_` and `.`. Use UTC `YYYYMMDDTHHMMSSZ` in filenames, for example `recovery-note-20261014T061143Z.json`. Keep normal ISO timestamps inside JSON fields; do not put their colons in filenames.
+
+Reject these names before writing:
+
+- Path components containing Windows-reserved characters (`< > : " / \ | ? *`) or control characters.
+- Names ending in a dot or space.
+- Reserved device names: `CON`, `PRN`, `AUX`, `NUL`, `COM1`..`COM9`, `LPT1`..`LPT9`, including names with extensions.
+- Names that collide with an existing name after case folding.
+
+Inspect new paths before reporting a recovery or batch complete. On a collision, preserve the existing file and stop or choose a distinct safe suffix. Do not overwrite an archive. These rules require agent checks; no automated filename validator enforces them.
+
+Do not normalize names by renaming original source files, accepted crop IDs, referenced artifacts or immutable snapshots. Obtain owner authorization and check references/hashes before a historical rename. Do not hide filename errors with broad Syncthing ignores or change checkpoints to clear a sync warning.
+
+### First-Round Authoring
+
+Run `/author-cards ID BOOK START END COUNT` after OCR/graphs, using the existing Pi model/session. Read `.pi/skills/econ-authoring/SKILL.md`. Limit each batch to 30 source pages and 8 proposed cards. Use one writer and do no authoring at session startup.
+
+Keep drafts, concerns and submissions under `private-sources/card-work/`. The agent may validate and submit; it must not review, export, approve or publish. Record owner-authorized selected authored cards/native specifications in `content/README.md`; that authorization does not cover raw source materials. Do not rewind OCR checkpoints to recover authoring. Check teacher review and publication permission separately.
+
+### Graph Reconstruction
+
+For each graph submission or revision, complete the source-first `evidence.fidelityReview` inventory/checklist and run `node scripts/graph-work.cjs audit <id>`. The gate checks four task-local captures, source/spec/manifest/runtime hashes and inventory consistency. Keep legacy exact snapshots readable; do not rewrite them or rewind transcription to migrate evidence. Read `docs/GRAPH_FIDELITY_POSTMORTEM.md` for failure causes and audit limits. Artifact checks cannot establish visual comprehension.
+
+Read `.pi/skills/econ-graphs/SKILL.md`. Keep graph checkpoints independent of OCR, and reconstruct sequentially within `/ocr-work` by default. After acceptance, the Pi extension registers only final referenced crops. Use `scripts/graph-work.cjs sync-ocr <book>` to recover interrupted registration and `next <book>` to resume graph drafts before advancing pages.
+
+Limit each OCR turn to three reconstructions in the existing model/session. Defer unsupported diagrams with a reason; leave browser/vision failures pending. Use `/graph-reconstruct 1` for a separate reconstruction turn. Keep drafts, evidence and screenshots in `private-sources/graph-work/`, with submissions marked `drafted_needs_review`. Do not auto-activate drafts, alter OCR checkpoints or run concurrent inference. Follow `docs/GRAPH_WORKFLOW.md` for validation and publication.
+
+### Processing and Recovery
 
 - Read `tools/ocr/README.md` before source-processing work. Pi instructions are in `.pi/skills/econ-transcription/SKILL.md`.
 - `.pi/` contains project-local Pi 1.0.0 settings, extension, skill and prompt. It is Git-ignored but must sync privately to the Omarchy machine.
@@ -93,15 +124,16 @@ Graph reconstruction has independent checkpoints but runs sequentially within `/
 - Use one writer on one synced machine at a time. Local locks are not distributed locks. Check checkpoints after interruption; never clear a lock without checking active workers.
 - Prepare/transcribe bounded batches with the current Pi model. Session startup must never launch processes or send model prompts. Setup is explicit via `/ocr-setup`. No parallel inference or second model server.
 - Launch OCR with the standalone `node` executable on PATH, never `process.execPath`: standalone Pi may use its own harness executable there. Preserve the `ECON_OCR_CHILD` recursion guard.
-- Vision delegates through Pi 1.0.0's built-in `read` image pipeline, confirmed configured by the user on Omarchy. Preserve the text-only-model guard; never fabricate visual evidence or treat image delivery as comprehension.
+- Use Pi 1.0.0's built-in `read` image pipeline, which the owner configured on Omarchy. Preserve the text-only-model guard. Do not fabricate visual evidence or treat image delivery as comprehension.
 - Transcription acceptance validates schema and hashes, not accuracy or publication rights. Human review remains required; preserve uncertainties and SL/HL distinctions.
 - Run `node tools/ocr/run.mjs test` and `node --test tests/ocr-vision.test.mjs` after changes. The optional Pi loader smoke test is documented in the OCR README.
+- Run long topic-focused jobs with `/ocr-range BOOK START END [1-10]` and explicit `/ocr-continue`. Use `ocr_recovery` to derive the scoped next page, pending graphs and remaining budget from durable state. Do not reset a batch after compaction or restart. Keep bounded compaction diagnostics in the private run-intent file. Do not restart the model/session automatically. Leave budget/tool/context failures pending, never deferred. Run `node --test tests/ocr-recovery.test.mjs` after changing these guards.
 
 ## Hosting
 
 The public repository is `ChromedomeV12/EconRevisionPlatform`; GitHub Pages is intended to serve the `main` branch root at `https://ChromedomeV12.github.io/EconRevisionPlatform/`.
 
-This project can be hosted on GitHub Pages because it is static. The expected path is:
+Use this deployment workflow:
 
 1. Initialize a Git repository if one does not exist.
 2. Commit explicit public files on a feature branch and open a pull request.

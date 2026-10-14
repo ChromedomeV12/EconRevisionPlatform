@@ -122,9 +122,11 @@ const path = require("node:path");
               return { before, after };
             });
             assert.deepEqual(geometry.after, geometry.before, `${theme}: theme switch preserves feed geometry, type and acrylic effects at ${width}`);
-            const diagram = page.locator('img[data-diagram]:visible, canvas:visible').first();
+            const diagram = page.locator('svg.econ-graph:visible, img[data-diagram]:visible, canvas:visible').first();
             await diagram.waitFor({ state: "visible" });
             await page.waitForFunction(() => {
+              const graph = document.querySelector("svg.econ-graph[data-graph]");
+              if (graph && graph.getClientRects().length) return graph.querySelectorAll("polyline").length > 0;
               const image = [...document.querySelectorAll('img[data-diagram]')].find(el => el.getClientRects().length && getComputedStyle(el).display !== "none");
               if (image) return image.complete && image.naturalWidth > 0 && image.naturalHeight > 0;
               const canvas = [...document.querySelectorAll("canvas")].find(el => el.getClientRects().length && getComputedStyle(el).display !== "none");
