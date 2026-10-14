@@ -11,6 +11,8 @@ const path = require("node:path");
   try {
     browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
     const page = await browser.newPage();
+    // Exercise the retained textbook-image path separately from curated native packs.
+    await page.route("**/content-bootstrap.js", route => route.fulfill({ contentType: "text/javascript", body: "" }));
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     const out = path.join(__dirname, "../test-output/diagrams");

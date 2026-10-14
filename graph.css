@@ -9,13 +9,15 @@
   --graph-guide: #6c6f85;
   --graph-arrow: #d20f39;
   --graph-welfare: #df8e1d;
+  --graph-consumer-surplus: #40a02b;
+  --graph-producer-surplus: #fe640b;
   display: block;
   width: 100%;
   max-width: 960px;
   height: auto;
   max-height: 100%;
   object-fit: contain;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: auto;
   background: var(--graph-paper);
   color: var(--graph-ink);
   color-scheme: light;
@@ -31,7 +33,7 @@
   --graph-cost: #7543a0;
   --graph-reference: #45475a;
   --graph-arrow: #a12d50;
-  --graph-welfare: #f9e2af;
+  --graph-welfare: #df8e1d;
 }
 .econ-graph .graph-paper { fill: var(--graph-paper); }
 .econ-graph text {
@@ -57,7 +59,15 @@
 .econ-graph .graph-curve-supply { stroke: var(--graph-supply); }
 .econ-graph .graph-curve-cost { stroke: var(--graph-cost); }
 .econ-graph .graph-curve-reference { stroke: var(--graph-reference); stroke-dasharray: 9 5; }
-.econ-graph .graph-arrow { stroke: var(--graph-arrow); stroke-width: 2.5; }
+.econ-graph .graph-arrow { stroke: var(--graph-arrow); stroke-width: 2.5; stroke-linecap: butt; }
 .econ-graph .graph-arrowhead { fill: var(--graph-ink); }
+.econ-graph .graph-movement-arrowhead { fill: var(--graph-arrow); }
 .econ-graph .graph-point { fill: var(--graph-ink); stroke: var(--graph-paper); stroke-width: 1.5; }
 .econ-graph .graph-area { fill: var(--graph-welfare); fill-opacity: 0.3; stroke: var(--graph-guide); stroke-width: 1; }
+.econ-graph .graph-area-consumer-surplus { fill: var(--graph-consumer-surplus); }
+.econ-graph .graph-area-producer-surplus { fill: var(--graph-producer-surplus); }
+.refresh-art:has(.graph-zoom) { position: relative; }
+.refresh-art:has(.graph-zoom) .visual-label > svg { visibility: hidden; }
+.refresh-art .graph-zoom { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; min-height: 0; z-index: 1; }
+.native-diagram-detail { overflow: auto; max-height: 65dvh; background: var(--graph-paper, #eff1f5); }
+.native-diagram-detail .econ-graph { max-height: none; }

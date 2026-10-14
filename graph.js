@@ -77,13 +77,14 @@
       if (spec.version !== 1) fail("version", "expected 1");
       id(spec.id, "id"); text(spec.title, 120, "title"); text(spec.description, 1000, "description");
       choice(spec.coordinateMode, ["schematic", "quantitative"], "coordinateMode");
-      if (object(spec.axes, ["x", "y"], [], "axes")) for (const key of ["x", "y"]) {
+      if (object(spec.axes, ["x", "y", "aspectRatio"], ["aspectRatio"], "axes")) for (const key of ["x", "y"]) {
         const axis = spec.axes[key];
         if (object(axis, ["label", "min", "max"], [], `axes.${key}`)) {
           text(axis.label, 48, `axes.${key}.label`);
           if (![axis.min, axis.max].every(n => typeof n === "number" && Number.isFinite(n) && Math.abs(n) <= 1e6) || axis.max - axis.min < 1e-6) fail(`axes.${key}`, "expected finite bounds within +/-1000000 and span >= 0.000001");
         }
       }
+      if (Object.hasOwn(spec.axes, "aspectRatio") && (typeof spec.axes.aspectRatio !== "number" || !Number.isFinite(spec.axes.aspectRatio) || spec.axes.aspectRatio < 0.8 || spec.axes.aspectRatio > 2.4)) fail("axes.aspectRatio", "expected plot width/height ratio from 0.8 to 2.4");
       if (errors.length) return { valid: false, errors };
       const coordinate = (value, axis, path) => {
         if (typeof value !== "number" || !Number.isFinite(value) || value < axis.min || value > axis.max) { fail(path, "coordinate outside axis bounds"); return false; }
@@ -95,8 +96,9 @@
       };
       const curves = new Map(), points = new Map();
       array(spec.curves, 16, "curves", (curve, path) => {
-        if (!object(curve, ["id", "label", "role", "points", "labelPosition"], ["labelPosition"], path)) return;
+        if (!object(curve, ["id", "label", "role", "points", "labelPosition", "shape"], ["labelPosition", "shape"], path)) return;
         id(curve.id, `${path}.id`); text(curve.label, 24, `${path}.label`);
+        if (Object.hasOwn(curve, "shape")) choice(curve.shape, ["linear", "piecewise"], `${path}.shape`);
         if (Object.hasOwn(curve, "labelPosition")) pair(curve.labelPosition, `${path}.labelPosition`);
         choice(curve.role, ["demand", "supply", "cost", "reference"], `${path}.role`);
         const before = errors.length;
@@ -106,11 +108,13 @@
           if (end[0] === start[0] && end[1] === start[1]) fail(path, "zero-length curve segment");
           if (["demand", "supply"].includes(curve.role) && (end[0] <= start[0] || (curve.role === "demand" ? end[1] >= start[1] : end[1] <= start[1]))) fail(path, "demand/supply requires increasing x and strictly decreasing/increasing y");
         });
+        if (errors.length === before && curve.shape === "linear" && curve.points.some(point => !onPolyline(point, [curve.points[0], curve.points.at(-1)], spec.axes))) fail(path, "linear curve vertices must lie on the straight endpoint segment");
         curves.set(curve.id, curve);
       });
       array(spec.points, 32, "points", (point, path) => {
-        if (!object(point, ["id", "label", "curve", "x", "y", "xLabel", "yLabel", "labelPosition"], ["xLabel", "yLabel", "labelPosition"], path)) return;
+        if (!object(point, ["id", "label", "curve", "x", "y", "xLabel", "yLabel", "labelPosition", "marker"], ["xLabel", "yLabel", "labelPosition", "marker"], path)) return;
         id(point.id, `${path}.id`); text(point.label, 16, `${path}.label`, true);
+        if (Object.hasOwn(point, "marker") && typeof point.marker !== "boolean") fail(`${path}.marker`, "expected boolean");
         if (Object.hasOwn(point, "labelPosition")) pair(point.labelPosition, `${path}.labelPosition`);
         for (const key of ["xLabel", "yLabel"]) if (Object.hasOwn(point, key)) text(point[key], 12, `${path}.${key}`);
         coordinate(point.x, spec.axes.x, `${path}.x`); coordinate(point.y, spec.axes.y, `${path}.y`);
@@ -131,16 +135,40 @@
         }, 1);
       });
       array(spec.arrows, 32, "arrows", (arrow, path) => {
-        if (!object(arrow, ["from", "to"], [], path)) return;
+        if (arrow && (Object.hasOwn(arrow, "start") || Object.hasOwn(arrow, "end"))) {
+          if (!object(arrow, ["start", "end"], [], path)) return;
+          // Detached indicators and callouts may use only the reserved SVG margins.
+          for (const key of ["start", "end"]) {
+            const p = arrow[key];
+            if (!Array.isArray(p) || p.length !== 2 || !p.every(Number.isFinite)) { fail(`${path}.${key}`, "expected finite [x,y]"); continue; }
+            const nx = (p[0] - spec.axes.x.min) / (spec.axes.x.max - spec.axes.x.min);
+            const ny = (p[1] - spec.axes.y.min) / (spec.axes.y.max - spec.axes.y.min);
+            const marginBelow = Math.min(0.2, 80 / (spec.axes.aspectRatio ? 416 / spec.axes.aspectRatio : 212));
+            if (nx < -0.18 || nx > 1.04 || ny < -marginBelow || ny > 1.08) fail(`${path}.${key}`, "outside plot and reserved annotation margins");
+          }
+          if (Array.isArray(arrow.start) && Array.isArray(arrow.end) && arrow.start[0] === arrow.end[0] && arrow.start[1] === arrow.end[1]) fail(path, "zero-length arrow");
+          return;
+        }
+        if (!object(arrow, ["from", "to", "offset"], ["offset"], path)) return;
+        let offset = [0, 0];
+        if (Object.hasOwn(arrow, "offset")) {
+          if (!Array.isArray(arrow.offset) || arrow.offset.length !== 2 || !arrow.offset.every(n => typeof n === "number" && Number.isFinite(n))) {
+            fail(`${path}.offset`, "expected finite [dx,dy] in axis-coordinate units");
+            return;
+          }
+          offset = arrow.offset;
+        }
         if (!points.has(arrow.from) || !points.has(arrow.to)) fail(path, "unknown arrow point");
         else {
           const a = points.get(arrow.from), b = points.get(arrow.to);
           if (a.x === b.x && a.y === b.y) fail(path, "zero-length arrow");
+          pair([a.x + offset[0], a.y + offset[1]], `${path}.offsetFrom`);
+          pair([b.x + offset[0], b.y + offset[1]], `${path}.offsetTo`);
         }
       });
       array(spec.areas, 16, "areas", (area, path) => {
         if (!object(area, ["id", "role", "points"], [], path)) return;
-        id(area.id, `${path}.id`); choice(area.role, ["welfare"], `${path}.role`);
+        id(area.id, `${path}.id`); choice(area.role, ["welfare", "consumer-surplus", "producer-surplus"], `${path}.role`);
         const before = errors.length;
         array(area.points, 64, `${path}.points`, pair, 3);
         if (errors.length === before) {
@@ -184,22 +212,26 @@
       if (parent) parent.appendChild(node);
       return node;
     };
-    const svg = make("svg", { class: "econ-graph", viewBox: "0 0 640 360", preserveAspectRatio: "xMidYMid meet", width: 640, height: 360, role: "img", "aria-labelledby": `${prefix}-title ${prefix}-desc`, "data-coordinate-mode": spec.coordinateMode, "data-review-status": spec.review.status });
+    const plotHeight = spec.axes.aspectRatio ? 416 / spec.axes.aspectRatio : 212;
+    const bottom = 54 + plotHeight, height = bottom + 94;
+    const svg = make("svg", { class: "econ-graph", viewBox: `0 0 640 ${height}`, preserveAspectRatio: "xMidYMid meet", width: 640, height, role: "img", "aria-labelledby": `${prefix}-title ${prefix}-desc`, "data-coordinate-mode": spec.coordinateMode, "data-review-status": spec.review.status });
     make("title", { id: `${prefix}-title` }, svg).textContent = spec.title;
     make("desc", { id: `${prefix}-desc` }, svg).textContent = `${spec.description}${spec.coordinateMode === "schematic" ? " Schematic: positions are illustrative, not numerical values." : " Quantitative coordinates; only explicitly supplied labels are shown."}${spec.review.status === "draft" ? " Draft; not teacher reviewed." : ` Reviewed by ${spec.review.reviewer}.`}`;
-    make("rect", { class: "graph-paper", width: 640, height: 360 }, svg);
+    make("rect", { class: "graph-paper", width: 640, height }, svg);
     const defs = make("defs", {}, svg);
-    const marker = make("marker", { id: `${prefix}-arrow`, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse", markerUnits: "userSpaceOnUse" }, defs);
+    const marker = make("marker", { id: `${prefix}-arrow`, viewBox: "0 0 10 10", refX: 10, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse", markerUnits: "userSpaceOnUse" }, defs);
     make("path", { class: "graph-arrowhead", d: "M0,0 L10,5 L0,10 Z" }, marker);
+    const movementMarker = make("marker", { id: `${prefix}-movement`, viewBox: "0 0 10 10", refX: 10, refY: 5, markerWidth: 11, markerHeight: 11, orient: "auto-start-reverse", markerUnits: "userSpaceOnUse" }, defs);
+    make("path", { class: "graph-movement-arrowhead", d: "M0,0 L10,5 L0,10 Z" }, movementMarker);
     const x = d3.scaleLinear().domain([spec.axes.x.min, spec.axes.x.max]).range([112, 528]);
-    const y = d3.scaleLinear().domain([spec.axes.y.min, spec.axes.y.max]).range([266, 54]);
+    const y = d3.scaleLinear().domain([spec.axes.y.min, spec.axes.y.max]).range([bottom, 54]);
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const line = (a, b, cls, parent = svg, extra = {}) => make("line", { class: cls, x1: a[0], y1: a[1], x2: b[0], y2: b[1], ...extra }, parent);
-    const text = (value, px, py, cls, width = 20, attributes = {}, maxWidth = 180) => {
+    const text = (value, px, py, cls, width = 20, attributes = {}, maxWidth = 180, maxLines = Infinity) => {
       const node = make("text", { class: cls, x: px, y: py, "text-anchor": "middle", ...attributes }, svg);
       const chunks = [];
       let rest = value;
-      while (rest.length > width) {
+      while (rest.length > width && chunks.length < maxLines - 1) {
         let split = rest.lastIndexOf(" ", width);
         if (split < width / 2) split = width;
         chunks.push(rest.slice(0, split)); rest = rest.slice(split).trimStart();
@@ -213,40 +245,46 @@
       });
       return node;
     };
-    for (const area of spec.areas) make("polygon", { class: "graph-area graph-area-welfare", points: area.points.map(p => `${x(p[0])},${y(p[1])}`).join(" ") }, svg);
-    line([112, 266], [556, 266], "graph-axis", svg, { "marker-end": `url(#${prefix}-arrow)` });
-    line([112, 266], [112, 30], "graph-axis", svg, { "marker-end": `url(#${prefix}-arrow)` });
-    text(spec.axes.x.label, 332, 329, "graph-axis-label", 24, {}, 400);
-    text(spec.axes.y.label, 25, 152, "graph-axis-label", 24, { transform: "rotate(-90 25 152)" }, 250);
+    for (const area of spec.areas) make("polygon", { class: `graph-area graph-area-${area.role}`, points: area.points.map(p => `${x(p[0])},${y(p[1])}`).join(" ") }, svg);
+    line([112, bottom], [556, bottom], "graph-axis", svg, { "marker-end": `url(#${prefix}-arrow)` });
+    line([112, bottom], [112, 30], "graph-axis", svg, { "marker-end": `url(#${prefix}-arrow)` });
+    text(spec.axes.x.label, 332, bottom + 63, "graph-axis-label", 24, {}, 400);
+    const middle = 46 + plotHeight / 2;
+    text(spec.axes.y.label, 25, middle, "graph-axis-label", 24, { transform: `rotate(-90 25 ${middle})` }, 250);
     const points = new Map(spec.points.map(p => [p.id, p]));
     for (const guide of spec.guides) {
       const point = points.get(guide.point), px = x(point.x), py = y(point.y);
       for (const axis of guide.axes) {
-        line([px, py], axis === "x" ? [px, 266] : [112, py], "graph-guide");
+        line([px, py], axis === "x" ? [px, bottom] : [112, py], "graph-guide");
         const label = axis === "x" ? point.xLabel : point.yLabel;
-        if (label) text(label, axis === "x" ? px : 102, axis === "x" ? 291 : py + 5, "graph-guide-label", 12, { "text-anchor": axis === "x" ? "middle" : "end" }, axis === "x" ? 120 : 70);
+        if (label) text(label, axis === "x" ? px : 102, axis === "x" ? bottom + 25 : py + 5, "graph-guide-label", 12, { "text-anchor": axis === "x" ? "middle" : "end" }, axis === "x" ? 120 : 70);
       }
     }
     for (const curve of spec.curves) {
       make("polyline", { class: `graph-curve graph-curve-${curve.role}`, points: curve.points.map(p => `${x(p[0])},${y(p[1])}`).join(" ") }, svg);
       const end = curve.points[curve.points.length - 1];
-      const position = curve.labelPosition ? [x(curve.labelPosition[0]), y(curve.labelPosition[1])] : [clamp(x(end[0]) + 28, 154, 562), clamp(y(end[1]) - 14, 43, 231)];
+      const position = curve.labelPosition ? [x(curve.labelPosition[0]), y(curve.labelPosition[1])] : [clamp(x(end[0]) + 28, 154, 562), clamp(y(end[1]) - 14, 43, bottom - 35)];
       text(curve.label, position[0], position[1], "graph-curve-label", 12, {}, 130);
     }
     for (const arrow of spec.arrows) {
+      if (arrow.start) {
+        line([x(arrow.start[0]), y(arrow.start[1])], [x(arrow.end[0]), y(arrow.end[1])], "graph-arrow", svg, { "marker-end": `url(#${prefix}-movement)` });
+        continue;
+      }
       const a = points.get(arrow.from), b = points.get(arrow.to);
-      const ax = x(a.x), ay = y(a.y), bx = x(b.x), by = y(b.y);
+      const [ox, oy] = arrow.offset || [0, 0];
+      const ax = x(a.x + ox), ay = y(a.y + oy), bx = x(b.x + ox), by = y(b.y + oy);
       const length = Math.hypot(bx - ax, by - ay);
       const inset = Math.min(8, length / 4);
       const dx = (bx - ax) / length * inset, dy = (by - ay) / length * inset;
-      line([ax + dx, ay + dy], [bx - dx, by - dy], "graph-arrow", svg, { "marker-end": `url(#${prefix}-arrow)` });
+      line([ax + dx, ay + dy], [bx - dx, by - dy], "graph-arrow", svg, { "marker-end": `url(#${prefix}-movement)` });
     }
     for (const point of spec.points) {
-      make("circle", { class: "graph-point", cx: x(point.x), cy: y(point.y), r: 4.5 }, svg);
-      const position = point.labelPosition ? [x(point.labelPosition[0]), y(point.labelPosition[1])] : [clamp(x(point.x) + 18, 144, 558), clamp(y(point.y) - 12, 43, 250)];
+      if (point.marker !== false) make("circle", { class: "graph-point", cx: x(point.x), cy: y(point.y), r: 4.5 }, svg);
+      const position = point.labelPosition ? [x(point.labelPosition[0]), y(point.labelPosition[1])] : [clamp(x(point.x) + 18, 144, 558), clamp(y(point.y) - 12, 43, bottom - 16)];
       if (point.label) text(point.label, position[0], position[1], "graph-point-label", 16, {}, 150);
     }
-    for (const label of spec.labels) text(label.text, clamp(x(label.x), 108, 532), clamp(y(label.y), 62, 202), "graph-annotation", 20);
+    for (const label of spec.labels) text(label.text, x(label.x), y(label.y), "graph-annotation", 12, {}, 180, Math.max(1, Math.floor((height - 8 - y(label.y)) / 19) + 1));
     return svg;
   }
 

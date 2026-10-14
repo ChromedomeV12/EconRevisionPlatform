@@ -23,6 +23,8 @@ const path = require("node:path");
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     const assertVisual = async point => {
+      const native = point.locator("svg.econ-graph");
+      if (await native.count()) { assert.ok(await native.isVisible()); assert.ok(await native.locator("polyline").count() > 0); return; }
       const image = point.locator("img[data-diagram]");
       if (await image.count()) {
         await image.evaluate(img => img.decode());
@@ -59,6 +61,7 @@ const path = require("node:path");
     await page.screenshot({path:path.join(out,"feed-desktop.png")});
     const first = page.locator("[data-point]").first();
     await assertVisual(first);
+    const savedTopic = await first.locator(".visual-label span").textContent();
     await first.getByRole("button",{name:"Save point",exact:true}).click();
     await first.getByRole("button",{name:"Revisit later",exact:true}).click();
     await first.getByRole("button",{name:"Flag as confusing",exact:true}).click();
@@ -70,7 +73,7 @@ const path = require("node:path");
     await page.locator('[data-action="feed-filter"][data-filter="revisit"]').click();await position(1);
     assert.equal(await page.locator("[data-point]").count(),1);
     await page.locator('[data-action="feed-filter"][data-filter="all"]').click();
-    assert.equal(await page.locator("[data-point]").count(),10);
+    assert.equal(await page.locator("[data-point]").count(), await page.evaluate(() => EconData.cards.length));
     assert.equal(await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem("econ-workspace-v2")).logs)),oldReviews);
     await page.getByRole("link", {name:"Overview",exact:true}).click();
     await page.locator(".stats-grid").waitFor();
@@ -91,16 +94,16 @@ const path = require("node:path");
     await page.getByRole("link", { name: "Saved cards" }).click();
     await page.locator('[data-nav="saved"][aria-current="page"]').waitFor();
     assert.equal(await page.locator(".library-card").count(), 1);
-    assert.match(await page.locator(".library-card h3").textContent(), /Negative externalities/);
+    assert.equal(await page.locator(".library-card h3").textContent(), savedTopic);
     await page.getByRole("link", { name: "Card studio" }).click();
     await page
       .getByLabel("Card title")
       .fill("Test card <img src=x onerror=bad()>");
     await page
-      .getByLabel("Recall question")
+      .getByLabel("Knowledge point")
       .fill("What does an opportunity cost describe?");
     await page
-      .getByLabel("Reference answer")
+      .getByLabel("Immediate explanation")
       .fill(
         "The value of the next-best alternative forgone when making a choice.",
       );

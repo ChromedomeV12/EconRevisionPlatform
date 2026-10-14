@@ -60,6 +60,11 @@ async function capture(id, workspace = root) {
   };
   const hash = file => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
   const specSha256 = hash(draftPath), sourceSha256 = hash(sourcePath);
+  const rendererPath = path.join(workspace, "graph.js"), stylesheetPath = path.join(workspace, "graph.css");
+  const rendererSha256 = hash(rendererPath), stylesheetSha256 = hash(stylesheetPath);
+  const spec = JSON.parse(fs.readFileSync(draftPath, "utf8"));
+  const valid = require("../graph.js").validate(spec);
+  if (!valid.valid) throw new Error(`Validate draft before capture: ${valid.errors.join("; ")}`);
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   let browser;
   try {
@@ -74,6 +79,23 @@ async function capture(id, workspace = root) {
         await page.locator("#native svg").waitFor();
         await page.locator(`[data-mode="${theme}"]`).click();
         await page.locator("#original").evaluate(img => img.decode());
+        const arrowCheck = await page.locator("#native svg").evaluate((svg, spec) => {
+          const errors = [];
+          const box = svg.getBoundingClientRect();
+          for (const text of svg.querySelectorAll("text")) {
+            const r = text.getBoundingClientRect();
+            if (r.left < box.left - 1 || r.right > box.right + 1 || r.top < box.top - 1 || r.bottom > box.bottom + 1) errors.push(`Clipped graph text: ${text.textContent}`);
+          }
+          if (svg.querySelectorAll(".graph-point").length !== spec.points.filter(p => p.marker !== false).length) errors.push("Unexpected point/anchor marker count");
+          for (const arrow of svg.querySelectorAll(".graph-arrow")) {
+            const id = arrow.getAttribute("marker-end").slice(5, -1);
+            const marker = svg.querySelector(`[id="${id}"]`);
+            if (!marker || marker.getAttribute("refX") !== "10" || marker.getAttribute("refY") !== "5" || marker.getAttribute("markerWidth") !== "11" || marker.getAttribute("orient") !== "auto-start-reverse") errors.push("Movement arrow tip/size/orientation mismatch");
+            if (getComputedStyle(arrow).strokeLinecap !== "butt") errors.push("Shaft must stop at its tip");
+          }
+          return errors;
+        }, spec);
+        if (arrowCheck.length) throw new Error(arrowCheck.join("; "));
         const destination = path.join(directory, `review-${theme}-${width}.png`);
         rejectLinkedOutput(destination);
         await page.screenshot({ path: destination, fullPage: true });
@@ -81,7 +103,8 @@ async function capture(id, workspace = root) {
       }
     }
     if (hash(draftPath) !== specSha256 || hash(sourcePath) !== sourceSha256) throw new Error("Source or draft changed during capture. Discard these previews and capture again.");
-    const manifest = { specSha256, sourceSha256, screenshots: outputs, capturedAt: new Date().toISOString(), status: "visual_inspection_required" };
+    if (hash(rendererPath) !== rendererSha256 || hash(stylesheetPath) !== stylesheetSha256) throw new Error("Renderer or stylesheet changed during capture. Capture again with stable runtime files.");
+    const manifest = { specSha256, sourceSha256, rendererSha256, stylesheetSha256, screenshots: outputs, capturedAt: new Date().toISOString(), status: "visual_inspection_required" };
     const manifestPath = path.join(directory, "render-manifest.json");
     rejectLinkedOutput(manifestPath);
     fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

@@ -8,6 +8,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const { createWorkflow, TASKS, MAX_JSON_BYTES } = require("../scripts/graph-work.cjs");
+const { CHECKS } = require("../scripts/graph-fidelity.cjs");
 const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
 
 // Synthetic fixtures test bookkeeping, not fidelity to a textbook image.
@@ -15,6 +16,7 @@ function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "econ-graph-work-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "assets/diagrams"), { recursive: true });
+  for (const name of ["graph.js", "graph.css"]) fs.copyFileSync(path.join(__dirname, "..", name), path.join(root, name));
   for (const task of TASKS) fs.writeFileSync(path.join(root, task.source), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1]));
   const workflow = createWorkflow({ root });
   return { root, workflow, absolute: relative => path.join(root, relative) };
@@ -22,16 +24,37 @@ function fixture(t) {
 
 function writeJson(file, value) { fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`); }
 
+function reviewedArtifacts(f, id, spec, evidence) {
+  const paths = f.workflow.paths(id), directory = path.dirname(paths.draft).split(path.sep).join("/");
+  const screenshots = ["light", "dark"].flatMap(theme => [390, 1440].map(width => {
+    const relative = `${directory}/review-${theme}-${width}.png`;
+    fs.copyFileSync(f.absolute(TASKS[0].source), f.absolute(relative));
+    return { path: relative, sha256: hash(fs.readFileSync(f.absolute(relative))) };
+  }));
+  const specSha256 = hash(fs.readFileSync(f.absolute(paths.draft)));
+  const manifestPath = f.absolute(`${directory}/render-manifest.json`);
+  writeJson(manifestPath, { sourceSha256: evidence.sourceSha256, specSha256,
+    rendererSha256: hash(fs.readFileSync(f.absolute("graph.js"))), stylesheetSha256: hash(fs.readFileSync(f.absolute("graph.css"))), screenshots });
+  evidence.fidelityReview = { version: 1, specSha256, manifestSha256: hash(fs.readFileSync(manifestPath)),
+    sourceInventory: { axes: { x: spec.axes.x.label, y: spec.axes.y.label }, plotAspectRatio: spec.axes.aspectRatio,
+      curves: spec.curves.map(c => ({ id: c.id, label: c.label, shape: c.shape })), visibleMarkers: spec.points.filter(p => p.marker !== false).length,
+      arrows: spec.arrows.map(() => ({ kind: "shift", description: "Synthetic source-supported direction and position." })),
+      regions: spec.areas.map(a => ({ id: a.id, role: a.role })), guideLabels: [] },
+    checks: Object.fromEntries(CHECKS.map(k => [k, { passed: true, notes: `Synthetic ${k} inspection claim; not actual visual evidence.` }])) };
+}
+
 function ready(f, id = "demand") {
   f.workflow.init();
   const paths = f.workflow.paths(id);
   const spec = JSON.parse(fs.readFileSync(f.absolute(paths.draft), "utf8"));
   spec.description = "Synthetic schematic fixture, not source reconstruction.";
-  spec.curves = [{ id: "D", label: "D", role: "demand", points: [[10, 90], [90, 10]] }];
+  spec.axes.aspectRatio = 1.5;
+  spec.curves = [{ id: "D", label: "D", role: "demand", shape: "linear", points: [[10, 90], [90, 10]] }];
   writeJson(f.absolute(paths.draft), spec);
   const result = f.workflow.validate(id);
   assert.equal(result.valid, true, result.errors.join("; "));
   const evidence = { visualInspected: true, sourceSha256: result.sourceSha256, uncertainties: [], fidelityNotes: "Synthetic unit-test inspection claim only; not a real visual review.", renderInspected: true, renderSpecSha256: result.specSha256 };
+  reviewedArtifacts(f, id, spec, evidence);
   writeJson(f.absolute(paths.evidence), evidence);
   return { paths, spec, evidence, result };
 }
@@ -76,13 +99,14 @@ test("submit is immutable and idempotent; next advances only matching hashes", t
 
 test("source, draft byte edits, evidence changes and render hash invalidate resume", t => {
   const f = fixture(t);
-  const { paths, evidence } = ready(f);
+  const { paths, evidence, spec } = ready(f);
   const first = f.workflow.submit("demand");
   fs.appendFileSync(f.absolute(paths.draft), " ");
   assert.equal(f.workflow.status().tasks[0].status, "stale");
   assert.equal(f.workflow.next().id, "demand");
   assert.throws(() => f.workflow.submit("demand"), /renderSpecSha256/);
   evidence.renderSpecSha256 = hash(fs.readFileSync(f.absolute(paths.draft)));
+  reviewedArtifacts(f, "demand", spec, evidence);
   writeJson(f.absolute(paths.evidence), evidence);
   const second = f.workflow.submit("demand");
   assert.notEqual(second.snapshot, first.snapshot);
@@ -108,6 +132,92 @@ test("submission requires explicit original/render inspection and structured evi
     assert.throws(() => f.workflow.submit("demand"));
   }
   assert.equal(fs.existsSync(f.absolute("private-sources/graph-work/.writer.lock")), false);
+});
+
+test("new submissions require an inventory/checklist; exact legacy snapshots remain readable only", t => {
+  const f = fixture(t);
+  const { paths, evidence } = ready(f);
+  delete evidence.fidelityReview;
+  writeJson(f.absolute(paths.evidence), evidence);
+  assert.throws(() => f.workflow.submit("demand"), /fidelityReview/);
+  const specJson = fs.readFileSync(f.absolute(paths.draft), "utf8"), evidenceJson = fs.readFileSync(f.absolute(paths.evidence), "utf8");
+  const sourceSha256 = evidence.sourceSha256, specSha256 = hash(specJson), evidenceSha256 = hash(evidenceJson);
+  const key = hash(JSON.stringify([1, sourceSha256, specSha256, evidenceSha256, "drafted_needs_review"]));
+  fs.mkdirSync(f.absolute(paths.submissions), { recursive: true });
+  writeJson(f.absolute(`${paths.submissions}/${key}.json`), { version: 1, id: "demand", status: "drafted_needs_review", sourceSha256, specSha256, evidenceSha256, specJson, evidenceJson });
+  assert.equal(f.workflow.status().tasks[0].status, "submitted");
+  assert.equal(f.workflow.status().tasks[0].fidelityProtocol, "legacy-inspection-flags");
+  assert.equal(f.workflow.submit("demand").snapshot, `${paths.submissions}/${key}.json`);
+  evidence.uncertainties.push("A new revision must use the new gate.");
+  writeJson(f.absolute(paths.evidence), evidence);
+  assert.throws(() => f.workflow.submit("demand"), /fidelityReview/);
+});
+
+test("source inventory mismatches and failed visual checks block new submissions", t => {
+  const f = fixture(t);
+  const { paths, evidence } = ready(f);
+  for (const mutate of [
+    r => { r.sourceInventory.visibleMarkers = 2; },
+    r => { r.sourceInventory.arrows = [{ kind: "movement", description: "Unprinted invented movement arrow." }]; },
+    r => { r.sourceInventory.curves[0].shape = "piecewise"; },
+    r => { r.sourceInventory.axes.x = "Wrong quantity units"; },
+    r => { r.sourceInventory.plotAspectRatio = 2; },
+    r => { r.sourceInventory.regions = [{ id: "invented", role: "welfare" }]; },
+    r => { r.sourceInventory.guideLabels = ["P99"]; },
+    r => { r.checks.geometry.passed = false; },
+    r => { r.checks.light390.notes = "ok"; },
+    r => { r.manifestSha256 = "0".repeat(64); },
+  ]) {
+    const copy = structuredClone(evidence); mutate(copy.fidelityReview);
+    writeJson(f.absolute(paths.evidence), copy);
+    assert.equal(f.workflow.audit("demand").valid, false);
+    assert.throws(() => f.workflow.submit("demand"));
+  }
+  writeJson(f.absolute(paths.evidence), evidence);
+  assert.equal(f.workflow.audit("demand").valid, true);
+});
+
+test("manifest, screenshot bytes and runtime changes invalidate new-protocol review", t => {
+  const f = fixture(t);
+  ready(f); f.workflow.submit("demand");
+  const manifestPath = f.absolute("private-sources/graph-work/demand/render-manifest.json");
+  const original = fs.readFileSync(manifestPath), manifest = JSON.parse(original);
+  manifest.screenshots[0].path = "../../outside.png";
+  writeJson(manifestPath, manifest);
+  assert.match(f.workflow.audit("demand").errors.join("; "), /task-local/);
+  fs.writeFileSync(manifestPath, original);
+  const screenshot = f.absolute(manifest.screenshots[1].path), image = fs.readFileSync(screenshot);
+  fs.appendFileSync(screenshot, "changed bytes");
+  assert.match(f.workflow.audit("demand").errors.join("; "), /screenshot bytes/);
+  assert.equal(f.workflow.status().tasks[0].status, "stale");
+  fs.writeFileSync(screenshot, image);
+  fs.appendFileSync(f.absolute("graph.css"), "\n/* changed runtime */\n");
+  assert.match(f.workflow.audit("demand").errors.join("; "), /Renderer\/stylesheet changed/);
+  assert.throws(() => f.workflow.submit("demand"), /Renderer\/stylesheet changed/);
+  assert.equal(fs.existsSync(f.absolute("private-sources/graph-work/.writer.lock")), false);
+});
+
+test("explicit dot policy and detached source arrow kinds are enforced", t => {
+  const f = fixture(t);
+  const { paths, spec, evidence } = ready(f);
+  spec.points = [{ id: "a", label: "", curve: "D", x: 30, y: 70 }, { id: "b", label: "", curve: "D", x: 70, y: 30, marker: false }];
+  spec.arrows = [{ from: "a", to: "b" }];
+  writeJson(f.absolute(paths.draft), spec);
+  evidence.renderSpecSha256 = hash(fs.readFileSync(f.absolute(paths.draft)));
+  reviewedArtifacts(f, "demand", spec, evidence);
+  evidence.fidelityReview.sourceInventory.arrows[0].kind = "axis-indicator";
+  writeJson(f.absolute(paths.evidence), evidence);
+  const errors = f.workflow.audit("demand").errors.join("; ");
+  assert.match(errors, /explicit marker/);
+  assert.match(errors, /detached in the source/);
+  spec.points[0].marker = false;
+  spec.arrows = [{ start: [-14, 70], end: [-14, 30] }];
+  writeJson(f.absolute(paths.draft), spec);
+  evidence.renderSpecSha256 = hash(fs.readFileSync(f.absolute(paths.draft)));
+  reviewedArtifacts(f, "demand", spec, evidence);
+  evidence.fidelityReview.sourceInventory.arrows[0].kind = "axis-indicator";
+  writeJson(f.absolute(paths.evidence), evidence);
+  assert.equal(f.workflow.audit("demand").valid, true);
 });
 
 test("draft-only task policy rejects reviewed, quantitative, mismatched and empty specs", t => {
@@ -270,6 +380,38 @@ test("OCR graph registration rejects unaccepted, altered or mismatched provenanc
   }
 });
 
+test("legacy accepted transcripts skip registration without rewriting history or guessing backfills", t => {
+  const f = fixture(t), p = acceptedPage(f);
+  delete p.transcript.figure_assets;
+  p.transcript.figures = [{ kind: "diagram", caption: "Figure 1" }, { kind: "image", asset_id: null }];
+  writeJson(p.transcriptPath, p.transcript);
+  const before = fs.readFileSync(p.transcriptPath);
+  const result = f.workflow.syncOcr("TB-01");
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.queued, []);
+  assert.deepEqual(result.legacySkipped, [{ page: 12, unlinkedDiagrams: 1 }]);
+  assert.deepEqual(fs.readFileSync(p.transcriptPath), before);
+  assert.equal(fs.existsSync(f.absolute("private-sources/graph-work/tasks")), false);
+  assert.deepEqual(f.workflow.syncOcr("TB-01"), result);
+});
+
+test("legacy compatibility does not hide missing referenced assets or malformed records", t => {
+  for (const change of ["referenced", "null-assets", "object-assets", "bad-status", "bad-figure"]) {
+    const f = fixture(t), p = acceptedPage(f);
+    delete p.transcript.figure_assets;
+    if (change !== "referenced") p.transcript.figures = [];
+    if (change === "null-assets") p.transcript.figure_assets = null;
+    if (change === "object-assets") p.transcript.figure_assets = {};
+    if (change === "bad-status") p.transcript.status = "draft";
+    if (change === "bad-figure") p.transcript.figures = [null];
+    writeJson(p.transcriptPath, p.transcript);
+    const result = f.workflow.syncOcr("TB-01");
+    assert.equal(result.errors.length, 1, change);
+    assert.deepEqual(result.legacySkipped, [], change);
+    assert.deepEqual(result.queued, [], change);
+  }
+});
+
 test("registered non-demand graphs can be drafted; unsupported diagrams defer without approval", t => {
   const f = fixture(t), p = acceptedPage(f);
   const [id] = f.workflow.enqueuePage("TB-01", 12).queued;
@@ -279,6 +421,10 @@ test("registered non-demand graphs can be drafted; unsupported diagrams defer wi
   writeJson(f.absolute(inputs.draft), spec);
   assert.equal(f.workflow.validate(id).valid, true);
   assert.throws(() => f.workflow.defer(id, " "), /reason/);
+  for (const reason of ["Turn budget already used", "Context overflow", "Compaction failed", "Browser unavailable", "Playwright missing", "Vision unavailable", "Interrupted run"]) {
+    assert.throws(() => f.workflow.defer(id, reason), /remain pending/);
+    assert.equal(fs.existsSync(f.absolute(`private-sources/graph-work/${id}/deferred.json`)), false);
+  }
   f.workflow.defer(id, "Source includes a flowchart unsupported by the Cartesian schema.");
   assert.equal(f.workflow.status().tasks.find(task => task.id === id).status, "deferred");
   assert.equal(f.workflow.next("TB-01").complete, true);

@@ -110,6 +110,36 @@ async function run() {
       assert.equal(contained.aspect, "xMidYMid meet");
       assert.equal(contained.inside, true);
     }
+    for (const ratio of [0.8, 1.45, 2.4]) for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const tall = fixture();
+      tall.axes.aspectRatio = ratio;
+      tall.arrows = [{ start: [-1.4, 7], end: [-1.4, 3] }, { start: [3, -1.4], end: [7, -1.4] }];
+      tall.areas[0].role = "consumer-surplus";
+      tall.areas.push({ id: "producer", role: "producer-surplus", points: [[1, 1], [5, 5], [1, 5]] });
+      tall.labels = [{ text: "W".repeat(80), x: 0, y: 0 }];
+      tall.points.forEach(p => { p.marker = false; });
+      await page.evaluate(spec => {
+        const svg = EconGraphs.render(spec, document);
+        svg.style.maxHeight = "none";
+        document.body.replaceChildren(svg);
+      }, tall);
+      const details = await page.locator("svg").evaluate(svg => {
+        const box = svg.getBoundingClientRect();
+        const clipped = [...svg.querySelectorAll("text, .graph-arrow")].filter(n => {
+          const r = n.getBoundingClientRect();
+          return r.left < box.left - 1 || r.right > box.right + 1 || r.top < box.top - 1 || r.bottom > box.bottom + 1;
+        }).map(n => n.textContent || n.getAttribute("class"));
+        return { clipped, ratio: box.width / box.height, points: svg.querySelectorAll("circle").length,
+          fills: [...svg.querySelectorAll("polygon")].map(n => getComputedStyle(n).fill),
+          arrows: [...svg.querySelectorAll(".graph-arrow")].map(n => [n.getAttribute("x1"), n.getAttribute("x2")]) };
+      });
+      assert.deepEqual(details.clipped, []);
+      assert.equal(details.points, 0);
+      assert.equal(new Set(details.fills).size, 2);
+      assert.ok(Math.abs(details.ratio - 640 / (148 + 416 / ratio)) < 0.001);
+      assert.equal(details.arrows[0][0], details.arrows[0][1]);
+    }
     const edge = fixture();
     edge.axes.x.label = "W".repeat(48); edge.axes.y.label = "W".repeat(48);
     edge.curves[0].label = "W".repeat(24);

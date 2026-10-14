@@ -291,7 +291,19 @@
       canvas.style.display = "none";
       canvas.after(graph);
       const caption = canvas.parentElement.querySelector("small");
-      if (caption) caption.textContent = "Reconstructed schematic";
+      if (caption) caption.textContent = "Reconstructed schematic · Editorial draft";
+      const zoom = document.createElement("button");
+      zoom.className = "icon-button graph-zoom";
+      zoom.type = "button";
+      zoom.title = "Enlarge diagram";
+      zoom.setAttribute("aria-label", `Enlarge ${card.topic} diagram`);
+      zoom.innerHTML = icon("zoom-in");
+      zoom.addEventListener("click", () => {
+        openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><div class="native-diagram-detail"></div><p>${escape(card.source)}. Editorial draft; not teacher verified.</p>`);
+        $(".native-diagram-detail").append(EconGraphs.render(spec, document));
+      });
+      canvas.parentElement.append(zoom);
+      icons();
       return;
     }
     const source = textbookImage(card);
@@ -712,7 +724,7 @@
               `<button data-action="detail" data-id="${c.id}">${escape(c.topic)}</button>`,
           )
           .join("") || "<p>No linked cards yet.</p>"
-      }</div></div><div class="detail-section"><h3>Content provenance</h3><p>${escape(card.source)}. ${card.id.startsWith("custom-") ? "Locally reviewed personal card; not teacher verified." : "Independent sample content; not an official IB question or teacher-verified explanation."}</p></div><div class="dialog-actions">${button("Open in feed", "study", "arrow-right", `data-id="${escape(card.id)}"`)}</div>`,
+      }</div></div><div class="detail-section"><h3>Content provenance</h3><p>${escape(card.source)}. ${card.id.startsWith("custom-") ? "Locally reviewed personal card; not teacher verified." : escape(card.editorialStatus || "Independent sample content; not an official IB question or teacher-verified explanation.")}</p></div><div class="dialog-actions">${button("Open in feed", "study", "arrow-right", `data-id="${escape(card.id)}"`)}</div>`,
     );
   }
   function renderStudio() {
@@ -733,7 +745,7 @@
     if (studioTab === "create") {
       const draft = state.submissions.find((s) => s.id === editing) || {};
       $("#studioContent").innerHTML =
-        `<div class="studio-layout"><form id="cardForm"><div class="form-grid"><label class="field">Card title<input name="title" maxlength="80" required placeholder="e.g. When a tax changes a market" value="${escape(draft.title || "")}" /></label><label class="field">Unit<select name="unit">${units.map((u) => `<option value="${u.id}" ${draft.unit === u.id ? "selected" : ""}>${u.name}</option>`).join("")}</select></label></div><label class="field">Recall question<textarea name="question" maxlength="600" required placeholder="Ask one clear question.">${escape(draft.question || "")}</textarea></label><label class="field">Reference answer<textarea name="answer" maxlength="1600" required placeholder="Give the answer, then explain the reasoning.">${escape(draft.answer || "")}</textarea></label><label class="field">Source &amp; page reference<input name="source" maxlength="300" placeholder="Original scenario, or a source with a page reference" value="${escape(draft.source || "")}"/><small>Keep private textbook extracts and personal information out of the card.</small></label>${draft.feedback ? `<div class="review-warning">Review note: ${escape(draft.feedback)}</div>` : ""}<div class="form-actions"><button type="submit" class="btn primary">${editing ? "Resubmit for review" : "Submit for review"}${icon("arrow-right")}</button><span class="screening-label">Saved on this device only</span></div></form><aside class="form-aside"><h3>A useful revision card</h3><p>One idea. One question. Enough context to answer without guessing what the author meant.</p><h3>Before it joins your library</h3><ul class="check-list"><li>Check for an existing question</li><li>Include a traceable source</li><li>Review the economics and wording</li></ul><div class="note">Automated checks cover completeness and exact duplicates. Accuracy still needs a human review.</div></aside></div>`;
+        `<div class="studio-layout"><form id="cardForm"><div class="form-grid"><label class="field">Card title<input name="title" maxlength="80" required placeholder="e.g. When a tax changes a market" value="${escape(draft.title || "")}" /></label><label class="field">Unit<select name="unit">${units.map((u) => `<option value="${u.id}" ${draft.unit === u.id ? "selected" : ""}>${u.name}</option>`).join("")}</select></label></div><label class="field">Knowledge point<textarea name="question" maxlength="130" required placeholder="State one clear knowledge point.">${escape(draft.question || "")}</textarea></label><label class="field">Immediate explanation<textarea name="answer" maxlength="480" required placeholder="Explain the point in a few sentences.">${escape(draft.authored?.summary || draft.answer || "")}</textarea></label><label class="field">Closer-look notes<textarea name="notes" maxlength="1600" placeholder="Optional assumptions or deeper explanation.">${escape(draft.authored?.notes || "")}</textarea></label><label class="field">Source &amp; page reference<input name="source" maxlength="300" placeholder="Original scenario, or a source with a page reference" value="${escape(draft.source || "")}"/><small>Keep private textbook extracts and personal information out of the card.</small></label>${draft.feedback ? `<div class="review-warning">Review note: ${escape(draft.feedback)}</div>` : ""}<div class="form-actions"><button type="submit" class="btn primary">${editing ? "Resubmit for review" : "Submit for review"}${icon("arrow-right")}</button><span class="screening-label">Saved on this device only</span></div></form><aside class="form-aside"><h3>A useful revision card</h3><p>One idea with an immediate explanation. Add assumptions and deeper context in the notes.</p><h3>Before it joins your library</h3><ul class="check-list"><li>Check for an existing question</li><li>Include a traceable source</li><li>Review the economics and wording</li></ul><div class="note">Automated checks cover completeness and exact duplicates. Accuracy still needs a human review.</div></aside></div>`;
     } else {
       const list = [...state.submissions]
         .reverse()
@@ -941,16 +953,27 @@
       const submit = form.querySelector('[type="submit"]');
       submit.disabled = true;
       const previous = state.submissions.find((s) => s.id === editing);
+      const candidate = {
+        id: previous?.id || `custom-${crypto.randomUUID()}`, revision: (previous?.version || 0) + 1,
+        unit: data.unit, topic: data.title.trim(), title: data.title.trim(),
+        headline: data.question.trim(), summary: data.answer.trim(), notes: data.notes?.trim() || data.answer.trim(),
+        takeaway: "", caution: "Personal content; source and economics require review.", related: [],
+        sources: [{ id: "original", page: null }], level: "unmapped", graphId: null,
+      };
+      const validation = EconCards.validateCard(candidate);
+      if (!validation.valid) { submit.disabled = false; toast(validation.errors[0]); return; }
       const card = {
-        id: previous?.id || `custom-${crypto.randomUUID()}`,
+        id: candidate.id,
+        authored: candidate,
+        refresh: { headline: candidate.headline, summary: candidate.summary },
         title: data.title.trim(),
         question: data.question.trim(),
-        answer: data.answer.trim(),
+        answer: candidate.notes,
         source: data.source.trim(),
         unit: data.unit,
         status: "pending",
         createdAt: previous?.createdAt || new Date().toISOString(),
-        version: (previous?.version || 0) + 1,
+        version: candidate.revision,
       };
       card.screening = await decisions.screenSubmission({
         card,
@@ -1032,5 +1055,6 @@
   new MutationObserver(() => {
     document.querySelectorAll("canvas[data-concept]").forEach(canvas => drawConcept(findCard(canvas.dataset.concept), canvas));
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  window.addEventListener("econ:catalog-change", () => { session = null; render(); });
   render();
 })();

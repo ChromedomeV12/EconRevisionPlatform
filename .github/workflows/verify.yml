@@ -44,10 +44,11 @@ jobs:
           const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
           const forbidden = /(^|\/)(private-sources|\.ocr-runtime|\.pi|\.agents|\.codex|\.aws|node_modules|\.venv|__pycache__|test-output)(\/|$)|(^|\/)\.env(?:\.|$)/i;
           for (const file of tracked) {
+            assert.ok(!/(^|\/)pi-session-[^/]+\.(html|jsonl)$/i.test(file), `Private session export tracked: ${file}`);
             assert.ok(!forbidden.test(file) || /(^|\/)\.env\.example$/.test(file), `Private/local file tracked: ${file}`);
             assert.ok(!fs.lstatSync(file).isSymbolicLink(), `Review linked publication input: ${file}`);
           }
-          const publicFiles = tracked.filter(file => /^(assets|vendor)\//.test(file) || /^[^/]+\.(html|css|js)$/.test(file) || file === '.nojekyll');
+          const publicFiles = tracked.filter(file => /^(assets|vendor|content)\//.test(file) || /^[^/]+\.(html|css|js)$/.test(file) || file === '.nojekyll');
           const privateReference = /(?:^|[^a-z0-9_$])(?:private-sources|\.ocr-runtime|\.pi)[/\\]/i;
           assert.ok(!privateReference.test('const radians = Math.PI/180;'));
           for (const sample of ['"private-sources/book.pdf"', '"/.PI/settings.json"', '"C:\\work\\.ocr-runtime\\file"']) {

@@ -1,5 +1,7 @@
 # Private teaching and textbook references must never be published.
 /private-sources/
+/pi-session-*.html
+/pi-session-*.jsonl
 
 # Local agent configuration and credentials
 /.agents/

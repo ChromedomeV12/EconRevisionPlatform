@@ -8,20 +8,25 @@ A static economics refresher: one knowledge point per swipe, with the explanatio
 
 For local use, open `index.html` in a browser. No installation or build step is needed. Progress is stored in that browser's localStorage. For a loopback preview, run `node scripts/serve.cjs 4181` and open `http://127.0.0.1:4181`.
 
+## Documentation
+
+Start with the [documentation index](docs/README.md). Contributors should read the [contribution guide](CONTRIBUTING.md), [architecture reference](docs/ARCHITECTURE.md), and [testing guide](docs/TESTING.md). Private source-processing operators have a separate [OCR operations guide](docs/OCR_OPERATIONS.md); a public clone does not include the private corpus or Pi configuration.
+
 ## Project files
 
 - `index.html`: refresh-first application shell.
 - `TikTok Econ.html`: compatibility redirect for old links.
-- `styles.css`: responsive interface, light study desk and dark study feed.
+- `styles.css`: base responsive interface and feed layout, overridden by the appearance layers below.
 - `acrylic.css`: frosted surfaces, rounded controls, serif knowledge headlines and responsive acrylic styling.
 - `theme.js`, `theme.css`: light/dark toolbar switch, persistent appearance preference and Catppuccin Latte light and Mocha dark color overrides. Uses the system preference until a mode is selected; keeps diagrams on light paper.
-- `content.js`: ten original public examples, concise refresh copy, explanations and retained rubrics.
+- `content.js`: legacy sample cards and unit metadata.
+- `card-model.js`, `content-bootstrap.js`, `content/*.js`: versioned card contract, replaceable backend-compatible repository adapter and 13 selected editorial knowledge points with 11 native graph assets.
 - `app.js`: scroll-snap feed, browsing overview, bookmarks and card studio.
-- `graph.js`, `graph.css`: bounded D3/SVG graph specifications, economic geometry checks and theme-aware diagram colors. Existing textbook images remain active until reconstructions pass human review.
+- `graph.js`, `graph.css`: bounded D3/SVG graph specifications, economic geometry checks, theme-aware colors and native graph enlargement. Selected reconstructions are active; the permitted PED image remains as a legacy example.
 - `refresh.js`: validated browsing state and revisit/confusing preferences.
 - `learning.js`: retained legacy FSRS state, scheduling helpers and persistence validation.
 - `decisions.js`: local screening and future Jev provider interface.
-- `vendor/`: pinned FSRS and Lucide browser bundles with licenses.
+- `vendor/`: pinned FSRS, Lucide and D3 browser bundles with licenses.
 - `assets/`: local fonts, photographs and credit information.
 - `AGENTS.md`: guidance for future contributors and coding agents.
 - `docs/JEV_INTEGRATION.md`: future AI contracts and backend architecture.
@@ -35,7 +40,7 @@ For local use, open `index.html` in a browser. No installation or build step is 
 
 This is an independent, unofficial educational prototype. Sample content needs teacher review and is not a complete or verified IB syllabus resource. The selected demand/PED textbook extracts have owner-confirmed public reuse permission; the remaining source collection stays private.
 
-The demand and PED cards use selected textbook figures with complete axes, labels and captions, accessible descriptions, and an enlarge control. Their explanations follow the figures' symbolic values rather than inventing numerical coordinates or an exact PED. See [diagram provenance and permission record](assets/diagrams/README.md). Other diagrams remain app-generated illustrations; none is teacher verified. [Python-based reconstruction](docs/DIAGRAM_RECONSTRUCTION.md) is planned, not implemented.
+The new demand, supply and market-outcomes packs use selected reconstructed schematic graphs and independently worded explanations, with exact source pages in Closer look. They are editorial drafts, not teacher verified; the owner authorized this selected demo publication. [Content records](content/README.md) list the scope. The permitted original PED image remains, and the original-image path is retained/tested. No numerical coordinates, exact elasticity or official syllabus verification are inferred from drawings. The [content pipeline](docs/CONTENT_PIPELINE.md) separates private authoring/review from public delivery and describes the backend transition for 1.0.0. The earlier [Python proposal](docs/DIAGRAM_RECONSTRUCTION.md) is historical.
 
 The MVP has no compulsory questions, answer reveals or recall ratings. Touch swipes, mouse-wheel scrolling, keyboard arrows/Page Up/Page Down and navigation buttons move through the feed. A Closer look opens full notes and provenance. Saved and Revisit filters use explicit user choices, not a retention algorithm.
 
@@ -51,7 +56,7 @@ Jev integration boundaries remain for future advisory assessment and submission 
 
 Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy scheduling, service and browsing-state tests. `node tests/browser.cjs` requires Playwright; it verifies feed navigation (including emulated touch), unchanged recall history, saved/revisit preferences, personal submissions, responsive layouts and private-source isolation. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
 
-Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, composited text contrast, interaction states and reduced transparency, and captures both themes across all views. The light theme uses Latte Base/Mantle/Crust surfaces and text roles throughout the feed and dashboard, with Mauve actions and Blue focus indicators. Diagrams retain light paper in both modes. Both themes follow the official [Catppuccin palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
+Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, composited text contrast, interaction states and reduced transparency, and captures both themes across all views. The approved PR #5 design combines bright white light reading surfaces with Latte text and accents, and layered Mocha dark surfaces. Sapphire details complement Mauve actions and Blue focus indicators. Dialogs have a fixed serif-title header and separately scrolling content; `node tests/navigation.cjs` checks their behavior and the persistent menu toggle. Diagrams retain light paper in both modes. Palette references: [Catppuccin palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
 
 `node --test tests/diagram-data.test.cjs` checks image dimensions, attribution and figure/copy consistency. `node tests/diagrams.cjs` checks image loading, uncropped contain fitting, accessible descriptions, enlargement and failure fallbacks across eleven viewport sizes in both themes, including both sides of the navigation and queue layout breakpoints. It and `node tests/browser.cjs` assert that feed content fits without inner scrolling or covered actions. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
 

@@ -4,14 +4,15 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const os = require("node:os");
+const { reviewTemplate, auditReview } = require("./graph-fidelity.cjs");
 
 const MAX_JSON_BYTES = 128 * 1024;
 const WORK_DIR = "private-sources/graph-work";
 const TASKS = Object.freeze([
   Object.freeze({ id: "demand", source: "assets/diagrams/demand-figure-3-2.png", figure: "3.2", pdfPage: 114,
-    title: "The demand curve", requirements: "Preserve carrot price rise P1 to P2, quantity fall Q1 to Q2, demand curve, labelled points, guides and movement arrow. Other determinants fixed." }),
+    title: "The demand curve", requirements: "Preserve carrot price rise P1 to P2, quantity fall Q1 to Q2, straight demand line, symbolic guide labels and all three printed arrows: offset movement, price rise beside the price axis, and quantity fall below the quantity axis. Do not add point dots absent from the source. Other determinants fixed." }),
   Object.freeze({ id: "price-elasticity", source: "assets/diagrams/ped-figure-7-1.png", figure: "7.1", pdfPage: 214,
-    title: "The price elastic demand curve", requirements: "Preserve Pepsi Cola price fall P1 to P2, proportionately greater quantity rise Q1 to Q2, demand curve, labelled points, guides and movement arrow. Do not calculate numerical PED from schematic geometry." }),
+    title: "The price elastic demand curve", requirements: "Preserve the shallow straight Pepsi Cola demand line, P1/P2 and Q1/Q2 guides, and only the printed detached downward price arrow and rightward quantity arrow. No on-curve movement arrow or point dots are printed; do not invent them. Elasticity compares percentage changes and cannot be inferred from schematic line angle or absolute pixel distances. No numerical PED is established by the diagram." }),
 ]);
 const sha256 = value => crypto.createHash("sha256").update(value).digest("hex");
 const encode = value => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
@@ -122,9 +123,9 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
     return {
       id: task.id, paths: paths(task.id), sourceSha256,
       provenance: { sourceId: task.book || "TB-01", figure: task.figure, pdfViewerPage: task.pdfPage, syllabus: task.book ? "Unconfirmed; preserve source SL/HL labels" : "Common core SL/HL; mapping provisional", teacherReview: "pending", publication: task.book ? "private_reference_only" : "owner_permitted_selected_extract", assetId: task.assetId || null },
-      requirements: [task.requirements, "Inspect the original PNG; preserve visible labels and caption. Use schematic coordinates only; these are illustrative positions, not measurements.", "Validation checks structure and provenance, not fidelity, correctness or publication permission. Human review is required."],
+      requirements: [task.requirements, "Before drawing, inspect the original PNG and fill fidelityReview.sourceInventory from the source, not from a generated draft. Count arrows/dots/regions, transcribe guide/axis labels and classify every curve shape. Use explicit marker flags, shape and axes.aspectRatio. Do not invent annotations to satisfy a generic template.", "Validate, capture, inspect all four actual previews and complete each fidelityReview check with specific notes. Run audit before submit. Missing tools or unresolved visual mismatches remain pending.", "Validation checks structure and provenance, not fidelity, correctness or publication permission. Human review is required."],
       template: { version: 1, id: task.id, title: task.title, description: "Unreconstructed draft; inspect the source before filling geometry.", coordinateMode: "schematic", axes: { x: { label: "Quantity", min: 0, max: 100 }, y: { label: "Price", min: 0, max: 100 } }, curves: [], points: [], guides: [], arrows: [], areas: [], labels: [], review: { status: "draft", reviewer: null } },
-      evidenceTemplate: { visualInspected: false, sourceSha256, uncertainties: [], fidelityNotes: "", renderInspected: false, renderSpecSha256: null },
+      evidenceTemplate: { visualInspected: false, sourceSha256, uncertainties: [], fidelityNotes: "", renderInspected: false, renderSpecSha256: null, fidelityReview: reviewTemplate() },
       previewCommand: `node scripts/graph-review.cjs ${task.id}`,
     };
   }
@@ -145,7 +146,14 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
       const base = `private-sources/ocr-work/${book}/pages/${String(page).padStart(5, "0")}`;
       const transcriptPath = `${base}/transcription.json`;
       const transcript = readJson(transcriptPath, 2 * 1024 * 1024).value;
-      if (transcript.status !== "transcribed_needs_review" || transcript.book_id !== book || transcript.pdf_page !== page || !Array.isArray(transcript.figures) || !Array.isArray(transcript.figure_assets) || transcript.figures.length > 128) throw new Error("Expected accepted OCR transcript");
+      if (transcript.status !== "transcribed_needs_review" || transcript.book_id !== book || transcript.pdf_page !== page || !Array.isArray(transcript.figures) || transcript.figures.length > 128 ||
+          transcript.figures.some(figure => !figure || typeof figure !== "object" || Array.isArray(figure))) throw new Error("Expected accepted OCR transcript");
+      // Pre-crop transcripts are valid history, but cannot provide final asset provenance.
+      if (!Object.hasOwn(transcript, "figure_assets")) {
+        if (transcript.figures.some(figure => figure.asset_id != null)) throw new Error("Referenced crop requires figure_assets provenance");
+        return { book, page, queued: [], status: "legacy_transcript_skipped", unlinkedDiagrams: transcript.figures.filter(figure => figure.kind === "diagram").length, modelCalled: false };
+      }
+      if (!Array.isArray(transcript.figure_assets) || transcript.figure_assets.length > 128) throw new Error("Expected accepted OCR transcript figure_assets array");
       const queued = [];
       for (const figure of transcript.figures) {
         if (figure.kind !== "diagram" || !figure.asset_id) continue;
@@ -182,13 +190,17 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
     const directory = safe(`private-sources/ocr-work/${book}/pages`);
     const names = fs.existsSync(directory) ? fs.readdirSync(directory) : [];
     if (names.length > 2000) throw new Error("OCR page scan exceeds bound");
-    const queued = [], errors = [];
+    const queued = [], errors = [], legacySkipped = [];
     for (const name of names.filter(name => /^\d{5}$/.test(name)).sort()) {
       if (!fs.existsSync(safe(`private-sources/ocr-work/${book}/pages/${name}/transcription.json`))) continue;
-      try { queued.push(...enqueuePage(book, Number(name)).queued); }
+      try {
+        const result = enqueuePage(book, Number(name));
+        queued.push(...result.queued);
+        if (result.status === "legacy_transcript_skipped") legacySkipped.push({ page: Number(name), unlinkedDiagrams: result.unlinkedDiagrams });
+      }
       catch (error) { errors.push({ page: Number(name), error: error.message }); }
     }
-    return { book, queued, errors, modelCalled: false };
+    return { book, queued, errors, legacySkipped, modelCalled: false };
   }
   function validate(id) {
     const task = taskFor(id);
@@ -226,6 +238,23 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
     if (errors.length) throw new Error(errors.join("; "));
     return { ...result, draft, evidence, evidenceSha256: sha256(evidence.bytes) };
   }
+  function audit(id, inputs) {
+    try {
+      inputs ||= current(id);
+      const directory = `${WORK_DIR}/${id}`;
+      const manifest = readJson(`${directory}/render-manifest.json`);
+      if (manifest.value.sourceSha256 !== inputs.sourceSha256 || manifest.value.specSha256 !== inputs.specSha256) throw new Error("Capture manifest source/spec does not match current inputs");
+      if (manifest.value.rendererSha256 !== sha256(readBytes("graph.js", 1024 * 1024)) || manifest.value.stylesheetSha256 !== sha256(readBytes("graph.css", 1024 * 1024))) throw new Error("Renderer/stylesheet changed: capture and inspect current previews again");
+      const expected = ["light", "dark"].flatMap(theme => [390, 1440].map(width => `${directory}/review-${theme}-${width}.png`));
+      const screenshots = manifest.value.screenshots;
+      if (!Array.isArray(screenshots) || screenshots.length !== 4 || new Set(screenshots.map(s => s?.path)).size !== 4 || screenshots.some(s => !expected.includes(s?.path))) throw new Error("Capture requires exactly the four task-local light/dark 390/1440 screenshots");
+      for (const screenshot of screenshots) {
+        const bytes = readBytes(screenshot.path, 8 * 1024 * 1024);
+        if (!bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) || sha256(bytes) !== screenshot.sha256) throw new Error("Missing/changed screenshot bytes; recapture and inspect again");
+      }
+      return { id, ...auditReview(inputs.draft.value, inputs.evidence.value, { specSha256: inputs.specSha256, manifestSha256: sha256(manifest.bytes) }) };
+    } catch (error) { return { id, valid: false, errors: [error.message] }; }
+  }
   function snapshotKey(sourceSha256, specSha256, evidenceSha256) {
     return sha256(JSON.stringify([1, sourceSha256, specSha256, evidenceSha256, "drafted_needs_review"]));
   }
@@ -249,6 +278,10 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
       const hasHistory = entries.some(name => /^[a-f0-9]{64}\.json$/.test(name));
       if (hasHistory) output.status = "stale";
       const inputs = current(task.id);
+      if (inputs.evidence.value.fidelityReview) {
+        const review = audit(task.id, inputs);
+        if (!review.valid) throw new Error(review.errors.join("; "));
+      }
       output.specSha256 = inputs.specSha256;
       const name = `${snapshotKey(inputs.sourceSha256, inputs.specSha256, inputs.evidenceSha256)}.json`;
       const relative = `${output.paths.submissions}/${name}`;
@@ -257,6 +290,7 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
         output.status = "submitted";
         output.reviewStatus = "drafted_needs_review";
         output.snapshot = relative;
+        output.fidelityProtocol = inputs.evidence.value.fidelityReview ? "source-inventory-v1" : "legacy-inspection-flags";
       }
     } catch (error) { output.errors = [error.message]; }
     return output;
@@ -275,6 +309,7 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
   function defer(id, reason) {
     const task = taskFor(id);
     if (typeof reason !== "string" || !reason.trim() || reason.length > 2000) throw new Error("A specific bounded defer reason is required");
+    if (/\b(budget|quota|compaction|context|timeout|interrupted|interruption|playwright|browser|vision)\b/i.test(reason)) throw new Error("Resource limits, interruptions and tool failures must remain pending, not deferred. Stop and resume in a new explicit turn; use deferral only for unsupported source geometry.");
       return withWriter(() => {
         const record = { sourceSha256: sourceHash(task), reason, status: "deferred_needs_review" };
         mkdir(`${WORK_DIR}/${id}`);
@@ -289,6 +324,11 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
     return withWriter(() => {
       const inputs = current(id);
       const relative = `${paths(id).submissions}/${snapshotKey(inputs.sourceSha256, inputs.specSha256, inputs.evidenceSha256)}.json`;
+      // Existing snapshots remain readable/idempotent; every new revision uses the gate.
+      if (!fs.existsSync(safe(relative)) || inputs.evidence.value.fidelityReview) {
+        const review = audit(id, inputs);
+        if (!review.valid) throw new Error(review.errors.join("; "));
+      }
       mkdir(paths(id).submissions);
       const entries = fs.readdirSync(safe(paths(id).submissions));
       if (entries.length >= 256 && !fs.existsSync(safe(relative))) throw new Error("Submission history full; human archival required");
@@ -298,7 +338,7 @@ function createWorkflow({ root = path.resolve(__dirname, "..") } = {}) {
       return { id, status: "submitted", reviewStatus: "drafted_needs_review", snapshot: relative, sourceSha256: inputs.sourceSha256, specSha256: inputs.specSha256, evidenceSha256: inputs.evidenceSha256 };
     });
   }
-  return { root, paths, init, status, next, validate, submit, enqueuePage, syncOcr, defer };
+  return { root, paths, init, status, next, validate, audit, submit, enqueuePage, syncOcr, defer };
 }
 
 function cliRoot() {
@@ -323,15 +363,15 @@ function cliRoot() {
 if (require.main === module) {
   try {
     const [command, id, ...extra] = process.argv.slice(2);
-    if (!["init", "status", "next", "validate", "submit", "enqueue-page", "sync-ocr", "defer"].includes(command) ||
+    if (!["init", "status", "next", "validate", "audit", "submit", "enqueue-page", "sync-ocr", "defer"].includes(command) ||
         (["init", "status"].includes(command) && (id !== undefined || extra.length)) ||
-        (["validate", "submit", "sync-ocr"].includes(command) && (!id || extra.length)) ||
+        (["validate", "audit", "submit", "sync-ocr"].includes(command) && (!id || extra.length)) ||
         (command === "next" && extra.length) || (command === "enqueue-page" && (!id || extra.length !== 1)) ||
-        (command === "defer" && (!id || extra.length !== 1))) throw new Error("Usage: init|status|next [book]|validate <id>|submit <id>|enqueue-page <book> <page>|sync-ocr <book>|defer <id> <reason>");
+        (command === "defer" && (!id || extra.length !== 1))) throw new Error("Usage: init|status|next [book]|validate <id>|audit <id>|submit <id>|enqueue-page <book> <page>|sync-ocr <book>|defer <id> <reason>");
     const workflow = createWorkflow({ root: cliRoot() });
     const result = command === "enqueue-page" ? workflow.enqueuePage(id, Number(extra[0])) : command === "sync-ocr" ? workflow.syncOcr(id) : command === "defer" ? workflow.defer(id, extra[0]) : workflow[command](id);
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    if (command === "validate" && !result.valid) process.exitCode = 1;
+    if (["validate", "audit"].includes(command) && !result.valid) process.exitCode = 1;
   } catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; }
 }
 
