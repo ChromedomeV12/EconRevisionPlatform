@@ -9,6 +9,7 @@ const publicFiles = new Set([
   "acrylic.css",
   "theme.css",
   "theme.js",
+  "adaptive-layout.js",
   "graph.js",
   "graph.css",
   "app.js",

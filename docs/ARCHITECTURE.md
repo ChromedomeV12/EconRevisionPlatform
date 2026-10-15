@@ -2,7 +2,7 @@
 
 ## Swipe Controls
 
-`feed-controls.js` mounts the previous/actions/next rail; `feed-controls.css` defines the portrait reading surface, acrylic action menu and side dial. Both are explicit public preview assets. The swipe view hides workspace headers, navigation strips, feed heading/filters and desktop queue; other views retain them. Card actions, feed selection and appearance remain reachable through the action menu. The dial opens Refresh, Library, Overview, Saved and Studio, with icons inset on its face rather than on its rim.
+In compact/portrait feeds, `feed-controls.js` mounts the previous/actions/next rail; `feed-controls.css` defines the portrait reading surface, acrylic action menu and side dial. Both are explicit public preview assets. The swipe view hides workspace headers, navigation strips, feed heading/filters and desktop queue; other views retain them. Card actions, feed selection and appearance remain reachable through the action menu. The dial opens Refresh, Library, Overview, Saved and Studio, with icons inset on its face rather than on its rim.
 
 A tap opens card actions. Holding the center control for 360ms opens the dial; vertical movement selects one view per 46px and release commits it. A hold without movement leaves the dial available for direct selection. Pointer cancellation, lost capture, window blur, hidden document, card change and route rerender dismiss transient controls without navigation. Keyboard users can open Switch view from the menu (or Shift+F10 on the center button), use arrows/Home/End, Enter and Escape. Event listeners/timers are disposed on rerender. The component owns no persisted learning state: actions use existing app handlers, and bookmark/manual revisit never create FSRS reviews.
 
@@ -12,7 +12,7 @@ Touch-driven dial selection changes request an optional 8ms vibration, capped at
 
 This is a static browser application. There is no application package manifest, build pipeline, backend or database. `index.html` loads relative assets so the same files work at the GitHub Pages project path. `TikTok Econ.html` preserves legacy links through a redirect.
 
-`theme.js` runs in the head before styles to initialize appearance and menu preference. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
+`theme.js` and `adaptive-layout.js` run synchronously in the head before styles to initialize appearance/menu preference and viewport presentation respectively. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
 
 Deferred scripts run in document order: vendored Lucide, FSRS and D3, then `graph.js`, legacy `content.js`, `card-model.js`, selected `content/*.js` packs, `content-bootstrap.js`, `learning.js`, `refresh.js`, `decisions.js` and `app.js`. Keep that dependency order. These browser scripts expose globals rather than using a bundler. Several logic modules also export CommonJS interfaces for Node tests.
 
@@ -32,6 +32,25 @@ theme.js -> data-theme -> theme.css / graph.css -> appearance
 `app.js` handles routing, DOM rendering, feed observation, dialogs, search and personal submission review. It combines built-in cards with locally approved personal submissions. An opened point requires at least 65% intersection with the feed viewport; this is an exposure signal, not evidence of comprehension.
 
 `decisions.js` provides local screening and a future provider boundary. No live AI request is enabled. FSRS is retained for legacy state and a possible separate recall mode; the current refresh feed does not collect recall ratings.
+
+## Adaptive Presentation
+
+`adaptive-layout.js` sets `html[data-layout]` before styles and first paint using the layout viewport's CSS-pixel width and height. It uses no user-agent detection, device list or stored layout preference. The initial body is the feed shell; deferred `app.js` resolves the route as usual.
+
+| Geometry | Presentation | Rationale |
+| --- | --- | --- |
+| Width < 600px | Swipe | Reading and conventional workspace controls compete for space even in a short window. |
+| Width 600–999px, width/height < 1.2 | Swipe | Portrait tablets and tall narrow windows get the focused reader. Square windows are included. |
+| Width 600–999px, height ≤ 500px | Swipe | Landscape phones keep the touch rail and can scroll long card bodies. |
+| All other sizes | Desktop | A 1000px viewport always has room for the conventional workspace; medium landscape tablets/windows use it at ratios ≥ 1.2. |
+
+Thus 768×1024 and 844×390 use swipe; 1024×768, 1000×1400 and 900×600 use desktop. Exactly 600px enters the ratio test, exactly 1.2 selects desktop unless the short-screen rule applies, and exactly 1000px selects desktop. These are presentation choices for windows as well as devices: a sufficiently narrow desktop window deliberately gets swipe. The historical desktop queue still collapses below 1200px; navigation, title bar, filters and conventional actions remain available.
+
+On coarse-pointer devices, height-only resize events retain the chosen layout until width or orientation changes, so browser chrome and software keyboards cannot change it. Height-only changes while an editable control is focused also retain it on fine-pointer devices. Explicit `screen.orientation` changes reevaluate geometry. Desktop height resizing otherwise reevaluates the ratio. No `visualViewport` resize listener is used; keyboard/zoom changes to the visual viewport alone do not change presentation. Viewport height can still change the reading surface and scroll area.
+
+`feed-controls.css` scopes the PR #9 distraction-free presentation to swipe. Desktop presentation/controls were recovered from `0397980`, the parent of merge `1dd2a55`; current content, graph gates, scheduling and action logic remain in place. Both presentations use one card DOM, catalog, session, `feedFilter`, learning/browsing state and delegated actions. CSS `display: none` removes the alternate controls from keyboard and accessibility navigation; IDs are not duplicated.
+
+Geometry notifications pause feed intersection observation, dismiss menus/dials (including active pointer capture/haptics), and re-anchor the existing active card on the next frame before observation resumes. A `ResizeObserver` covers workspace width changes such as menu collapse. The feed is not rendered again to switch layout. Reattaching observation to that same card does not rewrite its opened timestamp. Focus moves to the feed if the previously focused control becomes hidden; an open dialog retains focus and returns to the feed on close if its opener became hidden. Layout changes do not write persistent preferences or recall history.
 
 ## Persistent State
 
