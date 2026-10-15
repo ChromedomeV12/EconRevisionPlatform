@@ -41,3 +41,16 @@ test("Revisions, source changes, unknown graphs and private-path leaks fail clos
   assert.throws(() => f.work.project("synthetic", saved.contentHash), /Private file paths/);
   fs.appendFileSync(f.transcript, " "); assert.equal(f.work.validate("synthetic").valid, false);
 });
+
+test("recovery never treats an edited or stale submitted draft as complete", t => {
+  const f = fixture(t);
+  f.work.submit("synthetic");
+  assert.equal(f.work.packet("synthetic").status, "submitted_needs_review");
+  const notes = path.join(f.root, f.packet.evidencePath);
+  const previous = fs.readFileSync(notes);
+  const changed = JSON.parse(previous); changed.concerns.push("A newly discovered unresolved concern."); write(notes, changed);
+  assert.equal(f.work.packet("synthetic").status, "draft");
+  fs.writeFileSync(notes, previous);
+  fs.appendFileSync(f.transcript, " ");
+  assert.equal(f.work.packet("synthetic").status, "draft");
+});

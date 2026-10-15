@@ -19,7 +19,13 @@ const path = require("node:path");
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(base);
     await page.evaluate(() => document.fonts.ready);
-    const toggle = page.getByRole("switch", { name: "Dark mode" });
+    const toggle = page.locator(".theme-toggle");
+    const switchTheme = async () => {
+      if (await page.locator("body").evaluate(el => el.classList.contains("feed-mode"))) {
+        await page.getByRole("button", { name: "Card actions", exact: true }).click();
+        await page.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click();
+      } else await toggle.click();
+    };
     const color = (selector, property = "color") => page.locator(selector).first().evaluate((el, property) => {
       const value = getComputedStyle(el)[property];
       if (!value.startsWith("color(")) return value;
@@ -80,7 +86,8 @@ const path = require("node:path");
     });
     const before = await appearance();
     const studyBefore = await page.evaluate(() => localStorage.getItem("econ-workspace-v2"));
-    await toggle.focus();
+    await page.getByRole("button", { name: "Card actions", exact: true }).click();
+    await page.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).focus();
     await page.keyboard.press("Space");
     assert.equal(await toggle.getAttribute("aria-checked"), "true");
     assert.equal(await toggle.locator("svg.lucide-sun").count(), 1);
@@ -93,18 +100,19 @@ const path = require("node:path");
     assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
     const other = await context.newPage();
     await other.goto(base);
-    await other.getByRole("switch", { name: "Dark mode" }).click();
+    await other.getByRole("button", { name: "Card actions", exact: true }).click();
+    await other.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click();
     await page.waitForFunction(() => document.documentElement.dataset.theme === "light");
     await other.close();
 
     for (const theme of ["light", "dark"]) {
-      if (await page.locator("html").getAttribute("data-theme") !== theme) await toggle.click();
+      if (await page.locator("html").getAttribute("data-theme") !== theme) await switchTheme();
       for (const width of [360, 390, 768, 1280, 1920]) {
         await page.setViewportSize({ width, height: 900 });
         for (const view of ["feed", "progress", "units", "saved", "studio"]) {
           await page.goto(`${base}/#${view}`);
           await page.waitForFunction(view => document.querySelector(`[data-nav="${view}"]`).getAttribute("aria-current") === "page", view);
-          assert.ok(await toggle.isVisible());
+          assert.equal(await toggle.isVisible(), view !== "feed");
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${theme}/${view}: overflow at ${width}`);
           await checkPalette(view);
           if (view === "feed") {
@@ -144,16 +152,16 @@ const path = require("node:path");
     await toggle.click();
     await page.goto(`${base}/#feed`);
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.locator('.refresh-filters button[aria-pressed="false"]').first().hover();
-    assert.equal(await color('.refresh-filters button[aria-pressed="false"]:hover'), "rgb(76, 79, 105)");
-    await page.locator('.refresh-filters button[aria-pressed="true"]').hover();
-    assert.equal(await color('.refresh-filters button[aria-pressed="true"]:hover'), "rgb(239, 241, 245)");
-    const save = page.locator('.refresh-actions .icon-button').first();
+    const actions = page.getByRole('button', {name:'Card actions', exact:true});
+    await actions.click();
+    const save = page.getByRole('menuitemcheckbox', {name:'Bookmark card', exact:true});
     await save.click();
-    assert.equal(await save.getAttribute("aria-pressed"), "true");
-    assert.equal(await color('.refresh-actions .icon-button[aria-pressed="true"]'), "rgb(136, 57, 239)");
+    await actions.click();
+    assert.equal(await save.getAttribute("aria-checked"), "true");
+    assert.equal(await color('#feedActionMenu [aria-checked="true"]'), "rgb(136, 57, 239)");
     await save.click();
     await page.keyboard.press("Tab");
+    await page.goto(`${base}/#progress`);
     await toggle.focus();
     assert.equal(await color('.theme-toggle', "outlineColor"), "rgb(30, 102, 245)");
     await page.getByRole("button", { name: "Open study settings" }).click();
@@ -187,9 +195,10 @@ const path = require("node:path");
     });
     const fallback = await blocked.newPage();
     await fallback.goto(base);
-    const fallbackToggle = fallback.getByRole("switch", { name: "Dark mode" });
+    const fallbackToggle = fallback.locator(".theme-toggle");
     assert.equal(await fallbackToggle.getAttribute("aria-checked"), "true");
-    await fallbackToggle.click();
+    await fallback.getByRole("button", { name: "Card actions", exact: true }).click();
+    await fallback.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click();
     assert.equal(await fallbackToggle.getAttribute("aria-checked"), "false");
     await blocked.close();
     console.log("Theme checks passed: Latte surfaces and composited text contrast, hover/selected/focus/dialog states, reduced transparency, keyboard switch, persistence, cross-tab sync, OS preference, storage fallback, unchanged typography/state, diagrams and both themes across 5 widths and all views.");

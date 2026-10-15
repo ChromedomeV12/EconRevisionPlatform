@@ -22,7 +22,10 @@ const path = require("node:path");
       for (const [width, height] of [[360, 740], [390, 844], [650, 900], [651, 900], [768, 900], [900, 900], [901, 900], [1024, 768], [1199, 900], [1200, 900], [1440, 900]]) {
         await page.setViewportSize({ width, height });
         await page.goto(url);
-        if (await page.locator("html").getAttribute("data-theme") !== theme) await page.getByRole("switch", { name: "Dark mode" }).click();
+        if (await page.locator("html").getAttribute("data-theme") !== theme) {
+          await page.getByRole("button", { name: "Card actions", exact: true }).click();
+          await page.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click();
+        }
         for (const id of ["demand", "price-elasticity"]) {
           const image = page.locator(`img[data-diagram="${id}"]`);
           await image.waitFor({ state: "visible" });
@@ -38,8 +41,8 @@ const path = require("node:path");
           await image.scrollIntoViewIfNeeded();
           const overflow = await page.locator(`[data-point="${id}"] .refresh-body`).evaluate(body => body.scrollHeight - body.clientHeight);
           assert.ok(overflow <= 1, `${id}: inner scroll at ${width}x${height}: ${overflow}`);
-          const actionsBottom = await page.locator(`[data-point="${id}"] footer`).evaluate(footer => footer.getBoundingClientRect().bottom);
-          assert.ok(actionsBottom <= height - (width <= 650 ? 67 : 0), `${id}: actions covered at ${width}x${height}`);
+          const actionsBottom = await page.locator('.feed-rail').evaluate(rail => rail.getBoundingClientRect().bottom);
+          assert.ok(actionsBottom <= height, `${id}: actions covered at ${width}x${height}`);
           await image.screenshot({ path: path.join(out, `${id}-${theme}-${width}.png`) });
           await page.locator(`[data-point="${id}"] button[title="Enlarge diagram"]`).click();
           const enlarged = page.locator("#modal img");

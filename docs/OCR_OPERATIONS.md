@@ -8,7 +8,7 @@ This is an operator entry point, not a replacement for `tools/ocr/README.md` on 
 2. Confirm `.pi/`, `tools/ocr/` and the private corpus have synced. A Git clone alone does not provide them.
 3. Exclude `.ocr-runtime/` on every Syncthing device before setup or cleanup. The synced root is the parent Coding/Dev directory: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` to that folder's Ignore Patterns on each device, preserving existing rules. A nested project `.stignore` is insufficient.
 4. Open Pi 1.0.0 in the project root, review the local extension and reload if it arrived after Pi startup. Use standalone `node` on PATH; never substitute Pi's harness executable.
-5. Read the private tooling README and `.pi/skills/econ-transcription/SKILL.md`. For graphs, also read `.pi/skills/econ-graphs/SKILL.md`.
+5. Read the private tooling README and the `econ-transcription`, `econ-graphs` and `econ-authoring` skills. All three stages use the same session, sequentially.
 
 ## First Run and Resume
 
@@ -37,6 +37,8 @@ Preserve each diagram as an inspected original-PDF crop with provenance and a tr
 
 Accepted transcripts remain durable if graph registration/rendering fails. Graph checkpoints do not advance or rewind OCR page completion.
 
+After graphs, the same OCR command drafts 1-3 swipe points per accepted page, using `ocr_cards` and stable private page tasks. At most THREE card page tasks complete per explicit batch; no extra slash command is needed. New page work is blocked until pending graphs and card drafts are settled. All card submissions remain `submitted_needs_review`; no automatic approval/export/publication. Content-free or already-covered pages need a pinned `no_card_needed` reason, never a resource-failure excuse. See [Content Pipeline](CONTENT_PIPELINE.md).
+
 ## Durable Range and Interruption Recovery
 
 After private code sync and a Pi reload, start a topic range with this Pi command:
@@ -55,7 +57,9 @@ The read-only `ocr_recovery` tool reports actual range progress, the next unfini
 
 Fresh runs receive a small disk-derived reminder; successful compaction adds passive context without triggering a new turn, and failed/aborted compaction records a bounded diagnostic and warns the operator. No startup process, new session, background retry or inference is launched. If compaction itself fails, preserve the failure, wait for the current run to settle, then explicitly continue. Do not fabricate completed work or erase checkpoints to get past the failure.
 
-The new guards prevent page advancement when graph work is pending or the range/batch budget is exhausted. They are workflow checks, not protection against an agent deliberately editing files or bypassing tools with arbitrary shell commands. After compaction, source and render images must actually be read again; a saved inspection flag does not restore model visual context.
+Recovery also reports pending card page tasks and immutable card-history budget. It checks for accepted-but-unqueued diagrams before cards, then finishes graphs and cards before new pages. `/ocr-work` now saves a durable intent too. Explicit continuation upgrades legacy intents to include card backfill within their saved range, without rewriting accepted transcripts. Startup only reads state and never upgrades or starts work.
+
+If card initialization was interrupted, `ocr_cards packet` restores missing templates only. Surviving malformed drafts stay preserved for repair. Exact submitted snapshots avoid duplicates after lost replies; changed source/graph hashes block completion. Do not delete drafts, manifests, snapshots or locks to hide errors, or create another task ID. Only explicit continuation resets budgets. The guards do not protect against an agent deliberately bypassing tools/editing state. After compaction re-read source/render images and private card drafts/notes, not just inspection flags.
 
 Existing free-text runs have no saved range until `/ocr-range` is invoked. Existing incorrect budget-only deferrals still need owner-authorized recovery; these changes do not reopen them automatically. The current compaction token settings are deliberately unchanged: exact provider/Pi failure logs are needed before attributing failures to a token threshold or changing it. Test the recovery helper with `node --test tests/ocr-recovery.test.mjs`.
 

@@ -15,7 +15,7 @@
     search = "",
     studioTab = "create",
     editing = null;
-  let session = null, feedFilter = "all", feedObserver;
+  let session = null, feedFilter = "all", feedObserver, feedControls;
   let refreshState;
   try { refreshState = EconRefresh.load(localStorage, [...EconData.cards, ...state.submissions.filter(s => s.status === "approved")].map(c => c.id)); }
   catch { refreshState = EconRefresh.empty(); }
@@ -99,6 +99,7 @@
     else location.hash = view;
   }
   function openModal(content) {
+    feedControls?.close();
     $("#modalContent").innerHTML = content;
     icons();
     const modal = $("#modal"), contentNode = $("#modalContent");
@@ -134,6 +135,7 @@
         ? hash
         : "feed");
     feedObserver?.disconnect();
+    feedControls?.destroy();
     document.body.classList.toggle("feed-mode", route === "feed");
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === route);
@@ -227,6 +229,7 @@
     const list=feedSelection(), current=list.findIndex(c=>c.id===activeCard()?.id);
     const label=$("#refreshPosition"); if(!label) return;
     label.textContent=`${current+1} / ${list.length}${current===list.length-1 ? " · End of this set" : ""}`;
+    feedControls?.sync(activeCard()?.id);
     $('[data-action="previous"]').disabled=current<=0;
     $('[data-action="next"]').disabled=current>=list.length-1;
     document.querySelectorAll("[data-feed-jump]").forEach(button => {
@@ -242,25 +245,27 @@
   function refreshPoint(card, index, count) {
     const copy = refreshCopy(card), unit = unitOf(card);
     return `<article class="refresh-point" data-point="${escape(card.id)}" aria-label="${index + 1} of ${count}: ${escape(card.topic)}">
-      <div class="refresh-body"><div class="refresh-meta"><span class="refresh-unit">${icon(unit.icon)}${escape(unit.name)}</span><span>${String(index + 1).padStart(2,"0")} / ${String(count).padStart(2,"0")}</span></div>
+      <div class="refresh-body"><div class="refresh-meta"><span class="refresh-unit">${icon(unit.icon)}${escape(unit.name)}</span></div>
         <h2>${escape(copy.headline)}</h2><p class="refresh-summary">${escape(copy.summary)}</p>
         <div class="refresh-art"><div class="visual-label"><span>${escape(card.topic)}</span>${icon("chart-no-axes-combined")}</div><canvas data-concept="${escape(card.id)}" role="img" aria-label="${escape(visualLabel(card))}"></canvas><small>Original illustrative example</small></div>
         ${card.takeaway ? `<p class="refresh-takeaway">${icon("lightbulb")}<span>${escape(card.takeaway)}</span></p>` : ""}
-      </div><footer class="refresh-actions"><button data-action="detail" data-id="${escape(card.id)}">${icon("book-open")}Closer look${icon("arrow-up-right")}</button><div>
-        ${[["save","bookmark","Save point",state.saved.includes(card.id)],["revisit","history","Revisit later",refreshState.revisit.includes(card.id)],["confusing","flag","Flag as confusing",refreshState.confusing.includes(card.id)]].map(([a,s,l,on])=>`<button class="icon-button" data-action="${a}" data-id="${escape(card.id)}" aria-label="${l}" title="${l}" aria-pressed="${on}">${icon(s)}</button>`).join("")}
-      </div></footer></article>`;
+      </div></article>`;
   }
   function renderFeed() {
     feedObserver?.disconnect();
+    feedControls?.destroy();
     const list=feedSelection();
     $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">YOUR DAILY PERSPECTIVE</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
-    ${list.length ? `<div class="refresh-workspace"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div>
+    ${list.length ? `<div class="refresh-workspace"><div class="refresh-canvas"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div><div class="feed-gesture-controls"></div></div>
       <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong class="queue-title"><span class="subject-dot" data-subject="${subjectOf(card)}" title="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}" aria-label="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}"></span>${escape(card.topic)}</strong></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
-      <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
+      <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
     icons(); if(!list.length) return;
     list.forEach(card=>renderConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
     const current=list.find(c=>c.id===activeCard()?.id) || list[0];
     session.index=session.ids.indexOf(current.id);
+    feedControls = EconFeedControls.mount($(".feed-gesture-controls"), { navigate, icons, current: () => {
+      const card = activeCard(); return card && { id: card.id, saved: state.saved.includes(card.id), revisit: refreshState.revisit.includes(card.id), confusing: refreshState.confusing.includes(card.id), filter: feedFilter };
+    } });
     const scroller=$(".refresh-scroll"), node=document.querySelector(`[data-point="${CSS.escape(current.id)}"]`);
     scroller.scrollTo({top:node.offsetTop,behavior:"instant"}); feedPosition();
     feedObserver=new IntersectionObserver(entries=>{
