@@ -1,10 +1,18 @@
 # Architecture Reference
 
+## Swipe Controls
+
+`feed-controls.js` mounts the previous/actions/next rail; `feed-controls.css` defines the portrait reading surface, acrylic action menu and side dial. Both are explicit public preview assets. The swipe view hides workspace headers, navigation strips, feed heading/filters and desktop queue; other views retain them. Card actions, feed selection and appearance remain reachable through the action menu. The dial opens Refresh, Library, Overview, Saved and Studio, with icons inset on its face rather than on its rim.
+
+A tap opens card actions. Holding the center control for 360ms opens the dial; vertical movement selects one view per 46px and release commits it. A hold without movement leaves the dial available for direct selection. Pointer cancellation, lost capture, window blur, hidden document, card change and route rerender dismiss transient controls without navigation. Keyboard users can open Switch view from the menu (or Shift+F10 on the center button), use arrows/Home/End, Enter and Escape. Event listeners/timers are disposed on rerender. The component owns no persisted learning state: actions use existing app handlers, and bookmark/manual revisit never create FSRS reviews.
+
+Touch-driven dial selection changes request an optional 8ms vibration, capped at one request per 50ms. Mouse/keyboard interaction and reduced-motion preference do not trigger vibration. Dismissal/disposal cancels a requested pulse. Missing, denied or throwing Vibration APIs never block navigation; physical feedback is device/browser dependent and unavailable in iOS Safari. Browser tests stub API requests, not physical motor behavior.
+
 ## Runtime
 
 This is a static browser application. There is no application package manifest, build pipeline, backend or database. `index.html` loads relative assets so the same files work at the GitHub Pages project path. `TikTok Econ.html` preserves legacy links through a redirect.
 
-`theme.js` runs in the head before styles to initialize appearance and menu preference. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
+`theme.js` runs in the head before styles to initialize appearance and menu preference. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
 
 Deferred scripts run in document order: vendored Lucide, FSRS and D3, then `graph.js`, legacy `content.js`, `card-model.js`, selected `content/*.js` packs, `content-bootstrap.js`, `learning.js`, `refresh.js`, `decisions.js` and `app.js`. Keep that dependency order. These browser scripts expose globals rather than using a bundler. Several logic modules also export CommonJS interfaces for Node tests.
 

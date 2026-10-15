@@ -16,6 +16,7 @@ Start with `docs/README.md`. Read `CONTRIBUTING.md` for setup, `docs/ARCHITECTUR
 - `content.js`: original sample cards, rubrics and unit metadata. Not teacher verified.
 - `card-model.js`, `content-bootstrap.js`, `content/*.js`: versioned card contract, replaceable repository/provider adapter and modular editorial demo packs. Use `scripts/card-work.cjs` for private drafts, immutable submissions and operator-selected public projections. Read `docs/CONTENT_PIPELINE.md`. Version 1.0.0 requires backend moderation; the current tools provide no authentication.
 - `app.js`: refresh feed, browsing overview, search, bookmarks, local submission and review workflows.
+- `feed-controls.js`, `feed-controls.css`: three-button swipe rail, tap actions and hold/drag view dial. Hide workspace chrome only in the swipe view. Preserve pointer cancellation, keyboard alternatives and existing bookmark/manual-revisit state boundaries. Keep both assets in the preview allowlist.
 - `graph.js`, `graph.css`, `vendor/d3.min.js`: bounded declarative SVG diagrams with pinned D3 scales. Use semantic CSS color tokens. Do not put executable expressions or styles in geometry. Enable the app renderer only for reviewed built-in `graphSpec` content; keep image cards unchanged until reconstruction review.
 - `refresh.js`: independent browsing state, opened timestamps and explicit revisit/confusing preferences.
 - `learning.js`: FSRS scheduling, review logs, local dates, persistence validation and legacy migration.
@@ -101,9 +102,11 @@ Do not normalize names by renaming original source files, accepted crop IDs, ref
 
 ### First-Round Authoring
 
-Run `/author-cards ID BOOK START END COUNT` after OCR/graphs, using the existing Pi model/session. Read `.pi/skills/econ-authoring/SKILL.md`. Limit each batch to 30 source pages and 8 proposed cards. Use one writer and do no authoring at session startup.
+Card drafting is integrated into `/ocr-work`, `/ocr-range` and `/ocr-continue`, not a separate slash command. Read `.pi/skills/econ-authoring/SKILL.md`. `ocr_recovery` selects missing graph registration, pending graphs, then stable per-page card tasks before any new page. `ocr_cards packet/submit/no_card` resumes private authoring in the same single session. Each page yields 1-3 points; at most THREE card page tasks per explicit batch. Manual operator topic packs may still use `card-work init` (30 pages/8 cards maximum). No startup inference.
 
 Keep drafts, concerns and submissions under `private-sources/card-work/`. The agent may validate and submit; it must not review, export, approve or publish. Record owner-authorized selected authored cards/native specifications in `content/README.md`; that authorization does not cover raw source materials. Do not rewind OCR checkpoints to recover authoring. Check teacher review and publication permission separately.
+
+Card recovery derives completion from exact immutable submissions, pinned source/graph hashes and current notes, not summaries or a mutable status flag. Immutable history preserves budgets through compaction/restart. Missing templates can be repaired; surviving malformed drafts and stale manifests need inspection, never wholesale replacement. A content-only no-card decision must be source-pinned and cannot hide resource/context/tool failures or existing drafted/submitted work. Only explicit human continuation resets budgets. Run `node --test tests/card-work.test.cjs tests/ocr-recovery.test.mjs` and the isolated Pi loader smoke test after pipeline changes.
 
 ### Graph Reconstruction
 

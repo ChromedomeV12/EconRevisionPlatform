@@ -26,7 +26,12 @@ function createCardWork(root = path.resolve(__dirname, "..")) {
   const folder = id => { if (typeof id !== "string" || !/^[a-z][a-z0-9-]{0,63}$/.test(id)) throw new Error("Unsafe batch id"); return `${base}/${id}`; };
   function writeNew(relative, value) {
     const file = safe(relative); fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+    const temporary = safe(`${relative}.pending-${crypto.randomUUID()}`);
+    try {
+      fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+      if (fs.existsSync(file)) throw new Error("Existing immutable authoring record");
+      fs.renameSync(temporary, file);
+    } finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
   }
   function withWriter(fn) {
     fs.mkdirSync(safe(base), { recursive: true });
@@ -39,7 +44,9 @@ function createCardWork(root = path.resolve(__dirname, "..")) {
     const history = fs.existsSync(safe(`${dir}/submissions`)) ? fs.readdirSync(safe(`${dir}/submissions`)).filter(n => /^[a-f0-9]{64}\.json$/.test(n)) : [];
     if (history.length > 128) throw new Error("Human archival required for authoring history");
     const currentHash = hash(model.canonical(json(`${dir}/draft.json`)));
-    return { id, status: history.includes(`${currentHash}.json`) ? "submitted_needs_review" : "draft", submittedHashes: history.map(n => n.slice(0, -5)), manifest, draftPath: `${dir}/draft.json`, evidencePath: `${dir}/author-notes.json`,
+    const submitted = history.includes(`${currentHash}.json`) ? json(`${dir}/submissions/${currentHash}.json`) : null;
+    const matches = submitted && submitted.status === "submitted_needs_review" && submitted.contentHash === currentHash && submitted.manifestHash === hash(read(`${dir}/manifest.json`)) && model.canonical(submitted.pack) === model.canonical(json(`${dir}/draft.json`)) && model.canonical(submitted.notes) === model.canonical(json(`${dir}/author-notes.json`)) && validate(id).valid;
+    return { id, status: matches ? "submitted_needs_review" : "draft", contentHash: currentHash, submittedHashes: history.map(n => n.slice(0, -5)), manifest, draftPath: `${dir}/draft.json`, evidencePath: `${dir}/author-notes.json`,
       instructions: "Read the listed accepted transcripts one at a time and the content cautions. Write original, swipe-first explanations, not copied passages or questions. One idea per card. Keep exact source IDs/pages and provisional level. Reference only listed graph IDs. Record source conflicts and uncertainties in private author-notes.json. Validate then submit; never approve, export, publish, commit or edit app code.",
       schemaExample: { id: "your-point-id", revision: 1, unit: "micro", topic: "One topic", title: "Short library title", headline: "One declarative knowledge point", summary: "Immediate explanation, under 480 characters.", notes: "Deeper explanation, assumptions and diagram reading.", takeaway: "One compact distinction", caution: "A relevant misconception", related: [], sources: [{ id: manifest.book, page: manifest.pages[0]?.page }], level: "common-core-provisional", graphId: null } };
   }
@@ -51,6 +58,8 @@ function createCardWork(root = path.resolve(__dirname, "..")) {
       if (fs.existsSync(safe(`${dir}/manifest.json`))) {
         const old = json(`${dir}/manifest.json`);
         if (old.book !== book || old.start !== start || old.end !== end || old.limit !== limit) throw new Error("Existing batch differs; preserve it and choose a new ID");
+        // Manifest is durable first; repair only absent templates after interrupted init.
+        templates(dir, id);
         return packet(id);
       }
       const pages = [], unavailable = [];
@@ -68,9 +77,55 @@ function createCardWork(root = path.resolve(__dirname, "..")) {
         if ((meta.book || "TB-01") === book && meta.pdfPage >= start && meta.pdfPage <= end) graphs[task.id] = { page: meta.pdfPage, draft: task.paths.draft, specSha256: task.specSha256 };
       }
       writeNew(`${dir}/manifest.json`, { schemaVersion: 1, id, book, start, end, limit, pages, unavailable, graphs });
-      writeNew(`${dir}/draft.json`, { schemaVersion: 1, id, title: "Untitled topic pack", cards: [] });
-      writeNew(`${dir}/author-notes.json`, { status: "draft", concerns: [], assumptions: [], sourceConflicts: [], teacherReview: "pending" });
+      templates(dir, id);
       return packet(id);
+    });
+  }
+  function templates(dir, id) {
+    if (!fs.existsSync(safe(`${dir}/draft.json`))) writeNew(`${dir}/draft.json`, { schemaVersion: 1, id, title: "Untitled topic pack", cards: [] });
+    if (!fs.existsSync(safe(`${dir}/author-notes.json`))) writeNew(`${dir}/author-notes.json`, { status: "draft", concerns: [], assumptions: [], sourceConflicts: [], teacherReview: "pending" });
+  }
+  const pageId = (book, page) => {
+    if (!["TB-01", "TB-02"].includes(book) || !Number.isInteger(page) || page < 1 || page > 99999) throw new Error("Invalid authoring page");
+    return `ocr-${book.toLowerCase()}-p${String(page).padStart(5, "0")}-cards`;
+  };
+  function pageState(book, page) {
+    const id = pageId(book, page), dir = folder(id);
+    if (!fs.existsSync(safe(`${dir}/manifest.json`))) return { id, page, status: "uninitialized" };
+    try {
+      const manifest = json(`${dir}/manifest.json`);
+      if (manifest.book !== book || manifest.start !== page || manifest.end !== page || manifest.limit !== 3 || manifest.unavailable.length || manifest.pages.length !== 1) throw new Error("Integrated page manifest differs");
+      for (const source of manifest.pages) if (hash(read(source.transcript)) !== source.sha256) throw new Error("Accepted source changed");
+      const skipFile = `${dir}/no-card.json`;
+      if (fs.existsSync(safe(skipFile))) {
+        const skip = json(skipFile);
+        if (skip.status !== "no_card_needed" || skip.manifestHash !== hash(read(`${dir}/manifest.json`)) || !["front_matter", "no_knowledge_point", "duplicate_coverage"].includes(skip.kind) || typeof skip.reason !== "string" || skip.reason.length < 20 || json(`${dir}/draft.json`).cards.length) throw new Error("Invalid no-card record");
+        return { id, page, status: "no_card_needed", reason: skip.reason, kind: skip.kind };
+      }
+      json(`${dir}/author-notes.json`);
+      const p = packet(id);
+      return { id, page, status: p.status, contentHash: p.contentHash, errors: validate(id).errors };
+    } catch (error) { return { id, page, status: "interrupted_or_stale", errors: [error.message] }; }
+  }
+  function ensurePage(book, page) { return init(pageId(book, page), book, page, page, 3); }
+  function pageHistory(book, page) {
+    const dir = folder(pageId(book, page)), submissions = `${dir}/submissions`;
+    const entries = fs.existsSync(safe(submissions)) ? fs.readdirSync(safe(submissions)).filter(n => /^[a-f0-9]{64}\.json$/.test(n)) : [];
+    if (entries.length > 128) throw new Error("Human archival required for authoring history");
+    if (fs.existsSync(safe(`${dir}/no-card.json`))) entries.push("no-card");
+    return entries;
+  }
+  function noCard(book, page, kind, reason) {
+    if (!["front_matter", "no_knowledge_point", "duplicate_coverage"].includes(kind) || typeof reason !== "string" || reason.trim().length < 20 || reason.length > 2000 || /budget|compaction|context|timeout|browser|tool failure|provider|interrupt/i.test(reason)) throw new Error("No-card needs a content reason; resource/interruption failures remain pending");
+    ensurePage(book, page);
+    return withWriter(() => {
+      const id = pageId(book, page), dir = folder(id), p = packet(id);
+      if (p.submittedHashes.length || json(`${dir}/draft.json`).cards.length) throw new Error("Preserve existing card work; cannot skip a drafted/submitted page");
+      const record = { status: "no_card_needed", kind, reason: reason.trim(), manifestHash: hash(read(`${dir}/manifest.json`)) };
+      const file = `${dir}/no-card.json`;
+      if (!fs.existsSync(safe(file))) writeNew(file, record);
+      if (model.canonical(json(file)) !== model.canonical(record)) throw new Error("Existing no-card decision differs; human recovery required");
+      return pageState(book, page);
     });
   }
   function validate(id, supplied) {
@@ -97,6 +152,7 @@ function createCardWork(root = path.resolve(__dirname, "..")) {
     return withWriter(() => {
       const result = validate(id); if (!result.valid) throw new Error(result.errors.join("; "));
       const dir = folder(id), file = `${dir}/submissions/${result.contentHash}.json`;
+      if (fs.existsSync(safe(`${dir}/no-card.json`))) throw new Error("Existing no-card record requires human recovery before submission");
       const submission = { status: "submitted_needs_review", contentHash: result.contentHash, pack: json(`${dir}/draft.json`), notes: json(`${dir}/author-notes.json`), manifestHash: hash(read(`${dir}/manifest.json`)) };
       const prior = fs.existsSync(safe(`${dir}/submissions`)) ? fs.readdirSync(safe(`${dir}/submissions`)).filter(n => /^[a-f0-9]{64}\.json$/.test(n)) : [];
       if (prior.length >= 128 && !fs.existsSync(safe(file))) throw new Error("Human archival required for authoring history");
@@ -154,7 +210,7 @@ function createCardWork(root = path.resolve(__dirname, "..")) {
       return { id, destination, cards: payload.pack.cards.length, graphs: Object.keys(payload.graphs).length };
     });
   }
-  return { init, packet, validate, submit, review, project, exportPack };
+  return { init, packet, validate, submit, review, project, exportPack, pageId, pageState, pageHistory, ensurePage, noCard };
 }
 if (require.main === module) {
   try {

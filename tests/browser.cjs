@@ -51,31 +51,35 @@ const path = require("node:path");
         Math.abs(scroll.scrollTop - scroll.children[n - 1].offsetTop) <= 2;
     }, n);
     await position(1);
-    await page.locator('[data-feed-jump]').nth(2).click();
+    await page.locator('.refresh-scroll').evaluate(el => el.scrollTo({top:el.children[2].offsetTop,behavior:'instant'}));
     await position(3);
     assert.equal(await page.locator('[data-feed-jump][aria-current]').count(), 1);
     assert.equal(await page.getByRole('progressbar', {name:'Position in this set'}).getAttribute('aria-valuenow'), '3');
-    await page.locator('[data-feed-jump]').first().click();
+    await page.locator('.refresh-scroll').evaluate(el => el.scrollTo({top:0,behavior:'instant'}));
     await position(1);
-    await page.locator('h1').hover();
+    await page.locator('.refresh-summary').first().hover();
     await page.screenshot({path:path.join(out,"feed-desktop.png")});
     const first = page.locator("[data-point]").first();
     await assertVisual(first);
     const savedTopic = await first.locator(".visual-label span").textContent();
-    await first.getByRole("button",{name:"Save point",exact:true}).click();
-    await first.getByRole("button",{name:"Revisit later",exact:true}).click();
-    await first.getByRole("button",{name:"Flag as confusing",exact:true}).click();
-    await first.getByRole("button",{name:"Closer look",exact:true}).click();
+    for (const name of ["Bookmark card", "Revisit manually", "Flag as confusing", "Closer look"]) {
+      await page.getByRole("button", { name: "Card actions", exact: true }).click();
+      await page.locator("#feedActionMenu").getByRole(name === "Closer look" ? "menuitem" : "menuitemcheckbox", { name, exact: true }).click();
+    }
     await page.getByRole("button",{name:"Close dialog"}).click();
     await page.getByRole("button",{name:"Next point",exact:true}).click();await position(2);
     await page.locator(".refresh-scroll").focus();await page.keyboard.press("ArrowDown");await position(3);
     await page.locator(".refresh-scroll").hover();await page.mouse.wheel(0,700);await position(4);
-    await page.locator('[data-action="feed-filter"][data-filter="revisit"]').click();await position(1);
+    await page.getByRole("button", {name:"Card actions", exact:true}).click();
+    await page.getByRole("menuitemradio", {name:"Manual revisit list", exact:true}).click();await position(1);
     assert.equal(await page.locator("[data-point]").count(),1);
-    await page.locator('[data-action="feed-filter"][data-filter="all"]').click();
+    await page.getByRole("button", {name:"Card actions", exact:true}).click();
+    await page.getByRole("menuitemradio", {name:"All points", exact:true}).click();
     assert.equal(await page.locator("[data-point]").count(), await page.evaluate(() => EconData.cards.length));
     assert.equal(await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem("econ-workspace-v2")).logs)),oldReviews);
-    await page.getByRole("link", {name:"Overview",exact:true}).click();
+    await page.getByRole("button", {name:"Card actions", exact:true}).click();
+    await page.getByRole("menuitem", {name:"Switch view", exact:true}).click();
+    await page.getByRole("menuitem", {name:"Overview", exact:true}).click();
     await page.locator(".stats-grid").waitFor();
     assert.match(await page.locator(".stats-grid").innerText(),/Points opened/);
     assert.doesNotMatch(await page.locator(".stats-grid").innerText(),/Recall rate|Cards reviewed/);
@@ -164,7 +168,7 @@ const path = require("node:path");
           view,
         );
         await page.evaluate(() => document.fonts.ready);
-        await page.locator('h1').hover();
+        await page.locator(view === 'feed' ? '.refresh-summary' : 'h1').first().hover();
         assert.ok(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth + 1,
@@ -196,11 +200,11 @@ const path = require("node:path");
         await page.locator('.refresh-scroll').evaluate((el,i)=>el.scrollTo({top:el.children[i].offsetTop,behavior:'instant'}),i);
         await page.waitForFunction(i=>document.querySelector('#refreshPosition').textContent.startsWith((i+1)+' /'),i);
         const metrics=await page.locator('[data-point]').nth(i).evaluate(el=>{
-          const body=el.querySelector('.refresh-body'),actions=el.querySelector('footer').getBoundingClientRect();
+          const body=el.querySelector('.refresh-body'),actions=document.querySelector('.feed-rail').getBoundingClientRect();
           return {extra:body.scrollHeight-body.clientHeight,bottom:actions.bottom};
         });
         if (metrics.extra > 1) layoutFailures.push(`Internal scroll at ${width} card ${i}: ${metrics.extra}`);
-        if (metrics.bottom > height-(width<=650?67:0)) layoutFailures.push(`Actions covered at ${width} card ${i}`);
+        if (metrics.bottom > height) layoutFailures.push(`Actions covered at ${width} card ${i}`);
         await assertVisual(page.locator('[data-point]').nth(i));
         if(i===0||i===4)await page.screenshot({path:path.join(out,`refresh-${i}-${width}.png`)});
       }
@@ -208,6 +212,9 @@ const path = require("node:path");
     assert.deepEqual(layoutFailures, [], "Every point must fit without hiding actions or requiring an inner scroll");
     await page.goto(`${base}/TikTok%20Econ.html#feed`);
     await page.waitForURL("**/index.html#feed");
+    await page.getByRole("button", {name:"Card actions", exact:true}).click();
+    await page.getByRole("menuitem", {name:"Switch view", exact:true}).click();
+    await page.getByRole("menuitem", {name:"Overview", exact:true}).click();
     await page.getByRole("button", { name: "Study settings", exact: true }).click();
     await page.getByRole("button", { name: "Reset reviews", exact: true }).click();
     await page.getByRole("button", { name: "Reset reviews", exact: true }).click();

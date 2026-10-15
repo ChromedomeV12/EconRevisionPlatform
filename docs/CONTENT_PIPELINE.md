@@ -19,13 +19,11 @@ Strings are rendered as escaped text. Validation is neither economics verificati
 
 ## Private Authoring
 
-```text
-/author-cards demand-next TB-01 113 126 4
-```
+Card drafting is integrated into `/ocr-work`, `/ocr-range` and `/ocr-continue`; there is no separate card slash command. The same model/session runs accepted transcription -> graph reconstruction -> private card submission before advancing. `ocr_recovery` returns the next stage from durable artifacts, including legacy accepted pages in the explicitly resumed range.
 
-This project-local Pi command initializes a bounded private pack, then asks the existing model/session to follow `econ-authoring`. At most 30 viewer pages and 8 cards per invocation. It does not run at startup, launch another model, install tools, continue OCR or publish. It is a separate explicit stage after transcription/reconstruction, so it cannot silently spend the OCR batch's inference budget.
+The `ocr_cards` tool initializes/resumes a stable per-page task (for example `ocr-tb-01-p00110-cards`), submits it, or records an explicit content-only no-card decision. Each page yields 1-3 useful points, with at most THREE card page tasks per explicit batch. The page, graph and card budgets survive compaction/restart. No model/session is started automatically, and no card is approved or published by this process.
 
-The equivalent local tooling is:
+Manual operator tooling for larger topic packs remains available (not another Pi command):
 
 ```sh
 node scripts/card-work.cjs init demand-next TB-01 113 126 4
@@ -36,7 +34,9 @@ node scripts/card-work.cjs submit demand-next
 
 The packet lists accepted transcript paths/hashes and completed graph references. Missing pages are listed, not invented or transcribed again. The agent edits only the private draft and `author-notes.json`. It records assumptions, source conflicts and concerns separately from public copy. It must inspect graph labels before linking them to a claim. Submit saves an immutable `submitted_needs_review` snapshot; it does not approve or activate cards.
 
-After interruption, re-read `packet`, the draft/notes and relevant accepted sources. Hashes override summaries. Existing batches are not overwritten; source or graph edits invalidate their provenance. Changed submitted card content requires a higher revision. Do not reset OCR markers or edit accepted transcripts to recover authoring.
+After interruption call `ocr_recovery`, then resume its exact card page with `ocr_cards packet`. Re-read the draft/notes and pinned sources/render images; hashes override summaries. If submit completed before the response was lost, the matching immutable snapshot is already recognized and authoring is not repeated. Card budget counts immutable history, so editing a current draft cannot refund it. Only explicit human continuation resets the baseline.
+
+Initialization repairs absent templates only, never a surviving draft. Malformed/truncated drafts remain visible for careful repair; stale source/graph hashes block submission instead of silently refreshing provenance. Immutable records use temporary-file publication. Pending locks are never cleared automatically. `no_card_needed` requires front matter, no knowledge point or a specific duplicate-coverage explanation; tool/vision/context/provider/budget failures remain pending. A no-card record pins the source manifest and cannot replace existing drafted/submitted work. No OCR marker is rewound or accepted transcript rewritten for card recovery.
 
 ## Human Selection and Projection
 

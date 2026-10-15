@@ -21,6 +21,8 @@ Graph-work tests include source-inventory mismatches, explicit dot/arrow policie
 | Exposure, revisit or confusing preferences | `node --test tests/refresh.test.cjs` |
 | Native graph geometry/private queue | `node --test tests/graph.test.cjs tests/graph-work.test.cjs` |
 | Card contract/private authoring/public projections | `node --test tests/card-model.test.cjs tests/card-work.test.cjs` and `node tests/card-content.cjs` |
+| Swipe action menu and side dial | `node tests/feed-controls.cjs`: five widths/both themes, keyboard navigation, hold/drag/release, browser touch cancellation, active-card targeting, short-screen wrapping and unchanged recall history |
+| Integrated OCR/graph/card interruption recovery | `node --test tests/ocr-recovery.test.mjs` and `node tests/pi-ocr.test.mjs` (privately synced tooling; actual Pi loader required) |
 | Textbook figures and copy | `node --test tests/diagram-data.test.cjs` |
 | Preview assets or privacy boundary | `node --test tests/preview.test.cjs` |
 | Feed, navigation or content layout | `node tests/browser.cjs` |
