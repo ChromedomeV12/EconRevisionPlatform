@@ -73,3 +73,38 @@ jobs:
             fs.rmSync(staging, { recursive: true, force: true });
           }
           NODE
+
+  adaptive-browser:
+    name: adaptive-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install isolated browser tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/econ-browser" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/econ-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Check adaptive layouts and touch controls
+        run: |
+          export PLAYWRIGHT_PATH="$RUNNER_TEMP/econ-browser/node_modules/playwright"
+          node tests/adaptive-state.cjs
+          node tests/adaptive-layout.cjs
+          node tests/feed-controls.cjs
+      - name: Upload layout screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: adaptive-layout-screenshots
+          path: |
+            test-output/adaptive/*.png
+            test-output/feed-controls/*.png
+          if-no-files-found: error
+          retention-days: 30

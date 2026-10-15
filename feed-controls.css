@@ -1,4 +1,9 @@
-.refresh-canvas { position: relative; display: flex; min-width: 0; min-height: 0; padding-right: 62px; }
+/* The desktop presentation comes from PR #9's parent (0397980). */
+.refresh-canvas { position: relative; display: flex; min-width: 0; min-height: 0; }
+:root[data-layout="desktop"] .feed-gesture-controls,
+:root[data-layout="swipe"] .refresh-actions,
+:root[data-layout="swipe"] .desktop-feed-navigation,
+:root[data-layout="swipe"] .desktop-point-position { display: none; }
 .refresh-canvas .refresh-scroll { width: 100%; }
 .feed-gesture-controls { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: clip; }
 .feed-rail { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px; pointer-events: auto; }
@@ -29,44 +34,44 @@
 .is-dial .feed-rail > :not(.feed-multi) { visibility: hidden; }
 .is-dial .feed-rail { z-index: 2; }
 /* The refresh surface has its own navigation; workspace chrome lives in other views. */
-body.feed-mode { padding: 0; }
-body.feed-mode :is(.sidebar, .topbar, .refresh-heading, .refresh-queue) { display: none; }
-body.feed-mode .shell { margin: 0; padding: 0; border: 0; border-radius: 0; min-height: 100dvh; height: 100dvh; }
-:root body.feed-mode main { margin: 0 auto; padding: 0 28px; max-width: 620px; height: 100dvh; min-height: 0; }
-body.feed-mode .refresh-workspace { display: flex; gap: 0; }
-body.feed-mode .refresh-canvas { width: 100%; padding-right: 66px; }
-body.feed-mode .refresh-scroll { border: 0; }
-body.feed-mode .refresh-point { padding-top: 24px; padding-bottom: 12px; }
-body.feed-mode .refresh-body { display: flex; flex-direction: column; justify-content: safe center; padding: 4px 2px; }
-body.feed-mode .refresh-meta { flex-shrink: 0; margin-bottom: 20px; }
-body.feed-mode .refresh-point h2 { font-size: 32px; line-height: 1.2; flex-shrink: 0; }
-body.feed-mode .refresh-summary { font-size: 16px; line-height: 1.65; margin-block: 18px 24px; flex-shrink: 0; }
-body.feed-mode .refresh-art { flex-shrink: 0; }
-body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(180px, 28dvh, 280px); }
-body.feed-mode .refresh-takeaway { flex-shrink: 0; margin-block: 20px 8px; font-size: 13px; }
-body.feed-mode .refresh-controls { width: 100%; max-width: none; padding: 8px 66px max(12px, env(safe-area-inset-bottom)); }
-body.feed-mode .refresh-controls .set-position { font-size: 11px; }
+:root[data-layout="swipe"] body.feed-mode { padding: 0; }
+:root[data-layout="swipe"] body.feed-mode :is(.sidebar, .topbar, .refresh-heading, .refresh-queue) { display: none; }
+:root[data-layout="swipe"] body.feed-mode .shell { margin: 0; padding: 0; border: 0; border-radius: 0; min-height: 100dvh; height: 100dvh; }
+:root[data-layout="swipe"] body.feed-mode main { margin: 0 auto; padding: 0 28px; max-width: 620px; height: 100dvh; min-height: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-workspace { display: flex; gap: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-canvas { width: 100%; padding-right: 66px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-scroll { border: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 24px; padding-bottom: 12px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-body { display: flex; flex-direction: column; justify-content: safe center; padding: 4px 2px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-meta { flex-shrink: 0; margin-bottom: 20px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 32px; line-height: 1.2; flex-shrink: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 16px; line-height: 1.65; margin-block: 18px 24px; flex-shrink: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-art { flex-shrink: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(180px, 28dvh, 280px); }
+:root[data-layout="swipe"] body.feed-mode .refresh-takeaway { flex-shrink: 0; margin-block: 20px 8px; font-size: 13px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-controls { width: 100%; max-width: none; padding: 8px 66px max(12px, env(safe-area-inset-bottom)); }
+:root[data-layout="swipe"] body.feed-mode .refresh-controls .set-position { font-size: 11px; }
 @media (max-width: 600px) {
-  :root body.feed-mode main { padding-inline: 20px 12px; }
-  body.feed-mode .refresh-canvas { padding-right: 54px; }
+  :root[data-layout="swipe"] body.feed-mode main { padding-inline: 20px 12px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-canvas { padding-right: 54px; }
   .feed-rail { right: 0; gap: 14px; }
-  .refresh-canvas .refresh-point { padding-inline: 0; }
-  .refresh-canvas .refresh-meta { gap: 4px; }
-  .refresh-canvas .refresh-meta .refresh-unit { gap: 4px; }
-  .refresh-canvas .refresh-meta span { font-size: 10px; }
-  .refresh-canvas .refresh-body { padding: 0; }
-  .refresh-canvas .refresh-art { padding-inline: 10px; }
-  body.feed-mode .refresh-point h2 { font-size: 28px; }
-  body.feed-mode .refresh-summary { font-size: 15px; line-height: 1.6; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-point { padding-inline: 0; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-meta { gap: 4px; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-meta .refresh-unit { gap: 4px; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-meta span { font-size: 10px; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-body { padding: 0; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-art { padding-inline: 10px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 28px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 15px; line-height: 1.6; }
   .feed-action-menu { right: 50px; }
 }
 @media (max-height: 720px) {
-  body.feed-mode .refresh-point { padding-top: 16px; }
-  body.feed-mode .refresh-meta { margin-bottom: 12px; }
-  body.feed-mode .refresh-point h2 { font-size: 24px; }
-  body.feed-mode .refresh-summary { font-size: 14px; line-height: 1.5; margin-block: 12px 16px; }
-  body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 160px; }
-  body.feed-mode .refresh-takeaway { margin-top: 12px; font-size: 12px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 16px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-meta { margin-bottom: 12px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 24px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 14px; line-height: 1.5; margin-block: 12px 16px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 160px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-takeaway { margin-top: 12px; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .feed-dial button { transition: none; } }
 @media (prefers-reduced-transparency: reduce) { .feed-rail .icon-button, .feed-action-menu, .feed-dial-ring { background: var(--panel); backdrop-filter: none; } .feed-rail .icon-button.feed-multi { background: var(--accent); } }

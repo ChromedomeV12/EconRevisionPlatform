@@ -8,7 +8,7 @@ const { createServer } = require("../scripts/serve.cjs");
   try {
     browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
     const out = path.join(__dirname, "../test-output/feed-controls"); fs.mkdirSync(out, { recursive: true });
-    for (const theme of ["light", "dark"]) for (const width of [360, 390, 600, 1024, 1440]) {
+    for (const theme of ["light", "dark"]) for (const width of [360, 390, 600, 768, 900]) {
       const context = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 900 }, reducedMotion: "reduce" });
       const page = await context.newPage(), errors = []; page.on("pageerror", error => errors.push(error.message));
       await page.goto(base); await page.evaluate(theme => { localStorage.setItem("econ-theme-v1", theme); document.documentElement.dataset.theme = theme; }, theme);

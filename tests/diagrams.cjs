@@ -23,8 +23,9 @@ const path = require("node:path");
         await page.setViewportSize({ width, height });
         await page.goto(url);
         if (await page.locator("html").getAttribute("data-theme") !== theme) {
-          await page.getByRole("button", { name: "Card actions", exact: true }).click();
-          await page.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click();
+          if (await page.locator(".theme-toggle").isVisible()) await page.locator(".theme-toggle").click();
+          else { await page.getByRole("button", { name: "Card actions", exact: true }).click();
+          await page.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click(); }
         }
         for (const id of ["demand", "price-elasticity"]) {
           const image = page.locator(`img[data-diagram="${id}"]`);
@@ -41,7 +42,7 @@ const path = require("node:path");
           await image.scrollIntoViewIfNeeded();
           const overflow = await page.locator(`[data-point="${id}"] .refresh-body`).evaluate(body => body.scrollHeight - body.clientHeight);
           assert.ok(overflow <= 1, `${id}: inner scroll at ${width}x${height}: ${overflow}`);
-          const actionsBottom = await page.locator('.feed-rail').evaluate(rail => rail.getBoundingClientRect().bottom);
+          const actionsBottom = await page.evaluate(id => (document.documentElement.dataset.layout === 'swipe' ? document.querySelector('.feed-rail') : document.querySelector(`[data-point="${id}"] footer`)).getBoundingClientRect().bottom, id);
           assert.ok(actionsBottom <= height, `${id}: actions covered at ${width}x${height}`);
           await image.screenshot({ path: path.join(out, `${id}-${theme}-${width}.png`) });
           await page.locator(`[data-point="${id}"] button[title="Enlarge diagram"]`).click();

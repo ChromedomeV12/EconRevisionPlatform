@@ -50,9 +50,9 @@ const root = path.resolve(__dirname, "..");
     const spec = fixture();
     for (const status of ["draft", "reviewed"]) {
       spec.review = { status, reviewer: status === "reviewed" ? "Synthetic test reviewer" : null };
-      await page.route("**/content.js", async route => {
+      await page.route("**/content-bootstrap.js", async route => {
         const response = await route.fetch();
-        await route.fulfill({ response, body: `${await response.text()}\nEconData.cards[0].graphSpec = ${JSON.stringify(spec)};` });
+        await route.fulfill({ response, body: `${await response.text()}\nEconData.cards = [{ ...EconData.cards[0], graphSpec: ${JSON.stringify(spec)} }];` });
       });
       await page.goto(appBase);
       await page.locator(".refresh-scroll").waitFor();
@@ -61,7 +61,7 @@ const root = path.resolve(__dirname, "..");
         assert.equal(await page.locator("[data-point]").first().locator("canvas").isVisible(), false);
         assert.equal(await page.locator("svg[data-graph]").getAttribute("role"), "img");
       }
-      await page.unroute("**/content.js");
+      await page.unroute("**/content-bootstrap.js");
     }
     assert.deepEqual(errors, []);
     const manifest = await capture("demand", temporary);
