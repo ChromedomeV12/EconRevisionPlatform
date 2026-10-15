@@ -95,6 +95,7 @@ jobs:
       - name: Check adaptive layouts and touch controls
         run: |
           export PLAYWRIGHT_PATH="$RUNNER_TEMP/econ-browser/node_modules/playwright"
+          node tests/adaptive-state.cjs
           node tests/adaptive-layout.cjs
           node tests/feed-controls.cjs
       - name: Upload layout screenshots

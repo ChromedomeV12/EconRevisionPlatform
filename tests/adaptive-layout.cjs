@@ -38,6 +38,7 @@ async function resize(page, size) {
       await point.getByRole('button',{name:'Save point',exact:true}).click();
       await point.getByRole('button',{name:'Revisit later',exact:true}).click();
       await page.locator('.refresh-filters [data-filter="saved"]').click();
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const before=await page.evaluate(()=>[localStorage.getItem('econ-workspace-v2'),localStorage.getItem('econ-refresh-v1')]);
       await page.screenshot({path:path.join(out,`desktop-${theme}.png`)});
       // Card nodes survive every switch, as do explicit filters and persisted data.

@@ -245,6 +245,14 @@
       progress.setAttribute("aria-valuenow", String(current + 1));
     }
   }
+  function syncCardPreferences(id) {
+    for (const [action, selected] of [["save", state.saved.includes(id)], ["revisit", refreshState.revisit.includes(id)], ["confusing", refreshState.confusing.includes(id)]]) {
+      document.querySelectorAll(`[data-action="${action}"][data-id="${CSS.escape(id)}"]`).forEach(control => {
+        const attribute = control.getAttribute("role") === "menuitemcheckbox" ? "aria-checked" : "aria-pressed";
+        control.setAttribute(attribute, String(selected));
+      });
+    }
+  }
   function refreshPoint(card, index, count) {
     const copy = refreshCopy(card), unit = unitOf(card);
     return `<article class="refresh-point" data-point="${escape(card.id)}" aria-label="${index + 1} of ${count}: ${escape(card.topic)}">
@@ -260,6 +268,8 @@
     feedObserver?.disconnect();
     feedControls?.destroy();
     feedSizeObserver.disconnect();
+    cancelAnimationFrame(geometryFrame);
+    geometryCard = null;
     const list=feedSelection();
     $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">YOUR DAILY PERSPECTIVE</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
     ${list.length ? `<div class="refresh-workspace"><div class="refresh-canvas"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div><div class="feed-gesture-controls"></div></div>
@@ -275,10 +285,14 @@
     feedSizeObserver.disconnect();
     const scroller=$(".refresh-scroll"), node=document.querySelector(`[data-point="${CSS.escape(current.id)}"]`);
     scroller.scrollTo({top:node.offsetTop,behavior:"instant"}); feedPosition();
+    // The first visible card of a newly rendered feed is a visit, even if the
+    // initial ResizeObserver delivery re-anchors it before intersection arrives.
+    let visitPending = true;
     feedObserver=new IntersectionObserver(entries=>{
       for(const entry of entries) if(entry.isIntersecting && entry.intersectionRatio>=.65 && entry.target.isConnected && route==="feed") {
         const id=entry.target.dataset.point;session.index=session.ids.indexOf(id);feedPosition();
-        if(!document.hidden && (id !== geometryCard || !refreshState.opened[id])){EconRefresh.open(refreshState,id);saveRefresh();}
+        if(!document.hidden && (visitPending || id !== geometryCard || !refreshState.opened[id])){EconRefresh.open(refreshState,id);saveRefresh();}
+        visitPending = false;
         geometryCard = null;
       }
     },{root:scroller,threshold:.65});
@@ -876,7 +890,7 @@
         : [...state.saved, id];
       const persisted = save();
       if (route === "feed") {
-        target.setAttribute("aria-pressed", String(state.saved.includes(id)));
+        syncCardPreferences(id);
         if (feedFilter === "saved" && !state.saved.includes(id)) renderFeed();
       } else renderLibraryResults();
       if (persisted)
@@ -893,7 +907,7 @@
     }
     if (action === "revisit" || action === "confusing") {
       EconRefresh.toggle(refreshState,action,id); saveRefresh();
-      target.setAttribute("aria-pressed", String(refreshState[action].includes(id)));
+      syncCardPreferences(id);
       $("#navDue").textContent=refreshState.revisit.length;
       if(feedFilter==="revisit" && action==="revisit") renderFeed();
       toast(refreshState[action].includes(id) ? (action==="revisit" ? "Set aside to revisit" : "Flagged as confusing") : "Removed");
