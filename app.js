@@ -279,6 +279,7 @@
       for(const entry of entries) if(entry.isIntersecting && entry.intersectionRatio>=.65 && entry.target.isConnected && route==="feed") {
         const id=entry.target.dataset.point;session.index=session.ids.indexOf(id);feedPosition();
         if(!document.hidden && (id !== geometryCard || !refreshState.opened[id])){EconRefresh.open(refreshState,id);saveRefresh();}
+        geometryCard = null;
       }
     },{root:scroller,threshold:.65});
     scroller.querySelectorAll("[data-point]").forEach(el=>feedObserver.observe(el));
