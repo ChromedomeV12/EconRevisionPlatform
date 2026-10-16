@@ -76,20 +76,58 @@
   }
   function createRepository(initialPacks = [], graphs = {}) {
     let packs = [];
-    const replace = next => {
+    let registry = JSON.parse(JSON.stringify(graphs));
+    let reloadQueue = Promise.resolve();
+    const graphValidator = () => {
+      const global = typeof globalThis !== "undefined" ? globalThis : null;
+      if (global && global.EconGraphs && typeof global.EconGraphs.validate === "function") return global.EconGraphs.validate.bind(global.EconGraphs);
+      if (typeof require === "function") { try { return require("./graph.js").validate; } catch (_) { return null; } }
+      return null;
+    };
+    const stageGraphs = next => {
+      if (typeof next !== "object" || next === null || Array.isArray(next) || !plainJson(next) || Object.keys(next).length > 50) throw new Error("Invalid graph snapshot");
+      const validate = graphValidator();
+      if (!validate) throw new Error("Graph validator unavailable");
+      const copy = {};
+      for (const id of Object.keys(next)) {
+        const spec = next[id];
+        const result = validate(spec);
+        if (!result.valid) throw new Error(`Invalid graph ${id}: ${result.errors.join("; ")}`);
+        if (spec.id !== id) throw new Error(`Graph key mismatch for ${id}`);
+        if (spec.review.status !== "reviewed" || typeof spec.review.reviewer !== "string" || !spec.review.reviewer.trim()) throw new Error(`Graph ${id} requires a reviewed status and nonempty reviewer`);
+        copy[id] = JSON.parse(JSON.stringify(spec));
+      }
+      return copy;
+    };
+    const replace = (next, nextGraphs = null) => {
       if (!plainJson(next) || !Array.isArray(next) || next.length > 50) throw new Error("Invalid pack catalog");
       const seen = new Set();
       const copy = JSON.parse(JSON.stringify(next));
+      const live = nextGraphs === null ? registry : nextGraphs;
       for (const pack of copy) {
         const result = validatePack(pack); if (!result.valid) throw new Error(result.errors.join("; "));
-        for (const card of pack.cards) { if (seen.has(card.id)) throw new Error(`Duplicate catalog card ${card.id}`); seen.add(card.id); runtimeCard(card, graphs); }
+        for (const card of pack.cards) { if (seen.has(card.id)) throw new Error(`Duplicate catalog card ${card.id}`); seen.add(card.id); runtimeCard(card, live); }
       }
+      for (const pack of packs) for (const card of pack.cards) if (!seen.has(card.id)) throw new Error(`Refresh dropped canonical card ${card.id}`);
       packs = copy;
+      if (nextGraphs !== null) registry = nextGraphs;
     };
     replace(initialPacks);
-    return Object.freeze({ list: () => packs.flatMap(p => p.cards.map(c => runtimeCard(c, graphs))),
+    return Object.freeze({ list: () => packs.flatMap(p => p.cards.map(c => JSON.parse(JSON.stringify(runtimeCard(c, registry))))),
       catalog: () => JSON.parse(JSON.stringify(packs)),
-      async reload(provider) { const next = await provider.listPacks(); replace(next); return this.list(); } });
+      reload(provider) {
+        reloadQueue = reloadQueue.then(async () => {
+          if (!provider || typeof provider.listPacks !== "function") throw new Error("Provider must implement listPacks()");
+          const nextPacks = await provider.listPacks();
+          let stagedGraphs = null;
+          if (typeof provider.listGraphs === "function") stagedGraphs = stageGraphs(await provider.listGraphs(nextPacks));
+          replace(nextPacks, stagedGraphs);
+          return this.list();
+        });
+        const run = reloadQueue;
+        reloadQueue = reloadQueue.catch(() => undefined);
+        return run;
+      } });
   }
   return Object.freeze({ validateCard, validatePack, canonical, runtimeCard, createRepository });
 });
