@@ -132,13 +132,14 @@
     const hash = location.hash.slice(1).split("/")[0];
     route =
       alias[hash] ||
-      (["progress", "feed", "units", "saved", "studio"].includes(hash)
+      (["welcome", "progress", "feed", "units", "saved", "studio"].includes(hash)
         ? hash
-        : "feed");
+        : "welcome");
     feedObserver?.disconnect();
     feedControls?.destroy();
     feedSizeObserver.disconnect();
     cancelAnimationFrame(geometryFrame);
+    document.body.classList.toggle("welcome-mode", route === "welcome");
     document.body.classList.toggle("feed-mode", route === "feed");
     document.querySelectorAll("[data-nav]").forEach((a) => {
       a.classList.toggle("active", a.dataset.nav === route);
@@ -146,7 +147,8 @@
       else a.removeAttribute("aria-current");
     });
     const labels = {
-      progress: "Overview",
+      welcome: "Welcome",
+      progress: "Dashboard",
       feed: "Refresh",
       units: "Topic library",
       saved: "Saved cards",
@@ -156,6 +158,7 @@
     document.title = `${labels[route]} / Econ`;
     $("#navDue").textContent = refreshState.revisit.length;
     $("#navDue").title = "Points set aside to revisit";
+    if (route === "welcome") renderWelcome();
     if (route === "progress") renderDashboard();
     if (route === "units" || route === "saved") renderLibrary();
     if (route === "feed") {
@@ -170,17 +173,49 @@
     if (route === "studio") renderStudio();
     icons();
   }
+  function studyIllustration() {
+    return `<div class="study-illustration" aria-hidden="true"><div class="illustration-window"><div class="window-dots"><span></span><span></span><span></span></div><svg viewBox="0 0 180 100" fill="none"><path d="M18 10V84H168" class="illustration-axis"/><path d="M30 20L153 75" class="illustration-demand"/><path d="M30 76L153 18" class="illustration-supply"/><circle cx="91" cy="48" r="6" class="illustration-point"/></svg></div><span class="illustration-note">${icon("lightbulb")} A new perspective</span></div>`;
+  }
+  function heroDiagrams() {
+    return `<div class="hero-diagrams">
+      <figure class="hero-diagram externality-diagram"><figcaption><span>MICROECONOMICS</span>Negative externality</figcaption><svg viewBox="0 0 240 210" role="img" aria-label="Negative production externality: MSC lies above MPC, so socially efficient output Qs is below market output Qm.">
+        <path class="hero-axis" d="M40 30V170H211"/><text class="hero-axis-label" x="12" y="22">Cost / benefit</text><text class="hero-axis-label" x="205" y="195">Q</text>
+        <path class="hero-guide" d="M108 93V170M137 114V170"/><path class="hero-welfare" d="M108 93L137 114V79Z"/>
+        <path class="hero-blue-line" d="M55 55L195 155"/><path class="hero-private-line" d="M55 155L195 85"/><path class="hero-purple-line" d="M55 120L195 50"/>
+        <text class="hero-blue-label" x="201" y="159">D</text><text class="hero-private-label" x="191" y="80">MPC</text><text class="hero-purple-label" x="191" y="44">MSC</text><text class="hero-axis-label" x="100" y="189">Qs</text><text class="hero-axis-label" x="130" y="189">Qm</text>
+      </svg></figure>
+      <figure class="hero-diagram aggregate-diagram"><figcaption><span>MACROECONOMICS</span>Aggregate demand & supply</figcaption><svg viewBox="0 0 240 210" role="img" aria-label="Aggregate demand slopes downward and short-run aggregate supply slopes upward, intersecting at equilibrium price level Pe and real output Ye.">
+        <path class="hero-axis" d="M40 30V170H211"/><text class="hero-axis-label" x="12" y="22">Price level</text><text class="hero-axis-label" x="170" y="205">Real GDP</text>
+        <path class="hero-guide" d="M40 101H122V170"/><path class="hero-blue-line" d="M55 55L195 150"/><path class="hero-purple-line" d="M55 150L195 48"/><circle class="hero-equilibrium" cx="122" cy="101" r="4"/>
+        <text class="hero-blue-label" x="198" y="156">AD</text><text class="hero-purple-label" x="184" y="40">SRAS</text><text class="hero-axis-label" x="16" y="105">Pe</text><text class="hero-axis-label" x="115" y="189">Ye</text>
+      </svg></figure>
+      <figure class="hero-diagram ppc-diagram"><figcaption><span>CHOICE & SCARCITY</span>Production possibilities</figcaption><svg viewBox="0 0 240 210" role="img" aria-label="A bowed-out production possibilities curve shows the trade-off between two goods. An outward shift represents increased productive capacity.">
+        <path class="hero-axis" d="M40 30V170H211"/><text class="hero-axis-label" x="12" y="22">Good Y</text><text class="hero-axis-label" x="177" y="195">Good X</text>
+        <path class="hero-blue-line" d="M40 65C115 65 162 105 172 170"/><path class="hero-purple-line" d="M40 40C136 40 192 94 202 170"/>
+        <text class="hero-blue-label" x="83" y="108">PPC₁</text><text class="hero-purple-label" x="153" y="61">PPC₂</text>
+      </svg></figure>
+      <figure class="hero-diagram demand-shift-diagram"><figcaption><span>MARKETS & CHOICES</span>A shift in demand</figcaption><svg viewBox="0 0 240 210" role="img" aria-label="Demand shifts right from D1 to D2 with supply unchanged, increasing equilibrium price and quantity.">
+        <path class="hero-axis" d="M40 30V170H211"/><text class="hero-axis-label" x="12" y="22">Price</text><text class="hero-axis-label" x="201" y="195">Q</text>
+        <path class="hero-blue-line" d="M50 60L165 155"/><path class="hero-private-line" d="M83 40L198 135"/><path class="hero-purple-line" d="M55 153L194 45"/>
+        <text class="hero-blue-label" x="157" y="168">D₁</text><text class="hero-blue-label" x="198" y="144">D₂</text><text class="hero-purple-label" x="200" y="43">S</text>
+      </svg></figure>
+    </div>`;
+  }
+  function renderWelcome() {
+    $("#main").innerHTML = `<section class="welcome-hero"><span class="eyebrow">YOUR ECONOMICS STUDY SPACE</span><h1>Understand the ideas.<br>See the bigger picture.</h1><p>Make sense of markets, choices and the world around you.<br> One clear explanation at a time.</p><a class="btn primary hero-cta" href="#feed">Start learning ${icon("arrow-right")}</a><a class="hero-secondary" href="#progress">Go to your dashboard</a>${heroDiagrams()}</section><section class="welcome-features" aria-label="Ways to learn"><a class="welcome-card" href="#feed"><div class="welcome-card-heading"><h2>Refresh your thinking</h2>${icon("arrow-up-right")}</div><p>Explore one economic idea, with a clear explanation and a useful visual.</p><div class="feature-preview" aria-hidden="true"><span>YOUR DAILY PERSPECTIVE</span><strong>Why do markets fail?</strong>${studyIllustration()}</div></a><a class="welcome-card" href="#units"><div class="welcome-card-heading"><h2>Connect the concepts</h2>${icon("arrow-up-right")}</div><p>Find your way through microeconomics, macroeconomics and the global economy.</p><div class="feature-preview preview-topics" aria-hidden="true">${units.slice(1).map(u=>`<div>${icon(u.icon)}<span>${u.name}</span>${icon("arrow-right")}</div>`).join("")}</div></a><a class="welcome-card" href="#saved"><div class="welcome-card-heading"><h2>Keep what matters</h2>${icon("arrow-up-right")}</div><p>Save a useful idea. Set a point aside. Return when you want another look.</p><div class="feature-preview preview-saved" aria-hidden="true">${icon("bookmark")}<strong>Your next lightbulb moment.</strong><span>A personal collection of ideas.</span></div></a><span class="feature-arc" aria-hidden="true"></span></section><div class="welcome-footnote">Built for independent IB Economics revision. Sample content, not teacher verified.</div><button class="help-button" data-action="help" aria-label="Open help">${icon("circle-help")}</button>`;
+  }
   function renderDashboard() {
     const all = cards();
     const opened = all.filter(c => refreshState.opened[c.id]);
     const today = opened.filter(c => L.dayKey(refreshState.opened[c.id]) === L.dayKey()).length;
     const stat = (label, value, symbol) => `<div class="stat"><div class="stat-top"><span class="stat-symbol">${icon(symbol)}</span>${label}</div><strong class="stat-value">${value}</strong></div>`;
-    $("#main").innerHTML = `${heading("Your overview", "Browsing activity, not a measure of recall.", button("Continue refreshing", "start", "play"))}
-      <section class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</section>
-      <section><div class="section-heading"><h2>Your topics</h2><a class="text-button" href="#units">Topic library ${icon("arrow-up-right")}</a></div><div class="topic-grid">${units.map(u => {
+    $("#main").innerHTML = `${heading("Your learning starts here.", "A little curiosity. A clearer view of economics.")}
+      <section class="dashboard-feature"><div class="section-heading"><h2>A fresh perspective</h2><span class="subtle">IB Economics</span></div><div class="feature-banner"><div><span class="eyebrow">ONE IDEA AT A TIME</span><h2>Big ideas. Made clearer.</h2><p>Connect the theory to the world around you. Explore concise explanations and diagrams, then save what you want to revisit.</p><a class="text-button" href="#feed">Continue refreshing ${icon("arrow-right")}</a></div>${studyIllustration()}</div></section>
+      <section class="learning-topics"><div class="section-heading"><h2>Start learning</h2><a class="text-button" href="#units">View all topics ${icon("arrow-right")}</a></div><div class="learning-context"><p>Explore <a href="#units">IB Economics</a>, one concept at a time.</p><span>Choose a topic to begin</span></div><div class="topic-grid">${units.map(u => {
         const list=all.filter(c=>c.unit===u.id), seen=list.filter(c=>refreshState.opened[c.id]).length;
-        return `<a href="#units" class="topic-card" data-unit-link="${u.id}"><img class="topic-photo" src="${u.image}" alt="${u.name} topic photograph"/><div class="topic-info"><span class="eyebrow">UNIT ${u.number}</span><h3>${u.name}</h3><p>${u.description}</p><div class="topic-meta"><span>${list.length} points</span><span>${seen} opened</span></div></div></a>`;
+        return `<a href="#units" class="topic-card" data-unit-link="${u.id}"><div class="course-strip">${icon(u.icon)} UNIT ${u.number} · ECONOMICS</div><div class="topic-info"><h3>${u.name}</h3><p>${u.description}</p><div class="course-detail">${icon("layers-2")} ${list.length} knowledge points</div><div class="topic-meta"><span>${seen} opened</span><span>Explore ${icon("arrow-right")}</span></div></div></a>`;
       }).join("")}</div></section>
+      <section class="activity-section"><div class="section-heading"><h2>Your learning, at a glance</h2><span class="subtle">Browsing activity, not recall</span></div><div class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</div></section>
       <div class="overview-bottom"><section class="refresh-overview-list"><div class="section-heading"><h2>Recently opened</h2><span class="subtle">Your browsing</span></div>${opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id])).slice(0,4).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon(unitOf(c).icon)}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">Your opened points will appear here.</p>'}</section>
       <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon("history")}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section></div>`;
   }
@@ -850,6 +885,7 @@
     const target = event.target.closest("[data-action]");
     if (!target || target.disabled) return;
     const { action, id } = target.dataset;
+    if (action === "help") openModal(`<div class="detail-heading"><h2>Your study space</h2>${closeButton()}</div><p class="detail-answer">Start with Refresh to explore one idea at a time. Use the topic library to find a concept, or save cards to return to them later.</p><div class="detail-section"><h3>Your progress stays here</h3><p>Saved cards and browsing activity are stored on this device. Browsing is not a test of recall. Use Study settings to export your data.</p></div><div class="dialog-actions">${button("Open study settings", "settings", "settings-2")}</div>`);
     if (action === "close") $("#modal").close();
     if (action === "start") {
       feedFilter = "all";

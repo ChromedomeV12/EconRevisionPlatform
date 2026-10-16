@@ -3,24 +3,51 @@
   const menuKey = "econ-menu-hidden-v1";
   let menuHidden = false;
   try { menuHidden = localStorage.getItem(menuKey) === "true"; } catch { /* Optional preference. */ }
-  document.documentElement.dataset.menuHidden = String(menuHidden);
-
+  const narrow = matchMedia("(max-width: 1023px)");
   function applyMenu() {
-    document.documentElement.dataset.menuHidden = String(menuHidden);
-    const menu = document.getElementById("workspaceMenu");
+    const menu = document.getElementById("workspaceMenu"), drawer = document.getElementById("mobileMenu");
     const toggle = document.querySelector('[data-action="menu-toggle"]');
-    if (!menu || !toggle) return;
-    menu.hidden = menuHidden;
-    toggle.setAttribute("aria-expanded", String(!menuHidden));
-    toggle.setAttribute("aria-label", menuHidden ? "Show menu" : "Hide menu");
-    toggle.title = menuHidden ? "Show menu" : "Hide menu";
+    if (!menu || !drawer || !toggle) return;
+    if (narrow.matches) {
+      if (menu.parentElement !== drawer) drawer.append(menu);
+      menu.hidden = false;
+      document.documentElement.dataset.menuHidden = "false";
+      toggle.setAttribute("aria-controls", "mobileMenu");
+      toggle.setAttribute("aria-expanded", String(drawer.open));
+      toggle.setAttribute("aria-label", drawer.open ? "Close menu" : "Show menu");
+    } else {
+      if (drawer.open) drawer.close();
+      document.querySelector(".workspace-layout").prepend(menu);
+      menu.hidden = menuHidden;
+      document.documentElement.dataset.menuHidden = String(menuHidden);
+      toggle.setAttribute("aria-controls", "workspaceMenu");
+      toggle.setAttribute("aria-expanded", String(!menuHidden));
+      toggle.setAttribute("aria-label", menuHidden ? "Show menu" : "Hide menu");
+    }
+    toggle.title = toggle.getAttribute("aria-label");
   }
-  document.addEventListener("DOMContentLoaded", applyMenu);
-  document.addEventListener("click", event => {
-    if (!event.target.closest('[data-action="menu-toggle"]')) return;
-    menuHidden = !menuHidden;
+  document.addEventListener("DOMContentLoaded", () => {
     applyMenu();
-    try { localStorage.setItem(menuKey, String(menuHidden)); } catch { /* Works without storage. */ }
+    const drawer = document.getElementById("mobileMenu");
+    drawer.addEventListener("close", applyMenu);
+    drawer.addEventListener("click", event => {
+      const r = drawer.getBoundingClientRect();
+      if (event.target === drawer && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) drawer.close();
+    });
+  });
+  narrow.addEventListener("change", applyMenu);
+  document.addEventListener("click", event => {
+    const drawer = document.getElementById("mobileMenu");
+    if (event.target.closest('[data-action="menu-close"]') || (event.target.closest('#workspaceMenu a, #workspaceMenu [data-action="settings"]') && drawer.open)) drawer.close();
+    if (!event.target.closest('[data-action="menu-toggle"]')) return;
+    if (narrow.matches) {
+      if (drawer.open) drawer.close(); else drawer.showModal();
+      applyMenu();
+    } else {
+      menuHidden = !menuHidden;
+      applyMenu();
+      try { localStorage.setItem(menuKey, String(menuHidden)); } catch { /* Optional preference. */ }
+    }
     window.dispatchEvent(new Event("resize"));
   });
 

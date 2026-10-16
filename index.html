@@ -34,11 +34,26 @@
   </head>
   <body class="feed-mode">
     <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <div class="global-header">
+        <a class="global-brand" href="#welcome" aria-label="Econ introduction"><span class="brand-mark">e.</span>econ<span class="brand-period">.</span></a>
+        <nav class="global-nav" aria-label="Main navigation">
+          <a href="#progress" data-nav="progress">My dashboard</a>
+          <a href="#units" data-nav="units">Topic library</a>
+          <a href="#studio" data-nav="studio">Card studio <span class="new-label">Create</span></a>
+        </nav>
+        <div class="header-tools">
+          <button class="icon-button menu-toggle" type="button" data-action="menu-toggle" aria-controls="workspaceMenu" aria-expanded="true" aria-label="Hide menu" title="Hide menu"><i data-lucide="panel-left" aria-hidden="true"></i></button>
+          <button class="search-trigger" data-action="search" aria-label="Find a topic"><i data-lucide="search"></i><span>Search</span></button>
+          <button class="icon-button theme-toggle" data-action="theme-toggle" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch to dark mode"><i data-lucide="moon"></i></button>
+          <button class="icon-button" data-action="settings" aria-label="Open study settings" title="Study settings"><i data-lucide="settings-2"></i></button>
+          <a class="btn primary header-cta" href="#feed">Start learning <i data-lucide="arrow-right"></i></a>
+        </div>
+      </div>
+    </header>
+    <div class="workspace-layout">
     <aside class="sidebar" id="workspaceMenu">
-      <a class="brand" href="#feed" aria-label="Econ refresh feed"
-        ><span class="brand-mark">e.</span
-        ><span>econ<span class="brand-period">.</span></span></a
-      >
+      <button class="icon-button drawer-close" data-action="menu-close" aria-label="Close menu"><i data-lucide="x"></i></button>
       <div class="course-label">
         <span class="course-icon">IB</span>
         <div><strong>Economics</strong><small>Diploma Programme</small></div>
@@ -62,6 +77,7 @@
           ><i data-lucide="square-pen"></i><span>Card studio</span></a
         >
       </nav>
+      <div class="sidebar-study-card"><span class="eyebrow">A LITTLE, OFTEN</span><h3>Make room for an idea.</h3><p>A clear explanation. A useful diagram. A new perspective.</p><a class="btn primary" href="#feed">Continue learning <i data-lucide="arrow-right"></i></a></div>
       <div class="sidebar-bottom">
         <div class="workspace-status">
           <span class="status-dot"></span>Personal workspace<small
@@ -80,28 +96,15 @@
       </div>
     </aside>
     <div class="shell">
-      <header class="topbar">
-        <div class="topbar-leading">
-          <button class="icon-button menu-toggle" type="button" data-action="menu-toggle" aria-controls="workspaceMenu" aria-expanded="true" aria-label="Hide menu" title="Hide menu"><i data-lucide="panel-left" aria-hidden="true"></i></button>
-        <div class="breadcrumb">
-          Economics <span>/</span> <strong id="viewLabel">Refresh</strong>
-        </div>
-        </div>
-        <div class="header-tools">
-          <button class="search-trigger" data-action="search">
-            <i data-lucide="search"></i><span>Find a topic</span></button
-          ><span class="sample-label">Sample course</span>
-          <button class="icon-button toolbar-settings theme-toggle" data-action="theme-toggle" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch to dark mode"><i data-lucide="moon"></i></button>
-          <button class="icon-button toolbar-settings" data-action="settings" aria-label="Open study settings" title="Study settings"><i data-lucide="settings-2"></i></button>
-          <span class="avatar small-avatar">S</span>
-        </div>
-      </header>
-      <main id="main" tabindex="-1"></main>
+
+      <span id="viewLabel" class="sr-only">Refresh</span><main id="main" tabindex="-1"></main>
       <footer class="app-footer">
         <span>Independent IB Economics revision</span
         ><span>Sample content · Not teacher verified</span>
       </footer>
     </div>
+    </div>
+    <dialog id="mobileMenu" aria-label="Workspace menu"></dialog>
     <dialog id="modal"><div id="modalContent"></div></dialog>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <noscript>This study workspace needs JavaScript enabled.</noscript>
