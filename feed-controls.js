@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const views = [["feed", "Refresh", "layers-2"], ["units", "Library", "library"], ["progress", "Overview", "layout-dashboard"], ["saved", "Saved", "bookmark"], ["studio", "Studio", "square-pen"]];
+  const views = [["feed", "Refresh", "layers-2"], ["units", "Library", "library"], ["progress", "Dashboard", "layout-dashboard"], ["saved", "Saved", "bookmark"], ["studio", "Studio", "square-pen"]];
   const glyph = name => `<i data-lucide="${name}" aria-hidden="true"></i>`;
   function mount(host, { current, navigate, icons }) {
     const abort = new AbortController(), options = { signal: abort.signal };

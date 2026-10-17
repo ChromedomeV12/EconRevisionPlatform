@@ -134,7 +134,7 @@
       alias[hash] ||
       (["welcome", "progress", "feed", "units", "saved", "studio"].includes(hash)
         ? hash
-        : "welcome");
+        : "feed");
     feedObserver?.disconnect();
     feedControls?.destroy();
     feedSizeObserver.disconnect();
@@ -208,14 +208,18 @@
     const all = cards();
     const opened = all.filter(c => refreshState.opened[c.id]);
     const today = opened.filter(c => L.dayKey(refreshState.opened[c.id]) === L.dayKey()).length;
+    const last = opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id]))[0] : null;
     const stat = (label, value, symbol) => `<div class="stat"><div class="stat-top"><span class="stat-symbol">${icon(symbol)}</span>${label}</div><strong class="stat-value">${value}</strong></div>`;
-    $("#main").innerHTML = `${heading("Your learning starts here.", "A little curiosity. A clearer view of economics.")}
-      <section class="dashboard-feature"><div class="section-heading"><h2>A fresh perspective</h2><span class="subtle">IB Economics</span></div><div class="feature-banner"><div><span class="eyebrow">ONE IDEA AT A TIME</span><h2>Big ideas. Made clearer.</h2><p>Connect the theory to the world around you. Explore concise explanations and diagrams, then save what you want to revisit.</p><a class="text-button" href="#feed">Continue refreshing ${icon("arrow-right")}</a></div>${studyIllustration()}</div></section>
+    const continuation = last
+      ? `<span class="eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>${escape(last.topic)}</h2><p>${escape(unitOf(last).name)} · ${escape(refreshCopy(last).summary)}</p><button class="btn primary" data-action="study" data-id="${escape(last.id)}">Continue refreshing ${icon("arrow-right")}</button>`
+      : `<span class="eyebrow">GET STARTED</span><h2>Open your first point</h2><p>Take the feed's order for a first look at the collection, or choose a topic from the library below.</p><button class="btn primary" data-action="start">Start refreshing ${icon("arrow-right")}</button>`;
+    $("#main").innerHTML = `${heading("Dashboard", "What you have opened, saved and set aside.")}
+      <section class="activity-section"><div class="section-heading"><h2>Browsing activity</h2><span class="subtle">Browsing activity, not recall</span></div><div class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</div></section>
+      <section class="dashboard-feature"><div class="feature-banner"><div class="banner-entry">${continuation}</div>${studyIllustration()}</div></section>
       <section class="learning-topics"><div class="section-heading"><h2>Start learning</h2><a class="text-button" href="#units">View all topics ${icon("arrow-right")}</a></div><div class="learning-context"><p>Explore <a href="#units">IB Economics</a>, one concept at a time.</p><span>Choose a topic to begin</span></div><div class="topic-grid">${units.map(u => {
         const list=all.filter(c=>c.unit===u.id), seen=list.filter(c=>refreshState.opened[c.id]).length;
         return `<a href="#units" class="topic-card" data-unit-link="${u.id}"><div class="course-strip">${icon(u.icon)} UNIT ${u.number} · ECONOMICS</div><div class="topic-info"><h3>${u.name}</h3><p>${u.description}</p><div class="course-detail">${icon("layers-2")} ${list.length} knowledge points</div><div class="topic-meta"><span>${seen} opened</span><span>Explore ${icon("arrow-right")}</span></div></div></a>`;
       }).join("")}</div></section>
-      <section class="activity-section"><div class="section-heading"><h2>Your learning, at a glance</h2><span class="subtle">Browsing activity, not recall</span></div><div class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</div></section>
       <div class="overview-bottom"><section class="refresh-overview-list"><div class="section-heading"><h2>Recently opened</h2><span class="subtle">Your browsing</span></div>${opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id])).slice(0,4).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon(unitOf(c).icon)}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">Your opened points will appear here.</p>'}</section>
       <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon("history")}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section></div>`;
   }
@@ -1108,7 +1112,7 @@
   document.addEventListener("keydown", (event) => {
     if (
       route !== "feed" ||
-      $("#modal").open ||
+      document.querySelector("dialog[open]") ||
       event.target.closest("input,textarea,select,button")
     )
       return;
@@ -1131,6 +1135,13 @@
     window.scrollTo(0, 0);
     $("#main").focus({ preventScroll: true });
   });
+  // The skip link targets #main without touching the hash, so activating it
+  // never changes the route; focus lands in the main content.
+  $(".skip-link").addEventListener("click", (event) => {
+    event.preventDefault();
+    $("#main").focus({ preventScroll: false });
+  });
+
   // Native dialog handles Escape and focus restoration. Only actual backdrop clicks close it.
   const modal = $("#modal");
   let backdropDown = false;

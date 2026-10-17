@@ -4,20 +4,27 @@
   let menuHidden = false;
   try { menuHidden = localStorage.getItem(menuKey) === "true"; } catch { /* Optional preference. */ }
   const narrow = matchMedia("(max-width: 1023px)");
+  // The root attribute mirrors the saved DESKTOP preference only, applied
+  // before styles load so a collapsed workspace never flashes open. The
+  // narrow drawer is ephemeral and never sets it; welcome always uses the
+  // drawer, so its state is ephemeral as well.
+  document.documentElement.dataset.menuHidden = narrow.matches ? "false" : String(menuHidden);
+  const usesDrawer = () => narrow.matches || location.hash === "#welcome";
   function applyMenu() {
     const menu = document.getElementById("workspaceMenu"), drawer = document.getElementById("mobileMenu");
     const toggle = document.querySelector('[data-action="menu-toggle"]');
     if (!menu || !drawer || !toggle) return;
-    if (narrow.matches) {
+    if (usesDrawer()) {
       if (menu.parentElement !== drawer) drawer.append(menu);
       menu.hidden = false;
-      document.documentElement.dataset.menuHidden = "false";
+      document.documentElement.dataset.menuHidden = narrow.matches ? "false" : String(menuHidden);
       toggle.setAttribute("aria-controls", "mobileMenu");
       toggle.setAttribute("aria-expanded", String(drawer.open));
       toggle.setAttribute("aria-label", drawer.open ? "Close menu" : "Show menu");
     } else {
       if (drawer.open) drawer.close();
-      document.querySelector(".workspace-layout").prepend(menu);
+      const layout = document.querySelector(".workspace-layout");
+      if (menu.parentElement !== layout) layout.prepend(menu);
       menu.hidden = menuHidden;
       document.documentElement.dataset.menuHidden = String(menuHidden);
       toggle.setAttribute("aria-controls", "workspaceMenu");
@@ -36,11 +43,14 @@
     });
   });
   narrow.addEventListener("change", applyMenu);
+  // The welcome route uses the drawer even on wide viewports; re-sync the
+  // toggle whenever the route changes.
+  window.addEventListener("hashchange", applyMenu);
   document.addEventListener("click", event => {
     const drawer = document.getElementById("mobileMenu");
     if (event.target.closest('[data-action="menu-close"]') || (event.target.closest('#workspaceMenu a, #workspaceMenu [data-action="settings"]') && drawer.open)) drawer.close();
     if (!event.target.closest('[data-action="menu-toggle"]')) return;
-    if (narrow.matches) {
+    if (usesDrawer()) {
       if (drawer.open) drawer.close(); else drawer.showModal();
       applyMenu();
     } else {

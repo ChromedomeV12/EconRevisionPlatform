@@ -75,14 +75,14 @@ const path = require("node:path");
     await page.locator('[data-action="feed-filter"][data-filter="all"]').click();
     assert.equal(await page.locator("[data-point]").count(), await page.evaluate(() => EconData.cards.length));
     assert.equal(await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem("econ-workspace-v2")).logs)),oldReviews);
-    await page.getByRole("link", {name:"Overview",exact:true}).click();
+    await page.locator('#workspaceMenu a[href="#progress"]').click();
     await page.locator(".stats-grid").waitFor();
     assert.match(await page.locator(".stats-grid").innerText(),/Points opened/);
     assert.doesNotMatch(await page.locator(".stats-grid").innerText(),/Recall rate|Cards reviewed/);
     await page.screenshot({path:path.join(out,"dashboard-desktop.png"),fullPage:true});
     await page.reload();
     assert.equal(await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem("econ-workspace-v2")).logs)),oldReviews);
-    await page.locator('[data-nav="units"]').click();
+    await page.locator('#workspaceMenu a[href="#units"]').click();
     await page
       .getByRole("searchbox", { name: "Search topics" })
       .fill("inflation");
@@ -95,7 +95,7 @@ const path = require("node:path");
     await page.locator('[data-nav="saved"][aria-current="page"]').waitFor();
     assert.equal(await page.locator(".library-card").count(), 1);
     assert.equal(await page.locator(".library-card h3").textContent(), savedTopic);
-    await page.getByRole("link", { name: "Card studio" }).click();
+    await page.locator('#workspaceMenu a[href="#studio"]').click();
     await page
       .getByLabel("Card title")
       .fill("Test card <img src=x onerror=bad()>");

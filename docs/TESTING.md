@@ -28,8 +28,8 @@ Graph-work tests include source-inventory mismatches, explicit dot/arrow policie
 | Textbook figures and copy | `node --test tests/diagram-data.test.cjs` |
 | Preview assets or privacy boundary | `node --test tests/preview.test.cjs` |
 | Feed, navigation or content layout | `node tests/browser.cjs` |
-| Appearance, contrast or theme persistence | `node tests/theme.cjs` |
-| Menu and modal behavior | `node tests/navigation.cjs` |
+| Appearance, contrast or theme persistence | `node tests/theme.cjs`: both themes and all six views, composited small-text/SVG-label contrast, unchanged feed geometry and saved state, OS/cross-tab preferences, storage fallback and reduced motion/transparency |
+| Menu and modal behavior | `node tests/navigation.cjs`: pre-paint desktop preference, temporary narrow/welcome drawers, focus containment/restoration, backdrop scroll isolation, route and settings handoff, skip-link route preservation, viewport transitions, modal feed-keyboard isolation and fixed dialog headers |
 | Original images, enlargement or fallbacks | `node tests/diagrams.cjs` |
 | Native SVG visuals | `node tests/graphs.cjs` |
 | Private graph preview/app activation boundary | `node tests/graph-review.cjs` |
@@ -53,7 +53,19 @@ node tests/graph-review.cjs
 
 That package location is machine-specific. If it does not exist, select your own installation rather than copying the path unchanged. On Linux, environment assignments use shell syntax such as `export PLAYWRIGHT_PATH=/absolute/path/to/playwright`. Consult the graph guide for its private capture tool's additional browser executable option; not every browser test supports the same environment variables.
 
+A Linux installation matching CI can live entirely outside the app:
+
+```sh
+npm install --prefix /tmp/econ-browser --no-audit --no-fund playwright@1.62.1
+/tmp/econ-browser/node_modules/.bin/playwright install chromium
+export PLAYWRIGHT_PATH=/tmp/econ-browser/node_modules/playwright
+node tests/navigation.cjs
+node tests/theme.cjs
+```
+
 Browser suites create their own previews/fixtures; normally no manual server is needed first. Screenshots go to Git-ignored `test-output/`. Inspect them for complete axes/labels, unclipped text, readable captions, visible actions, appropriate contrast and coherent spacing. Check both themes and the small-screen cases, not only the widest screenshot.
+
+For a redesign, also inspect the actual welcome, dashboard, feed, library and studio surfaces, not only test screenshots. Check that real activity is easy to find, the introduction does not replace feed-first entry, every route remains reachable at intermediate widths, and short portrait/landscape windows keep the study controls available without scrolling the outer page. Exercise drawer dismissal and keyboard focus; ensure navigating a menu does not advance the background feed or record exposure. Evaluate type hierarchy, text contrast and diagram readability in both themes, including a 320px-wide layout and enlarged browsing.
 
 ## Adaptive Layout Review
 

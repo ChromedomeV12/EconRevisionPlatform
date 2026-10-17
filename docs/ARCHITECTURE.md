@@ -2,7 +2,7 @@
 
 ## Swipe Controls
 
-In compact/portrait feeds, `feed-controls.js` mounts the previous/actions/next rail; `feed-controls.css` defines the portrait reading surface, acrylic action menu and side dial. Both are explicit public preview assets. The swipe view hides workspace headers, navigation strips, feed heading/filters and desktop queue; other views retain them. Card actions, feed selection and appearance remain reachable through the action menu. The dial opens Refresh, Library, Overview, Saved and Studio, with icons inset on its face rather than on its rim.
+In compact/portrait feeds, `feed-controls.js` mounts the previous/actions/next rail; `feed-controls.css` defines the portrait reading surface, acrylic action menu and side dial. Both are explicit public preview assets. The swipe view hides workspace headers, navigation strips, feed heading/filters and desktop queue; other views retain them. Card actions, feed selection and appearance remain reachable through the action menu. The dial opens Refresh, Library, Dashboard, Saved and Studio, with icons inset on its face rather than on its rim.
 
 A tap opens card actions. Holding the center control for 360ms opens the dial; vertical movement selects one view per 46px and release commits it. A hold without movement leaves the dial available for direct selection. Pointer cancellation, lost capture, window blur, hidden document, card change and route rerender dismiss transient controls without navigation. Keyboard users can open Switch view from the menu (or Shift+F10 on the center button), use arrows/Home/End, Enter and Escape. Event listeners/timers are disposed on rerender. The component owns no persisted learning state: actions use existing app handlers, and bookmark/manual revisit never create FSRS reviews.
 
@@ -15,6 +15,15 @@ This is a static browser application. There is no application package manifest, 
 `theme.js` and `adaptive-layout.js` run synchronously in the head before styles to initialize appearance/menu preference and viewport presentation respectively. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
 
 Deferred scripts run in document order: vendored Lucide, FSRS and D3, then `graph.js`, legacy `content.js`, `card-model.js`, selected `content/*.js` packs, `content-bootstrap.js`, `learning.js`, `refresh.js`, `decisions.js` and `app.js`. Keep that dependency order. These browser scripts expose globals rather than using a bundler. Several logic modules also export CommonJS interfaces for Node tests.
+
+## Routes and Workspace Navigation
+
+Empty and unrecognized hashes enter `#feed`; existing compatibility aliases still work. `#welcome` is an optional introduction, not a gate before studying. The brand and the menu's **About this study space** link open it explicitly. `#progress` opens the dashboard: actual browsing statistics precede the continuation entry and topic catalog. A continuation uses the last opened point, not a predicted recall schedule. `#units`, `#saved` and `#studio` retain their existing routes.
+
+The shared header sits outside `.workspace-layout`. There is one `#workspaceMenu`, not cloned desktop/mobile navigation: `theme.js` moves it into the native `#mobileMenu` dialog at widths up to 1023px and on the introduction at every width. Other wide views use the collapsible sidebar. The saved desktop collapse preference is applied in the head before styles load; drawer-open state is temporary and never overwrites it.
+
+Escape, the close button and backdrop dismissal return focus to the menu toggle. The open drawer locks background page scrolling and contains its own overflow. Selecting a route closes the drawer and focuses the new main content; Study settings closes the drawer before opening the settings dialog. Open dialogs suppress the feed's global arrow/Page Up/Page Down shortcuts. The skip link focuses the current main content without changing the hash or route.
+
 
 ## Ownership and Data Flow
 
@@ -44,7 +53,7 @@ theme.js -> data-theme -> theme.css / graph.css -> appearance
 | Width 600–999px, height ≤ 500px | Swipe | Landscape phones keep the touch rail and can scroll long card bodies. |
 | All other sizes | Desktop | A 1000px viewport always has room for the conventional workspace; medium landscape tablets/windows use it at ratios ≥ 1.2. |
 
-Thus 768×1024 and 844×390 use swipe; 1024×768, 1000×1400 and 900×600 use desktop. Exactly 600px enters the ratio test, exactly 1.2 selects desktop unless the short-screen rule applies, and exactly 1000px selects desktop. These are presentation choices for windows as well as devices: a sufficiently narrow desktop window deliberately gets swipe. The historical desktop queue still collapses below 1200px; navigation, title bar, filters and conventional actions remain available.
+Thus 768×1024 and 844×390 use swipe; 1024×768, 1000×1400 and 900×600 use desktop. Exactly 600px enters the ratio test, exactly 1.2 selects desktop unless the short-screen rule applies, and exactly 1000px selects desktop. These are presentation choices for windows as well as devices: a sufficiently narrow desktop window deliberately gets swipe. The desktop queue collapses below 1280px in the redesigned frame; navigation, title bar, filters and conventional actions remain available.
 
 On coarse-pointer devices, height-only resize events retain the chosen layout until width or orientation changes, so browser chrome and software keyboards cannot change it. Height-only changes while an editable control is focused also retain it on fine-pointer devices. Explicit `screen.orientation` changes reevaluate geometry. Desktop height resizing otherwise reevaluates the ratio. No `visualViewport` resize listener is used; keyboard/zoom changes to the visual viewport alone do not change presentation. Viewport height can still change the reading surface and scroll area.
 
@@ -59,7 +68,7 @@ Geometry notifications pause feed intersection observation, dismiss menus/dials 
 | `econ-workspace-v2` | `learning.js`, saved by `app.js` | Legacy reviews/scheduling, saved cards and personal submissions. |
 | `econ-refresh-v1` | `refresh.js`, saved by `app.js` | Opened timestamps and explicit revisit/confusing preferences. |
 | `econ-theme-v1` | `theme.js` | Explicit light/dark choice; otherwise follow the OS. |
-| `econ-menu-hidden-v1` | `theme.js` | Navigation collapse preference. |
+| `econ-menu-hidden-v1` | `theme.js` | Desktop sidebar collapse preference; temporary drawer state is not persisted. |
 
 Storage is browser-profile and origin local, not an authenticated shared record. `file:`, localhost (including different ports) and GitHub Pages are different storage contexts; do not expect progress to move between them. Storage failures fall back to in-memory behavior; changes may then last only for the visit.
 
