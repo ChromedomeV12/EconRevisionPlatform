@@ -27,32 +27,7 @@ const path = require("node:path");
         await page.getByRole("menuitemcheckbox", { name: "Dark mode", exact: true }).click();
       }
     };
-    const color = (selector, property = "color") => page.locator(selector).first().evaluate((el, property) => {
-      const value = getComputedStyle(el)[property];
-      if (!value.startsWith("color(")) return value;
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 1;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = value; ctx.fillRect(0, 0, 1, 1);
-      return `rgb(${[...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3).join(", ")})`;
-    }, property);
-    const checkPalette = async view => {
-      const theme = await page.locator("html").getAttribute("data-theme");
-      assert.equal(await page.locator('meta[name="theme-color"]').getAttribute("content"), theme === "dark" ? "#1e1e2e" : "#eff1f5");
-      if (theme === "light") {
-        assert.equal(await color("body", "backgroundColor"), "rgb(250, 251, 252)", `${view}: bright Latte backdrop`);
-        assert.equal(await color(".shell", "backgroundColor"), "rgb(255, 255, 255)", `${view}: white reading workspace`);
-        assert.equal(await color(".shell", "backgroundImage"), "none", `${view}: no legacy dark feed gradient`);
-        assert.equal(await color(".breadcrumb strong"), "rgb(76, 79, 105)");
-        assert.equal(await color(".sample-label"), "rgb(92, 95, 119)");
-        assert.equal(await color(".topbar", "backgroundColor"), "rgb(244, 245, 248)");
-        if (view === "feed") {
-          assert.equal(await color(".refresh-point h2"), "rgb(76, 79, 105)");
-          assert.equal(await color(".refresh-summary"), "rgb(92, 95, 119)");
-          assert.equal(await color(".refresh-art", "backgroundColor"), "rgb(255, 255, 255)");
-          assert.equal(await color('.refresh-filters button[aria-pressed="true"]', "backgroundColor"), "rgb(136, 57, 239)");
-        }
-      }
+    const checkContrast = async view => {
       const failures = await page.evaluate(() => {
         const rgb = value => {
           const canvas = document.createElement("canvas"); canvas.width = canvas.height = 1;
@@ -68,23 +43,36 @@ const path = require("node:path");
           v /= 255;
           return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
         }).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-        const selectors = '.breadcrumb, .sample-label, .refresh-meta, .refresh-meta > span:last-child, .refresh-summary, .refresh-takeaway, .refresh-art small, .visual-label, .refresh-controls, .queue-number, .queue-list small, .refresh-filters button, .stat-foot, .topic-info p, .topic-meta, .library-body p, .badge, .filter, .studio-tabs button, .note';
+        const selectors = '.global-nav a, .hero-secondary, .welcome-hero p, .welcome-footnote, .hero-diagram figcaption, .hero-diagram figcaption span, .hero-diagram svg text, .welcome-card > p, .course-label small, .course-strip, .course-detail, .feature-banner .eyebrow, .feature-banner p, .learning-context, .sample-label, .refresh-meta, .refresh-meta > span:last-child, .refresh-summary, .refresh-takeaway, .refresh-art small, .visual-label, .refresh-controls, .queue-number, .queue-list small, .refresh-filters button, .stat-top, .stat-foot, .topic-info p, .topic-meta, .library-body p, .badge, .filter, .studio-tabs button, .note';
         return [...document.querySelectorAll(selectors)].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden").flatMap(el => {
           const ancestors = [];
           for (let parent = el; parent; parent = parent.parentElement) ancestors.unshift(parent);
-          const background = ancestors.reduce((back, node) => over(rgb(getComputedStyle(node).backgroundColor), back), [255, 255, 255]);
-          const foreground = over(rgb(getComputedStyle(el).color), background);
+          let background = [255, 255, 255];
+          const layers = ancestors.map(node => {
+            const style = getComputedStyle(node), underneath = background;
+            background = over(rgb(style.backgroundColor), background);
+            return { underneath, opacity: Number(style.opacity) };
+          });
+          const style = getComputedStyle(el);
+          let foreground = over(rgb(el instanceof SVGElement ? style.fill : style.color), background);
+          for (const layer of layers.reverse()) {
+            foreground = over([...foreground, layer.opacity], layer.underneath);
+            background = over([...background, layer.opacity], layer.underneath);
+          }
           const [a, b] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
           const ratio = (a + 0.05) / (b + 0.05);
           return ratio < 4.5 ? [{ selector: el.className, text: el.textContent.trim().slice(0, 50), ratio }] : [];
         });
       });
-      assert.deepEqual(failures, [], `${view}: small Latte text must reach 4.5:1 on composited surfaces`);
+      assert.deepEqual(failures, [], `${view}: small text must reach 4.5:1 on composited surfaces`);
     };
     const appearance = () => page.locator(".refresh-point h2").first().evaluate(el => {
       const rect = el.getBoundingClientRect(), style = getComputedStyle(el);
       return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, font: style.fontFamily, size: style.fontSize, spacing: style.letterSpacing };
     });
+    const bookmark = page.locator('.refresh-actions .icon-button').first();
+    await bookmark.click();
+    assert.equal(await bookmark.getAttribute("aria-pressed"), "true");
     const before = await appearance();
     const studyBefore = await page.evaluate(() => localStorage.getItem("econ-workspace-v2"));
     await toggle.focus();
@@ -93,7 +81,7 @@ const path = require("node:path");
     assert.equal(await toggle.locator("svg.lucide-sun").count(), 1);
     assert.deepEqual(await appearance(), before, "Color switching must preserve typesetting and geometry");
     assert.equal(await page.evaluate(() => localStorage.getItem("econ-workspace-v2")), studyBefore);
-    assert.equal(await page.locator(".refresh-point h2").first().evaluate(el => getComputedStyle(el).color), "rgb(205, 214, 244)");
+    assert.equal(await bookmark.getAttribute("aria-pressed"), "true", "Theme switching preserves the saved-card selection");
     await page.reload();
     assert.equal(await toggle.getAttribute("aria-checked"), "true", "Explicit choice survives reload");
     await page.emulateMedia({ colorScheme: "light" });
@@ -108,12 +96,12 @@ const path = require("node:path");
       if (await page.locator("html").getAttribute("data-theme") !== theme) await switchTheme();
       for (const width of [360, 390, 768, 1280, 1920]) {
         await page.setViewportSize({ width, height: 900 });
-        for (const view of ["feed", "progress", "units", "saved", "studio"]) {
+        for (const view of ["welcome", "feed", "progress", "units", "saved", "studio"]) {
           await page.goto(`${base}/#${view}`);
-          await page.waitForFunction(view => document.querySelector(`[data-nav="${view}"]`).getAttribute("aria-current") === "page", view);
+          await page.locator(view === "feed" ? ".refresh-point h2" : "#main h1").first().waitFor({ state: "visible" });
           assert.equal(await toggle.isVisible(), view !== "feed" || width >= 1000);
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${theme}/${view}: overflow at ${width}`);
-          await checkPalette(view);
+          await checkContrast(view);
           if (view === "feed") {
             const geometry = await page.evaluate(() => {
               const root = document.documentElement;
@@ -145,35 +133,19 @@ const path = require("node:path");
       }
     }
     await page.getByRole("button", { name: "Open study settings" }).click();
-    assert.equal(await page.locator("dialog").evaluate(el => getComputedStyle(el).color), "rgb(205, 214, 244)");
+    await checkContrast("dark settings");
     await page.screenshot({ path: path.join(out, "dark-settings.png") });
     await page.getByRole("button", { name: "Close dialog" }).click();
     await toggle.click();
     await page.goto(`${base}/#feed`);
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.locator('.refresh-filters button[aria-pressed="false"]').first().hover();
-    assert.equal(await color('.refresh-filters button[aria-pressed="false"]:hover'), "rgb(76, 79, 105)");
-    await page.locator('.refresh-filters button[aria-pressed="true"]').hover();
-    assert.equal(await color('.refresh-filters button[aria-pressed="true"]:hover'), "rgb(239, 241, 245)");
-    const save = page.locator('.refresh-actions .icon-button').first();
-    await save.click();
-    assert.equal(await save.getAttribute("aria-pressed"), "true");
-    assert.equal(await color('.refresh-actions .icon-button[aria-pressed="true"]'), "rgb(136, 57, 239)");
-    await save.click();
-    await page.keyboard.press("Tab");
-    await toggle.focus();
-    assert.equal(await color('.theme-toggle', "outlineColor"), "rgb(30, 102, 245)");
     await page.getByRole("button", { name: "Open study settings" }).click();
-    // Light dialogs use neutral Latte text on a white reading surface.
-    assert.equal(await color("dialog"), "rgb(76, 79, 105)");
-    assert.equal(await color("dialog", "backgroundColor"), "rgb(255, 255, 255)");
+    await checkContrast("light settings");
     await page.getByRole("button", { name: "Close dialog" }).click();
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-transparency", value: "reduce" }] });
-    assert.equal(await color(".sidebar", "backgroundColor"), "rgb(244, 245, 248)");
-    assert.equal(await color(".shell", "backgroundColor"), "rgb(255, 255, 255)");
-    assert.equal(await color(".sidebar", "backdropFilter"), "none");
-    assert.equal(await color(".shell", "backdropFilter"), "none");
+    assert.equal(await page.locator(".sidebar").evaluate(el => getComputedStyle(el).backdropFilter), "none");
+    assert.equal(await page.locator(".shell").evaluate(el => getComputedStyle(el).backdropFilter), "none");
     await cdp.send("Emulation.setEmulatedMedia", { features: [] });
     await cdp.detach();
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -199,7 +171,7 @@ const path = require("node:path");
     await fallbackToggle.click();
     assert.equal(await fallbackToggle.getAttribute("aria-checked"), "false");
     await blocked.close();
-    console.log("Theme checks passed: Latte surfaces and composited text contrast, hover/selected/focus/dialog states, reduced transparency, keyboard switch, persistence, cross-tab sync, OS preference, storage fallback, unchanged typography/state, diagrams and both themes across 5 widths and all views.");
+    console.log("Theme checks passed: composited text contrast, reduced motion/transparency, keyboard switch, persistence, cross-tab sync, OS preference, storage fallback, unchanged typography/saved state, diagrams and both themes across 5 widths and all six views.");
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

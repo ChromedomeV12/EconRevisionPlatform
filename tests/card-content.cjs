@@ -27,8 +27,8 @@ const { createServer } = require("../scripts/serve.cjs");
         assert.match(await point.locator(".refresh-art small").textContent(), /Editorial draft/);
         await page.screenshot({ path: path.join(out, `${id}-${theme}-${width}.png`) });
         await point.getByRole("button", { name: `Enlarge ${await point.locator('.visual-label span').textContent()} diagram` }).click();
-        assert.equal(await page.locator("dialog svg.econ-graph").count(), 1);
-        assert.match(await page.locator("dialog").textContent(), /not teacher verified/);
+        assert.equal(await page.locator("#modal svg.econ-graph").count(), 1);
+        assert.match(await page.locator("#modal").textContent(), /not teacher verified/);
         await page.getByRole("button", { name: "Close dialog" }).click();
       }
       assert.equal((await page.request.get(`http://127.0.0.1:${server.address().port}/private-sources/card-work/demand-basics/draft.json`)).status(), 404);

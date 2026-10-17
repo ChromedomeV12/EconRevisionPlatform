@@ -1,12 +1,14 @@
 # Econ / Quick Refresh
 
-A static economics refresher: one knowledge point per swipe, with the explanation immediately visible. Optional deeper notes, saved/revisit lists, a secondary overview, a searchable topic library, and personal card review support the feed.
+A static economics refresher: one knowledge point per swipe, with the explanation immediately visible. Optional deeper notes, saved/revisit lists, a secondary dashboard, a searchable topic library, and personal card review support the feed.
 
 ## Try the demo
 
 [Open the demo](https://ChromedomeV12.github.io/EconRevisionPlatform/).
 
 For local use, open `index.html` in a browser. No installation or build step is needed. Progress is stored in that browser's localStorage. For a loopback preview, run `node scripts/serve.cjs 4181` and open `http://127.0.0.1:4181`.
+
+The app opens the refresh feed directly. `#welcome` is an optional introduction, reachable through the brand or **About this study space** in the workspace menu; `#progress` opens the dashboard with browsing activity and a continuation entry before the topic catalog. The menu is a persistent collapsible sidebar on wide workspace views and a temporary modal drawer on narrow screens or the introduction. Dismissing the drawer does not change the saved desktop preference.
 
 ## Documentation
 
@@ -21,7 +23,7 @@ Start with the [documentation index](docs/README.md). Contributors should read t
 - `theme.js`, `theme.css`: light/dark toolbar switch, persistent appearance preference and Catppuccin Latte light and Mocha dark color overrides. Uses the system preference until a mode is selected; keeps diagrams on light paper.
 - `content.js`: legacy sample cards and unit metadata.
 - `card-model.js`, `content-bootstrap.js`, `content/*.js`: versioned card contract, replaceable backend-compatible repository adapter with an opt-in HTTP catalog provider and 13 selected editorial knowledge points with 11 native graph assets.
-- `app.js`: scroll-snap feed, browsing overview, bookmarks and card studio.
+- `app.js`: scroll-snap feed, optional introduction, browsing dashboard, bookmarks and card studio.
 - `graph.js`, `graph.css`: bounded D3/SVG graph specifications, economic geometry checks, theme-aware colors and native graph enlargement. Selected reconstructions are active; the permitted PED image remains as a legacy example.
 - `refresh.js`: validated browsing state and revisit/confusing preferences.
 - `learning.js`: retained legacy FSRS state, scheduling helpers and persistence validation.
@@ -48,7 +50,7 @@ The MVP has no compulsory questions, answer reveals or recall ratings. Touch swi
 
 Feed headlines use the compact 24px size when the reading column is at most 650px wide, including columns narrowed by the sidebar or topic queue. Wider columns retain the existing desktop sizing and short-viewport rules; diagrams and actions keep their existing sizes.
 
-The overview reports unique points opened, points opened today, bookmarks and points set aside. An opened point means at least 65% of its panel entered the visible feed; it does not prove reading, understanding or mastery. Browsing state uses `econ-refresh-v1`. Existing recall history and personal submissions remain in `econ-workspace-v2`; browsing never adds FSRS reviews or changes scheduled dates. Existing scheduling helpers and tests are retained for a possible separate, optional recall mode.
+The dashboard reports unique points opened, points opened today, bookmarks and points set aside. An opened point means at least 65% of its panel entered the visible feed; it does not prove reading, understanding or mastery. Browsing state uses `econ-refresh-v1`. Existing recall history and personal submissions remain in `econ-workspace-v2`; browsing never adds FSRS reviews or changes scheduled dates. Existing scheduling helpers and tests are retained for a possible separate, optional recall mode.
 
 Card submissions are stored and reviewed on the current device. Approval makes a card available in that personal library; it does not publish it or claim teacher verification. Local checks identify missing sources, short text and exact duplicate questions. There are no accounts, shared submissions, authenticated authoring backend, or live AI calls; the optional local backend provider above delivers content only.
 
@@ -72,7 +74,7 @@ Do not deploy the whole local workspace or serve its root publicly: Git ignore r
 
 ## Deployment
 
-GitHub Pages serves the root of the `main` branch. Open a feature-branch pull request, pass the required `verify` check, resolve review conversations, and merge to `main` to update the demo. Only committed files are available to the Pages build. The default branch blocks direct pushes, force pushes and deletion.
+GitHub Pages serves the root of the `main` branch. Open a feature-branch pull request, pass the required `verify` and `adaptive-browser` checks, resolve review conversations, and merge to `main` to update the demo. Only committed files are available to the Pages build. The default branch blocks direct pushes, force pushes and deletion.
 
 See [Git, deployment and pull requests](docs/GIT_WORKFLOW.md) for the exact commit/push workflow, deployment checks, and instructions for opening or reviewing a PR. New files must be staged explicitly: committing changes to `index.html` alone does not include a new stylesheet it references.
 
