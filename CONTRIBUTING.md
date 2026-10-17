@@ -24,7 +24,7 @@ Check `git status --short --branch` first. Preserve other people's changes and u
 | --- | --- |
 | Knowledge point | Add structured content in `content.js`; preserve stable IDs and source references. |
 | Feed, dialog, search or personal review | `app.js` and `index.html`; escape untrusted strings and preserve focus behavior. |
-| Layout or typography | `styles.css` and `acrylic.css`; verify small screens and long content. |
+| Layout or typography | `styles.css`, `acrylic.css` and theme-independent workspace composition in `theme.css`; inspect the final cascade and [surface ownership](docs/ARCHITECTURE.md#surface-and-proportion-ownership). |
 | Appearance | Semantic roles in `theme.css`, behavior in `theme.js`; keep diagram paper light. |
 | Browsing preferences | `refresh.js`; exposure is not recall evidence. |
 | Recall state | `learning.js`; only explicit recall ratings may create reviews. |
@@ -42,7 +42,7 @@ Native reconstructions remain private drafts until human fidelity/content review
 ## Before Opening a PR
 
 1. Run the checks appropriate to the change using [Testing](docs/TESTING.md).
-2. Inspect screenshots for UI changes; passing geometry checks alone does not establish a good design.
+2. Inspect screenshots for UI changes. For shared CSS/layout changes, run `node tests/layout.cjs` and inspect fresh-document captures of all six views in both themes at phone and desktop widths. Check computed wrapper borders, radii and backgrounds, card insets, wrapping and action rows against the documented surface contract. Passing checks do not make an unintended page frame an acceptable design.
 3. Run `git diff --check` and inspect `git diff --cached` after explicit staging.
 4. Confirm no private material, credentials, local runtimes or screenshots are staged.
 5. Update affected guides and describe behavior, verification and remaining limitations in the PR.

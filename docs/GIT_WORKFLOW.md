@@ -28,7 +28,7 @@ Use the interactive browser login. Authentication is stored by GitHub CLI, not i
 
 ## Commit and Propose a Deployment
 
-The protected default branch uses pull requests and the required `verify` check. Direct pushes to `main` are blocked. The policy is recorded in `.github/rulesets/main.json`; editing that file alone does not update GitHub's live ruleset. See `REPOSITORY_SECURITY.md` for the settings and maintenance commands.
+The protected default branch uses pull requests and the required `verify` and `adaptive-browser` checks. Direct pushes to `main` are blocked. The policy is recorded in `.github/rulesets/main.json`; editing that file alone does not update GitHub's live ruleset. See `REPOSITORY_SECURITY.md` for the settings and maintenance commands.
 
 Before starting edits, update your branch. Commit or otherwise preserve any existing tracked work before switching branches or pulling.
 

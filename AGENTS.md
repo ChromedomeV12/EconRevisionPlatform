@@ -41,8 +41,9 @@ Keep the locked Python dependencies in `tools/ocr/` separate from the app runtim
 - Keep deep explanations readable and academic.
 - Preserve the owner-approved PR #5 design: bright white light-mode reading surfaces, layered Mocha dark surfaces, restrained Sapphire accents and rounded controls. Use semantic theme tokens over hard-coded component colors. Keep textbook images and native SVG diagrams on high-contrast light paper. Respect reduced motion/transparency preferences.
 - Use Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero. Do not add remote font dependencies.
-- Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep theme overrides limited to colors and shadows; preserve the acrylic layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
+- Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep light/dark-specific overrides limited to colors and shadows; preserve the shared layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
 - PR #5 replaces PR #4's white/navy/sky-blue dialog overrides. Dialogs use a fixed serif-title header and close button, independently scrolling content, neutral theme text and backdrop. Do not restore the superseded PR #4 overrides.
+- Treat `.workspace-layout`, `.shell` and `main` as unframed layout wrappers, not cards. Non-feed shells and the inline sidebar stay transparent. Follow [surface and proportion ownership](docs/ARCHITECTURE.md#surface-and-proportion-ownership); use low-specificity `:where()` for shared surface defaults so one complex selector cannot restyle every page.
 - Add dependencies only for a demonstrated project need.
 
 ## Implementation Rules
@@ -69,7 +70,8 @@ Keep the locked Python dependencies in `tools/ocr/` separate from the app runtim
 - `node tests/browser.cjs` runs Playwright browser checks if Playwright is installed. `PLAYWRIGHT_PATH` can point to a bundled package; `BROWSER_CHANNEL=msedge` can use installed Edge.
 - `node tests/theme.cjs` checks theme persistence, system preference, storage failures, unchanged feed geometry/state and both palettes across five widths and all views.
 - `node tests/navigation.cjs` checks persistent menu collapse/recovery and fixed dialog headers, focus restoration, keyboard/backdrop closing in both themes across five viewport sizes.
-- Browser tests write Git-ignored screenshots under `test-output/` and check five viewport widths.
+- `node tests/layout.cjs` is required for shared CSS/layout changes: all six views, both themes and six widths. Inspect fresh-document phone/desktop screenshots against the surface contract, including computed wrapper borders/backgrounds, card insets, text wrapping and action rows. Passing interaction/contrast tests is not layout or design approval.
+- Browser suites write Git-ignored screenshots under `test-output/`. Layout coverage uses six widths; other suites use their documented viewport matrices.
 - `node scripts/serve.cjs 4181` starts a loopback-only, allowlisted preview. Add new public runtime assets to its allowlist. It must never serve the private source collection.
 - Directly opening `index.html` also works; keep relative asset URLs for GitHub Pages project paths.
 
@@ -140,7 +142,7 @@ Use this deployment workflow:
 
 1. Initialize a Git repository if one does not exist.
 2. Commit explicit public files on a feature branch and open a pull request.
-3. Pass the required `verify` check and resolve review conversations, then squash or rebase merge to `main`. Direct pushes, force pushes and deletion of the default branch are blocked by the repository ruleset.
+3. Pass the required `verify` and `adaptive-browser` checks and resolve review conversations, then squash or rebase merge to `main`. Direct pushes, force pushes and deletion of the default branch are blocked by the repository ruleset.
 4. GitHub Pages deploys the merged `main` branch root automatically. Verify the successful deployment matches the merged commit.
 
 If the repository is named `<username>.github.io`, GitHub Pages can serve it at `https://<username>.github.io/`. Otherwise it will usually be served at `https://<username>.github.io/<repo-name>/`.
