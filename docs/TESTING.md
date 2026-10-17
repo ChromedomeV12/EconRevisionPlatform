@@ -28,7 +28,7 @@ Graph-work tests include source-inventory mismatches, explicit dot/arrow policie
 | Textbook figures and copy | `node --test tests/diagram-data.test.cjs` |
 | Preview assets or privacy boundary | `node --test tests/preview.test.cjs` |
 | Feed, navigation or content layout | `node tests/browser.cjs` |
-| Shared page proportions and surface boundaries | `node tests/layout.cjs`: all six views in both themes at 360/390/768/1024/1280/1920px; unframed page/sidebar wrappers, card insets, text wrapping, horizontal action rows, feed queue bounds and 44px graph zoom targets. Screenshots go to `test-output/layout/`. |
+| Shared page proportions and surface boundaries | `node tests/layout.cjs`: all six views in both themes at 360/390/768/1024/1280/1920px; unframed wrappers, card insets, text wrapping, action rows, queue bounds and 44px graph zoom targets. Refresh checks aligned heading/canvas/queue/control edges, the same desktop top-bar gap as Dashboard, a native point fitting without inner scrolling at 1280×900, and full-viewport swipe mode. Screenshots go to `test-output/layout/`. |
 | Appearance, contrast or theme persistence | `node tests/theme.cjs`: both themes and all six views, composited small-text/SVG-label contrast, unchanged feed geometry and saved state, OS/cross-tab preferences, storage fallback and reduced motion/transparency |
 | Menu and modal behavior | `node tests/navigation.cjs`: pre-paint desktop preference, temporary narrow/welcome drawers, focus containment/restoration, backdrop scroll isolation, route and settings handoff, skip-link route preservation, viewport transitions, modal feed-keyboard isolation and fixed dialog headers |
 | Original images, enlargement or fallbacks | `node tests/diagrams.cjs` |

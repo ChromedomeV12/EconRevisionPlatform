@@ -8,7 +8,7 @@ const { createServer } = require("../scripts/serve.cjs");
   try {
     browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
     for (const theme of ["light", "dark"]) for (const width of [360, 390, 768, 1024, 1280, 1920]) {
-      const context = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 1080 }, reducedMotion: "reduce" });
+      const context = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : width === 1280 ? 900 : 1080 }, reducedMotion: "reduce" });
       await context.addInitScript(theme => localStorage.setItem("econ-theme-v1", theme), theme);
       const page = await context.newPage(), errors = []; page.on("pageerror", e => errors.push(e.message));
       await page.goto(base);
@@ -16,17 +16,35 @@ const { createServer } = require("../scripts/serve.cjs");
         const learning = EconLearning.empty(); learning.saved = EconData.cards.slice(0, 2).map(c => c.id);
         localStorage.setItem("econ-workspace-v2", JSON.stringify(learning));
       });
+      let workspaceTopGap;
       for (const view of ["progress", "units", "saved", "studio", "welcome", "feed"]) {
         await page.goto(`${base}/#${view}`); await page.reload();
         await page.evaluate(() => document.fonts.ready);
+        if (view === "progress") workspaceTopGap = await page.evaluate(() => document.querySelector(".shell").getBoundingClientRect().top - document.querySelector(".topbar").getBoundingClientRect().bottom);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${theme}/${view}/${width}: page overflow`);
-        const defects = await page.evaluate(() => {
+        const defects = await page.evaluate(expectedTopGap => {
           const errors = [], shell = document.querySelector(".shell"), frame = getComputedStyle(shell);
           if (parseFloat(frame.borderTopWidth) || parseFloat(frame.borderLeftWidth) || parseFloat(frame.borderRadius)) errors.push("Workspace shell regained a card frame");
           if (!document.body.classList.contains("feed-mode")) {
             if (frame.backgroundColor !== "rgba(0, 0, 0, 0)") errors.push("Non-feed page gained a filled wrapper");
             const sidebar = document.querySelector(".workspace-layout > .sidebar");
             if (sidebar?.getClientRects().length && getComputedStyle(sidebar).backgroundColor !== "rgba(0, 0, 0, 0)") errors.push("Sidebar gained a filled rectangle");
+          }
+          if (document.body.classList.contains("feed-mode")) {
+            const panel = document.querySelector(".refresh-stage").getBoundingClientRect(), heading = document.querySelector(".refresh-heading");
+            if (heading.getClientRects().length) {
+              const gap = shell.getBoundingClientRect().top - document.querySelector(".topbar").getBoundingClientRect().bottom;
+              if (Math.abs(gap - expectedTopGap) > 1) errors.push(`Refresh top-bar gap ${gap}px differs from workspace gap ${expectedTopGap}px`);
+              const left = heading.firstElementChild.getBoundingClientRect().left, right = document.querySelector(".refresh-filters").getBoundingClientRect().right;
+              const inset = left - panel.left;
+              if (inset < 12 || Math.abs(panel.right - right - inset) > 1) errors.push("Refresh heading has uneven panel insets");
+              for (const [selector, side, edge] of [[".refresh-canvas", "left", left], [".set-position", "left", left], [".desktop-feed-navigation", "right", right], [".refresh-queue", "right", right]]) {
+                const element = document.querySelector(selector);
+                if (element?.getClientRects().length && Math.abs(element.getBoundingClientRect()[side] - edge) > 1) errors.push(`Refresh panel edge misaligned: ${selector}`);
+              }
+              const body = document.querySelector(".refresh-body");
+              if (body.scrollHeight > body.clientHeight + 1) errors.push("Desktop refresh point requires internal scrolling");
+            } else if (Math.abs(panel.top) > 1 || Math.abs(panel.bottom - innerHeight) > 1) errors.push("Swipe refresh no longer fills the viewport");
           }
           for (const el of document.querySelectorAll(".view-heading h1, .section-heading h2, .library-body h3, .library-body p, .form-actions, .studio-tabs, .stat-top")) {
             if (!el.getClientRects().length) continue;
@@ -55,7 +73,7 @@ const { createServer } = require("../scripts/serve.cjs");
             if (b.width < 44 || b.height < 44 || b.right > p.right || b.top < p.top) errors.push("Graph zoom target clipped or undersized");
           }
           return errors;
-        });
+        }, workspaceTopGap);
         assert.deepEqual(defects, [], `${theme}/${view}/${width}: layout proportions`);
         if ([390, 1920].includes(width)) {
           await page.mouse.click(width - 3, 100);
@@ -64,6 +82,6 @@ const { createServer } = require("../scripts/serve.cjs");
       }
       assert.deepEqual(errors, []); await context.close();
     }
-    console.log("Layout proportions: all six views, both themes, six widths, unframed shells, card insets, wrapping and overflow passed.");
+    console.log("Layout proportions: all six views, both themes, six widths, unframed shells, card insets, refresh edge/top-bar alignment, wrapping and overflow passed.");
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
