@@ -307,7 +307,7 @@ h1 { font-size: 36px; }
 .header-tools .icon-button { border: 0; background: var(--clear); }
 .btn, .filter, .studio-tabs button, .related-links button { border-radius: var(--radius-sm); min-height: 44px; font-size: 14px; font-weight: 600; padding: 10px 16px; }
 .workspace-layout { width: calc(100% - 80px); max-width: 1200px; margin: var(--workspace-top-gap) auto 64px; display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 40px; align-items: start; }
-.sidebar { position: sticky; inset: auto; top: 24px; width: auto; height: auto; max-height: calc(100dvh - 104px); padding: 0 24px 0 0; border: 0; border-right: 1px solid var(--border); border-radius: 0; background: var(--clear); box-shadow: none; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.sidebar { position: sticky; align-self: start; inset: auto; top: 24px; width: auto; height: auto; max-height: calc(100dvh - 104px); padding: 0 24px 0 0; border: 0; border-right: 1px solid var(--border); border-radius: 0; background: var(--clear); box-shadow: none; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .course-label { display: flex; align-items: center; align-self: stretch; gap: 12px; margin: 0; padding: 0 16px 24px; background: var(--clear); color: inherit; text-decoration: none; }
 .course-label:hover { color: var(--text); }
 .course-label strong { font-size: 14px; font-weight: 700; } .course-label small { font-size: 12px; }
@@ -329,10 +329,8 @@ main, .feed-mode main { padding: 0; width: 100%; max-width: none; min-height: 0;
 /* Feed: viewport-locked stage; the frame never adds page scroll. */
 :root[data-layout="desktop"] body.feed-mode .workspace-layout { height: calc(100dvh - var(--workspace-header-height) - var(--workspace-top-gap)); margin-bottom: 0; padding: 0 0 12px; align-items: stretch; }
 :root[data-layout="desktop"] body.feed-mode :is(.shell, main) { height: 100%; }
-:root[data-layout="desktop"] body.feed-mode .sidebar { max-height: 100%; }
 :root[data-layout="swipe"] body.feed-mode .workspace-layout { width: 100%; max-width: none; margin: 0; }
 body.feed-mode .refresh-stage { color: var(--text); }
-:root[data-theme="dark"] body.feed-mode .shell { background: var(--raised); }
 body.feed-mode .refresh-empty { color: var(--muted); }
 body.feed-mode .refresh-empty h2 { color: var(--text); }
 .refresh-workspace { display: grid; grid-template-columns: minmax(0,1fr) 190px; gap: 24px; flex: 1 1 auto; min-height: 0; align-items: stretch; }
