@@ -75,6 +75,8 @@ for (const theme of ['light', 'dark']) {
         const before = await page.evaluate(() => localStorage.getItem('econ-refresh-v1'));
         await page.evaluate(() => location.hash = 'progress');
         await page.locator('.stats-grid').waitFor();
+        const menu = page.locator('[data-action="menu-toggle"]');
+        if (await menu.getAttribute('aria-expanded') === 'false') await menu.click();
         await page.getByRole('link', { name: 'Refresh', exact: true }).click();
         await page.waitForFunction(({ id, before }) => JSON.parse(localStorage.getItem('econ-refresh-v1')).opened[id] > JSON.parse(before).opened[id], { id, before });
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
