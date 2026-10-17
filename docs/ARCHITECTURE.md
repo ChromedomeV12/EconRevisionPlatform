@@ -48,6 +48,8 @@ Workspace wrappers (`.workspace-layout`, `.shell`, `main`) are unframed layouts,
 
 The desktop workspace reserves a 240px navigation column and a 40px gutter within the 1200px header/content alignment. Narrower breakpoints use the existing drawer/column behavior. Library grids size from available content width (300px minimum, bounded by the container), not a fixed desktop column count. Card actions remain in one row; studio form/help columns have independent readable widths. Compact-height desktop feeds reduce diagram height and vertical spacing while preserving reachable actions and text. `tests/layout.cjs` guards these boundaries in all six views and both themes at six widths; inspect screenshots as well as metrics.
 
+Desktop Refresh uses the same `--workspace-top-gap` as the other workspace pages: 40px normally and 24px below 768px. Its `.refresh-stage` owns the common 24px horizontal inset; the heading, reading canvas, queue and controls do not add competing edge padding. The capped reading column remains centered inside the canvas. Stage/header/action spacing preserves the available reading height without reducing text or diagram sizes. Swipe mode keeps its edge-to-edge, full-viewport stage with no workspace top gap.
+
 ## Adaptive Presentation
 
 `adaptive-layout.js` sets `html[data-layout]` before styles and first paint using the layout viewport's CSS-pixel width and height. It uses no user-agent detection, device list or stored layout preference. The initial body is the feed shell; deferred `app.js` resolves the route as usual.
