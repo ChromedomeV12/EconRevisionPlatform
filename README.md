@@ -72,7 +72,7 @@ Do not deploy the whole local workspace or serve its root publicly: Git ignore r
 
 ## Deployment
 
-GitHub Pages serves the root of the `main` branch. Open a feature-branch pull request, pass the required `verify` check, resolve review conversations, and merge to `main` to update the demo. Only committed files are available to the Pages build. The default branch blocks direct pushes, force pushes and deletion.
+GitHub Pages serves the root of the `main` branch. Open a feature-branch pull request, pass the required `verify` and `adaptive-browser` checks, resolve review conversations, and merge to `main` to update the demo. Only committed files are available to the Pages build. The default branch blocks direct pushes, force pushes and deletion.
 
 See [Git, deployment and pull requests](docs/GIT_WORKFLOW.md) for the exact commit/push workflow, deployment checks, and instructions for opening or reviewing a PR. New files must be staged explicitly: committing changes to `index.html` alone does not include a new stylesheet it references.
 
