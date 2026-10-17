@@ -1,0 +1,69 @@
+const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path");
+const { chromium } = require(process.env.PLAYWRIGHT_PATH || "playwright");
+const { createServer } = require("../scripts/serve.cjs");
+(async () => {
+  const server = createServer(); await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`, out = path.join(__dirname, "../test-output/layout");
+  fs.mkdirSync(out, { recursive: true }); let browser;
+  try {
+    browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+    for (const theme of ["light", "dark"]) for (const width of [360, 390, 768, 1024, 1280, 1920]) {
+      const context = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 1080 }, reducedMotion: "reduce" });
+      await context.addInitScript(theme => localStorage.setItem("econ-theme-v1", theme), theme);
+      const page = await context.newPage(), errors = []; page.on("pageerror", e => errors.push(e.message));
+      await page.goto(base);
+      await page.evaluate(() => {
+        const learning = EconLearning.empty(); learning.saved = EconData.cards.slice(0, 2).map(c => c.id);
+        localStorage.setItem("econ-workspace-v2", JSON.stringify(learning));
+      });
+      for (const view of ["progress", "units", "saved", "studio", "welcome", "feed"]) {
+        await page.goto(`${base}/#${view}`); await page.reload();
+        await page.evaluate(() => document.fonts.ready);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${theme}/${view}/${width}: page overflow`);
+        const defects = await page.evaluate(() => {
+          const errors = [], shell = document.querySelector(".shell"), frame = getComputedStyle(shell);
+          if (parseFloat(frame.borderTopWidth) || parseFloat(frame.borderLeftWidth) || parseFloat(frame.borderRadius)) errors.push("Workspace shell regained a card frame");
+          if (!document.body.classList.contains("feed-mode")) {
+            if (frame.backgroundColor !== "rgba(0, 0, 0, 0)") errors.push("Non-feed page gained a filled wrapper");
+            const sidebar = document.querySelector(".workspace-layout > .sidebar");
+            if (sidebar?.getClientRects().length && getComputedStyle(sidebar).backgroundColor !== "rgba(0, 0, 0, 0)") errors.push("Sidebar gained a filled rectangle");
+          }
+          for (const el of document.querySelectorAll(".view-heading h1, .section-heading h2, .library-body h3, .library-body p, .form-actions, .studio-tabs, .stat-top")) {
+            if (!el.getClientRects().length) continue;
+            if (el.scrollWidth > el.clientWidth + 1) errors.push(`Clipped content: ${el.className || el.tagName}`);
+          }
+          for (const [parentSelector, childSelector] of [[".stat", ".stat-top"], [".topic-card", ".topic-info h3"], [".library-card", ".library-body h3"], [".feature-banner", ".banner-entry"]]) {
+            for (const parent of document.querySelectorAll(parentSelector)) {
+              const child = parent.querySelector(childSelector); if (!child?.getClientRects().length) continue;
+              const p = parent.getBoundingClientRect(), c = child.getBoundingClientRect();
+              if (c.left < p.left + 12 || c.right > p.right - 12) errors.push(`Missing card inset: ${parentSelector}`);
+            }
+          }
+          for (const tag of document.querySelectorAll(".image-tag")) if (!tag.textContent.trim()) errors.push("Empty image badge");
+          for (const row of document.querySelectorAll(".library-bottom > div")) {
+            const buttons = [...row.querySelectorAll("button")];
+            if (buttons.length > 1 && Math.abs(buttons[0].getBoundingClientRect().top - buttons[1].getBoundingClientRect().top) > 1) errors.push("Library actions stacked vertically");
+          }
+          for (const button of document.querySelectorAll(".queue-list button")) {
+            if (!button.getClientRects().length) continue;
+            const p = button.closest(".refresh-queue").getBoundingClientRect(), b = button.getBoundingClientRect();
+            if (b.left < p.left - 1 || b.right > p.right + 1) errors.push("Feed queue extends past its column");
+          }
+          for (const button of document.querySelectorAll(".graph-zoom")) {
+            if (!button.getClientRects().length) continue;
+            const b = button.getBoundingClientRect(), p = button.closest(".refresh-art").getBoundingClientRect();
+            if (b.width < 44 || b.height < 44 || b.right > p.right || b.top < p.top) errors.push("Graph zoom target clipped or undersized");
+          }
+          return errors;
+        });
+        assert.deepEqual(defects, [], `${theme}/${view}/${width}: layout proportions`);
+        if ([390, 1920].includes(width)) {
+          await page.mouse.click(width - 3, 100);
+          await page.screenshot({ path: path.join(out, `${view}-${theme}-${width}.png`) });
+        }
+      }
+      assert.deepEqual(errors, []); await context.close();
+    }
+    console.log("Layout proportions: all six views, both themes, six widths, unframed shells, card insets, wrapping and overflow passed.");
+  } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
