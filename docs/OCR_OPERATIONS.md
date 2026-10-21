@@ -8,7 +8,7 @@ On a replacement machine, use a fresh frontend Git checkout and follow the priva
 
 1. Stop the writer on the other machine and let private sync finish. Local locks are not distributed locks.
 2. Confirm `.pi/`, `tools/ocr/` and the private corpus have synced. A Git clone alone does not provide them.
-3. Exclude `.ocr-runtime/` on every Syncthing device before setup or cleanup. The synced root is the parent Coding/Dev directory: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` to that folder's Ignore Patterns on each device, preserving existing rules. A nested project `.stignore` is insufficient.
+3. Exclude machine-local files on every Syncthing device before setup or cleanup. The synced root is the parent Coding/Dev directory: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` to that folder's Ignore Patterns on each device, preserving existing rules. The include excludes `.ocr-runtime/`, both repositories' `.git` metadata and the backend's default SQLite database/journals. If `DB_PATH` points elsewhere inside the synced tree, exclude that path and its journals too. Verify the effective rules on each device; a nested project `.stignore` is insufficient. Use Git to transfer commits and private sync to transfer source-processing files. Do not replace a fresh clone's `.git` with synced metadata from another machine.
 4. Open Pi 1.0.0 in the project root, review the local extension and reload if it arrived after Pi startup. Use standalone `node` on PATH; never substitute Pi's harness executable.
 5. Read the private tooling README and the `econ-transcription`, `econ-graphs` and `econ-authoring` skills. All three stages use the same session, sequentially.
 
