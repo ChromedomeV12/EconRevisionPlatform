@@ -10,16 +10,26 @@ Touch-driven dial selection changes request an optional 8ms vibration, capped at
 
 ## Repositories and Working Copies
 
-Use two repositories:
+Use two repositories with three active working directories:
 
-| Repository | Owns | Development branch |
+| Directory | Owns | Branch |
 | --- | --- | --- |
 | `EconRevisionPlatform` | Browser UI, shared card/graph contracts, public demo content, private local authoring tools | `main`; feature branches through PRs |
-| `EconRevisionPlatform-backend` | Node/SQLite API, stored content revisions, server migrations and future authenticated workflows | Check its own `main` and roadmap |
+| `EconRevisionPlatform-m1` | Backend-integrated frontend for cross-repository testing; linked worktree of the frontend repository | `m1` |
+| `EconRevisionPlatform-backend` | Node/SQLite API, stored content revisions, server migrations and future authenticated workflows | Its own `main`; feature branches through PRs |
 
-Frontend `main` serves the public demo. The frontend `m1` branch contains the opt-in HTTP catalog/graph provider; check whether maintainers have merged it before using `EconCatalog.createHttpProvider`. A generic repository provider on `main` does not establish HTTP-provider support. Keep static delivery as the default until an integration change says otherwise.
+Frontend `main` serves the public demo and owns user-facing UI/style development. Keep it usable without the backend. Maintain `m1` as the long-lived frontend integration branch: merge frontend `main` into it to bring over UI fixes while preserving backend adapters. Test `m1` against the backend before pushing. Promote reviewed integration changes to `main` when deployment needs them; do not delete `m1` as a routine merged-feature cleanup. Retiring this integration lane requires an owner decision.
 
-Maintainers used `EconRevisionPlatform-m1` and `EconRevisionPlatform-m1-publish` as temporary frontend worktrees and retired those local copies during cleanup. Their names carry no runtime meaning. Preserve unique tracked edits and ignored/private files before retiring any other copy. A synced `.git` pointer to another machine's absolute path does not provide a working checkout. On a new machine, clone each repository with fresh Git metadata; restore private authoring files through private sync and follow [OCR operations](OCR_OPERATIONS.md). Do not copy a machine-local runtime or assume an old worktree path still exists.
+Use `EconRevisionPlatform-m1` as the integration worktree. The earlier `-m1-publish` directory was a clean publishing copy; its commits belong to `m1`, so a fourth active folder adds no role. Preserve archived copies and private files until their owner chooses to remove them.
+
+Create worktrees on each machine with Git. Keep the integration directory out of folder sync; its `.git` file points to machine-local metadata. On a fresh frontend clone, run:
+
+```sh
+git fetch origin
+git worktree add --track -b m1 ../EconRevisionPlatform-m1 origin/m1
+```
+
+If local `m1` already exists and has no attached worktree, use `git worktree add ../EconRevisionPlatform-m1 m1`. Stop if the destination contains files or the branch is checked out elsewhere; inspect rather than replacing either. Restore private authoring files only in the normal frontend checkout through [OCR operations](OCR_OPERATIONS.md). See [Git workflow](GIT_WORKFLOW.md#integration-branch) for synchronization and promotion.
 
 Use the backend's `docs/BACKEND_ROADMAP.md` for API milestones and its `docs/DEPLOYMENT_PLAN.md` for backend operations. The frontend hosting comparison records earlier alternatives; maintainers have not selected a production host.
 

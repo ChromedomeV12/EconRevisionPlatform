@@ -8,6 +8,8 @@ Build a static IBDP Economics revision prototype. The MVP opens a swipe-first re
 
 Start with `docs/README.md`. Read `CONTRIBUTING.md` for setup, `docs/ARCHITECTURE.md` for runtime and state ownership, `docs/TESTING.md` for checks, and `docs/OCR_OPERATIONS.md` for private operator onboarding. Update these guides when you change commands, state keys, runtime assets or review/publication boundaries.
 
+Keep the normal frontend checkout demo-ready on `main` and feature branches. Use the linked `EconRevisionPlatform-m1` worktree on long-lived frontend `m1` for backend integration. Bring `main` changes into `m1` while preserving adapters; test against the separate backend repo. Do not merge integration into the demo, delete `m1`, or retire its active worktree as routine branch cleanup. Promote integration through reviewed PRs when the owner requests it. Read the architecture guide for worktree setup and private-sync boundaries.
+
 - `index.html`: application shell, navigation and dialogs. Opens the refresh feed directly.
 - `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
 - `styles.css`: visual system and desktop/mobile layouts. The study feed has a dark workspace; other views are light.

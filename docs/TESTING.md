@@ -4,6 +4,8 @@ Run commands from the project root. Public unit tests need Node, not the private
 
 ## Baseline
 
+Run user-facing frontend checks from the normal checkout. Run backend-provider tests from `../EconRevisionPlatform-m1` on frontend `m1`; its public suite includes `tests/content-provider.test.cjs`. From the backend repository, run `npm run smoke -- --frontend ../EconRevisionPlatform --content-frontend ../EconRevisionPlatform-m1` to exercise both the demo's decision adapter and the integrated catalog provider. Keep backend and integration worktree paths outside the backend's ES-module package scope. See [integration workflow](GIT_WORKFLOW.md#integration-branch) before bringing frontend updates into `m1`.
+
 ```sh
 node --test tests/*.test.cjs
 git diff --check
