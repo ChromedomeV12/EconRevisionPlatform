@@ -8,9 +8,24 @@ A tap opens card actions. Holding the center control for 360ms opens the dial; v
 
 Touch-driven dial selection changes request an optional 8ms vibration, capped at one request per 50ms. Mouse/keyboard interaction and reduced-motion preference do not trigger vibration. Dismissal/disposal cancels a requested pulse. Missing, denied or throwing Vibration APIs never block navigation; physical feedback is device/browser dependent and unavailable in iOS Safari. Browser tests stub API requests, not physical motor behavior.
 
+## Repositories and Working Copies
+
+Use two repositories:
+
+| Repository | Owns | Development branch |
+| --- | --- | --- |
+| `EconRevisionPlatform` | Browser UI, shared card/graph contracts, public demo content, private local authoring tools | `main`; feature branches through PRs |
+| `EconRevisionPlatform-backend` | Node/SQLite API, stored content revisions, server migrations and future authenticated workflows | Check its own `main` and roadmap |
+
+Frontend `main` serves the public demo. The frontend `m1` branch contains the opt-in HTTP catalog/graph provider; check whether maintainers have merged it before using `EconCatalog.createHttpProvider`. A generic repository provider on `main` does not establish HTTP-provider support. Keep static delivery as the default until an integration change says otherwise.
+
+Maintainers used `EconRevisionPlatform-m1` and `EconRevisionPlatform-m1-publish` as temporary frontend worktrees and retired those local copies during cleanup. Their names carry no runtime meaning. Preserve unique tracked edits and ignored/private files before retiring any other copy. A synced `.git` pointer to another machine's absolute path does not provide a working checkout. On a new machine, clone each repository with fresh Git metadata; restore private authoring files through private sync and follow [OCR operations](OCR_OPERATIONS.md). Do not copy a machine-local runtime or assume an old worktree path still exists.
+
+Use the backend's `docs/BACKEND_ROADMAP.md` for API milestones and its `docs/DEPLOYMENT_PLAN.md` for backend operations. The frontend hosting comparison records earlier alternatives; maintainers have not selected a production host.
+
 ## Runtime
 
-This is a static browser application. There is no application package manifest, build pipeline, backend or database. `index.html` loads relative assets so the same files work at the GitHub Pages project path. `TikTok Econ.html` preserves legacy links through a redirect.
+This repository contains the static browser application. It has no application package manifest, build pipeline, server runtime or database. `index.html` loads relative assets so the same files work at the GitHub Pages project path. `TikTok Econ.html` preserves legacy links through a redirect.
 
 `theme.js` and `adaptive-layout.js` run synchronously in the head before styles to initialize appearance/menu preference and viewport presentation respectively. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
 

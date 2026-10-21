@@ -14,6 +14,8 @@ The app opens the refresh feed directly. `#welcome` is an optional introduction,
 
 Start with the [documentation index](docs/README.md). Contributors should read the [contribution guide](CONTRIBUTING.md), [architecture reference](docs/ARCHITECTURE.md), and [testing guide](docs/TESTING.md). Private source-processing operators have a separate [OCR operations guide](docs/OCR_OPERATIONS.md); a public clone does not include the private corpus or Pi configuration.
 
+This repository owns the browser app. Maintainers develop the Node/SQLite API in `EconRevisionPlatform-backend`; its M1 catalog service runs on loopback. The opt-in frontend HTTP provider lives on the frontend `m1` branch pending review and merge. Check [repository and working-copy roles](docs/ARCHITECTURE.md#repositories-and-working-copies) before using an old integration folder.
+
 ## Project files
 
 - `index.html`: refresh-first application shell.
@@ -50,7 +52,7 @@ Feed headlines use the compact 24px size when the reading column is at most 650p
 
 The dashboard reports unique points opened, points opened today, bookmarks and points set aside. An opened point means at least 65% of its panel entered the visible feed; it does not prove reading, understanding or mastery. Browsing state uses `econ-refresh-v1`. Existing recall history and personal submissions remain in `econ-workspace-v2`; browsing never adds FSRS reviews or changes scheduled dates. Existing scheduling helpers and tests are retained for a possible separate, optional recall mode.
 
-Card submissions are stored and reviewed on the current device. Approval makes a card available in that personal library; it does not publish it or claim teacher verification. Local checks identify missing sources, short text and exact duplicate questions. There are no accounts, shared submissions, backend, or live AI calls.
+You submit and review personal cards on the current device. Local approval adds a card to your personal library; it grants no publication or teacher-verification status. Local checks identify missing sources, short text and exact duplicate questions. Frontend `main` needs no backend. Maintainers have implemented a separate local catalog API, while accounts, shared submissions and live AI remain planned.
 
 Jev integration boundaries remain for future advisory assessment and submission screening, with validation, timeouts and fallback. The refresh feed does not call answer assessment. Browsing/preferences must not be relabelled as recall evidence or teacher approval. [The integration plan](docs/JEV_INTEGRATION.md) describes future work.
 

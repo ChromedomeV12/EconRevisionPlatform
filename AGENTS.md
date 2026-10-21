@@ -28,7 +28,7 @@ Start with `docs/README.md`. Read `CONTRIBUTING.md` for setup, `docs/ARCHITECTUR
 - `docs/GRAPH_WORKFLOW.md`: local Pi graph reconstruction, private review previews and human promotion requirements.
 - `docs/superpowers/`: historical planning notes, superseded where they describe a landing page.
 
-The app has no build step, package manager, backend, database or framework. The browser loads vendored FSRS, Lucide and D3. Keep optional Playwright tooling separate from app dependencies.
+The frontend has no build step, package manager, server runtime or database. The browser loads vendored FSRS, Lucide and D3. Maintainers develop the local API in the sibling backend repository; see the repository roles in `docs/ARCHITECTURE.md`. Keep optional Playwright tooling separate from app dependencies.
 
 Keep the locked Python dependencies in `tools/ocr/` separate from the app runtime and build.
 

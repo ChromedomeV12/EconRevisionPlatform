@@ -2,6 +2,7 @@
 /private-sources/
 /pi-session-*.html
 /pi-session-*.jsonl
+/for-omarchy.jsonl
 
 # Local agent configuration and credentials
 /.agents/
@@ -21,6 +22,11 @@ Thumbs.db
 # Machine-local OCR dependencies and private Pi sessions/configuration
 /.ocr-runtime/
 /.pi/
+# Privately synced operator tooling; public clones do not include these files.
+/tools/ocr/
+/tests/ocr-recovery.test.mjs
+/tests/ocr-vision.test.mjs
+/tests/pi-ocr.test.mjs
 __pycache__/
 *.pyc
 /tools/ocr/.venv/

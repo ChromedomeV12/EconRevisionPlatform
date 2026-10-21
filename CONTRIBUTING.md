@@ -12,6 +12,8 @@ Open <http://127.0.0.1:4181>. Stop the preview with Ctrl+C. If the port is occup
 
 A public clone is enough for app development and public tests. Private PDFs, OCR outputs and `.pi/` settings arrive only through the owner's private sync. Do not invent missing source references or download private materials to make public tests pass.
 
+Use this repository for frontend changes and `EconRevisionPlatform-backend` for API changes. Read [repository and working-copy roles](docs/ARCHITECTURE.md#repositories-and-working-copies) before using an old `-m1` directory. On a fresh installation, clone repositories with new Git metadata. Restore private files after configuring sync exclusions; keep `.ocr-runtime/` machine-local. You do not need the temporary integration worktrees to develop the frontend.
+
 ## Working Agreement
 
 Read [AGENTS.md](AGENTS.md) before editing. Keep the first screen a usable knowledge feed, with the explanation immediately visible. Preserve typography, approved PR #5 appearance, keyboard access and responsive layouts. Keep the application vanilla JavaScript and GitHub Pages compatible.
