@@ -219,3 +219,19 @@ gh pr review 123 --comment --body "Consider making the empty-state label more sp
 ```
 
 Write what you actually verified; these review messages are examples. Return to your branch afterward with `git switch main` (or your previous branch). The CLI supports [checking out a PR](https://cli.github.com/manual/gh_pr_checkout) and [submitting reviews](https://cli.github.com/manual/gh_pr_review).
+
+## Integration Branch
+
+Keep frontend `main` demo-ready. Use `../EconRevisionPlatform-m1` on the long-lived `m1` branch to test the backend with current frontend UI. Create the worktree through [the architecture guide](ARCHITECTURE.md#repositories-and-working-copies); keep its directory outside folder sync.
+
+Before synchronizing, inspect both working trees and fetch the frontend remote. With a clean integration tree, run from that worktree:
+
+```sh
+git fetch origin
+git merge origin/main
+node --test tests/*.test.cjs
+```
+
+Resolve conflicts by preserving the UI changes and backend adapters; inspect each conflicting hunk. Do not reset `m1` to `main` or replace complete files to suppress conflicts. Run the backend's `npm run smoke -- --frontend ../EconRevisionPlatform --content-frontend ../EconRevisionPlatform-m1`, plus the checks for any changed runtime surface. Push `m1` after validation. Record which frontend and backend commits you tested.
+
+Promote integration changes to `main` through a reviewed feature PR when the owner requests deployment integration. Keep backend calls optional until that PR changes the startup contract. A merge to `m1` does not deploy Pages. Retain the integration branch and active worktree after promotion unless the owner retires that testing role. The separate `-m1-publish` copy is unnecessary; push from the clean `m1` worktree.

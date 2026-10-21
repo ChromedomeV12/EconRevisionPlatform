@@ -22,7 +22,7 @@
 
 ## Status and Authority
 
-Frontend `main` runs the static feed with local browsing/preferences and personal submissions. It includes light/dark appearance, selected textbook images and native graphs. Operators run the private OCR, graph and card-authoring pipeline outside the public app. In the sibling backend repository, maintainers have implemented local Node/SQLite catalog delivery; the frontend HTTP integration remains on `m1` until a reviewed merge. Neither app provides accounts, shared moderation or live AI. See [repository roles](ARCHITECTURE.md#repositories-and-working-copies) before choosing a checkout.
+Frontend `main` runs the static demo and user-facing UI. Maintain the linked `m1` worktree for backend integration and bring frontend updates into it from `main`. Operators run private authoring from the normal frontend checkout. The sibling backend provides local Node/SQLite catalog delivery. Accounts, shared moderation and live AI remain planned. See [repository roles](ARCHITECTURE.md#repositories-and-working-copies) before choosing a checkout.
 
 `AGENTS.md` governs contributor/agent constraints; `SECURITY.md` governs security expectations. Architecture and operations guides describe the current code. Deployment and Jev documents describe future work unless explicitly marked implemented. If documents disagree, inspect the implementation and update the conflicting guide instead of treating historical notes as current requirements.
 

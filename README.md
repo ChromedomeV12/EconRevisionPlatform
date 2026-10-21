@@ -14,7 +14,7 @@ The app opens the refresh feed directly. `#welcome` is an optional introduction,
 
 Start with the [documentation index](docs/README.md). Contributors should read the [contribution guide](CONTRIBUTING.md), [architecture reference](docs/ARCHITECTURE.md), and [testing guide](docs/TESTING.md). Private source-processing operators have a separate [OCR operations guide](docs/OCR_OPERATIONS.md); a public clone does not include the private corpus or Pi configuration.
 
-This repository owns the browser app. Maintainers develop the Node/SQLite API in `EconRevisionPlatform-backend`; its M1 catalog service runs on loopback. The opt-in frontend HTTP provider lives on the frontend `m1` branch pending review and merge. Check [repository and working-copy roles](docs/ARCHITECTURE.md#repositories-and-working-copies) before using an old integration folder.
+Use this checkout for the demo-ready frontend and UI/style changes. Maintainers test backend integration in the linked `EconRevisionPlatform-m1` worktree on the long-lived frontend `m1` branch. The Node/SQLite API belongs to `EconRevisionPlatform-backend`. Read [repository and working-copy roles](docs/ARCHITECTURE.md#repositories-and-working-copies) before changing branches or retiring a worktree.
 
 ## Project files
 

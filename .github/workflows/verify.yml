@@ -3,7 +3,7 @@ name: Verify
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, m1]
   workflow_dispatch:
 
 permissions:
