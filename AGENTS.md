@@ -8,6 +8,8 @@ Build a static IBDP Economics revision prototype. The MVP opens a swipe-first re
 
 Start with `docs/README.md`. Read `CONTRIBUTING.md` for setup, `docs/ARCHITECTURE.md` for runtime and state ownership, `docs/TESTING.md` for checks, and `docs/OCR_OPERATIONS.md` for private operator onboarding. Update these guides when you change commands, state keys, runtime assets or review/publication boundaries.
 
+Keep the normal frontend checkout demo-ready on `main` and feature branches. Use the linked `EconRevisionPlatform-m1` worktree on long-lived frontend `m1` for backend integration. Bring `main` changes into `m1` while preserving adapters; test against the separate backend repo. Do not merge integration into the demo, delete `m1`, or retire its active worktree as routine branch cleanup. Promote integration through reviewed PRs when the owner requests it. Read the architecture guide for worktree setup and private-sync boundaries.
+
 - `index.html`: application shell, navigation and dialogs. Opens the refresh feed directly.
 - `TikTok Econ.html`: compatibility redirect preserving old URLs and section hashes.
 - `styles.css`: visual system and desktop/mobile layouts. The study feed has a dark workspace; other views are light.
@@ -28,7 +30,7 @@ Start with `docs/README.md`. Read `CONTRIBUTING.md` for setup, `docs/ARCHITECTUR
 - `docs/GRAPH_WORKFLOW.md`: local Pi graph reconstruction, private review previews and human promotion requirements.
 - `docs/superpowers/`: historical planning notes, superseded where they describe a landing page.
 
-The app has no build step, package manager, backend, database or framework. The browser loads vendored FSRS, Lucide and D3. Keep optional Playwright tooling separate from app dependencies.
+The frontend has no build step, package manager, server runtime or database. The browser loads vendored FSRS, Lucide and D3. Maintainers develop the local API in the sibling backend repository; see the repository roles in `docs/ARCHITECTURE.md`. Keep optional Playwright tooling separate from app dependencies.
 
 Keep the locked Python dependencies in `tools/ocr/` separate from the app runtime and build.
 

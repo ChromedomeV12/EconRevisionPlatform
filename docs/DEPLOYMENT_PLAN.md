@@ -1,10 +1,16 @@
 # Deployment plan
 
-Research checked: 2026-10-12. This is a proposal, not a record of implemented infrastructure. Read alongside [README](../README.md), [Jev integration](JEV_INTEGRATION.md), and [AGENTS.md](../AGENTS.md).
+Hosting research checked: 2026-10-12. This document records production-hosting proposals. Read alongside [README](../README.md), [Jev integration](JEV_INTEGRATION.md), and [AGENTS.md](../AGENTS.md). Recheck provider terms and limits before choosing a host.
 
-## Recommendation
+## Scope and Current Implementation
 
-Keep GitHub Pages for the current public, local-only MVP. Keep GitHub as the source repository and review system even if hosting later moves. For the first shared classroom pilot, prefer Cloudflare Workers Static Assets plus a small API and managed Supabase Auth/Postgres, subject to school requirements, provider terms, region availability, and measured access from students' networks. Vercel is a credible alternative if its collaboration or server runtime fits the eventual team better.
+Keep frontend release and Pages instructions here. For API deployment, use `docs/DEPLOYMENT_PLAN.md` and `docs/BACKEND_ROADMAP.md` in the sibling `EconRevisionPlatform-backend` repository. Maintainers have since implemented a local Node 24/SQLite catalog service and placed the frontend HTTP provider on the `m1` branch. They have not selected or deployed a production backend.
+
+The Workers/Supabase sections below record the earlier hosting proposal. Treat them as alternatives when evaluating hosting; do not read them as instructions to replace the implemented Node/SQLite service. Running that service on Workers would require changes to HTTP handling and storage. Keep authentication, moderation and student-data collection behind their backend roadmap decisions.
+
+## Earlier Hosting Proposal
+
+Keep GitHub Pages for the current public MVP and GitHub for source review. The original pilot proposal used Cloudflare Workers Static Assets with managed Supabase Auth/Postgres. Maintainers have since built a local Node/SQLite service. Compare hosting options against that implementation and school requirements in the backend deployment guide before selecting a host.
 
 This is an interactive learning app that happens to have a static frontend. Its present hosting requirements resemble a documentation site; accounts, private drafts, moderation, and AI calls will not. A documentation framework or frontend rewrite would not solve those backend requirements. Keep vanilla JavaScript and the current swipe-first experience unless product needs justify a change.
 
@@ -26,7 +32,7 @@ All limits above are research snapshots, not capacity commitments. Recheck them 
 
 ## Phase 1: reliable public MVP
 
-Stay on Pages while content is public, progress is local, and submitted cards remain personal. Continue teacher feedback using the actual feed and diagrams. Keep account signup and live Jev disabled until the backend exists.
+Stay on Pages while content is public, progress is local, and submitted cards remain personal. Gather teacher feedback through the feed and diagrams. Keep account signup and live Jev disabled until maintainers implement the required authenticated workflows and the owner approves deployment.
 
 Improve delivery before changing providers:
 

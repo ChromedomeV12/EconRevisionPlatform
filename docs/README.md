@@ -6,7 +6,7 @@
 | --- | --- |
 | Try the app and understand its limits | [Project README](../README.md) |
 | Make a code or documentation change | [Contributing](../CONTRIBUTING.md) |
-| Find ownership, state keys and rendering boundaries | [Architecture](ARCHITECTURE.md) |
+| Find repository/branch roles, state keys and rendering boundaries | [Architecture](ARCHITECTURE.md) |
 | Choose and run verification | [Testing](TESTING.md) |
 | Commit, open/review a PR and verify deployment | [Git workflow](GIT_WORKFLOW.md) |
 | Operate privately synced OCR and resume diagram work | [OCR operations](OCR_OPERATIONS.md) |
@@ -22,7 +22,7 @@
 
 ## Status and Authority
 
-Implemented: static swipe-first feed, local browsing/preferences and personal submissions, light/dark appearance, original textbook image display, native graph renderer, and private OCR-to-graph draft tooling. No accounts, shared database, live AI, automatic teacher approval or automatic graph publication exist.
+Frontend `main` runs the static demo and user-facing UI. Maintain the linked `m1` worktree for backend integration and bring frontend updates into it from `main`. Operators run private authoring from the normal frontend checkout. The sibling backend provides local Node/SQLite catalog delivery. Accounts, shared moderation and live AI remain planned. See [repository roles](ARCHITECTURE.md#repositories-and-working-copies) before choosing a checkout.
 
 `AGENTS.md` governs contributor/agent constraints; `SECURITY.md` governs security expectations. Architecture and operations guides describe the current code. Deployment and Jev documents describe future work unless explicitly marked implemented. If documents disagree, inspect the implementation and update the conflicting guide instead of treating historical notes as current requirements.
 

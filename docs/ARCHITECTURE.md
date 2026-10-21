@@ -8,9 +8,36 @@ A tap opens card actions. Holding the center control for 360ms opens the dial; v
 
 Touch-driven dial selection changes request an optional 8ms vibration, capped at one request per 50ms. Mouse/keyboard interaction and reduced-motion preference do not trigger vibration. Dismissal/disposal cancels a requested pulse. Missing, denied or throwing Vibration APIs never block navigation; physical feedback is device/browser dependent and unavailable in iOS Safari. Browser tests stub API requests, not physical motor behavior.
 
+## Repositories and Working Copies
+
+Use two repositories with three active working directories:
+
+| Directory | Owns | Branch |
+| --- | --- | --- |
+| `EconRevisionPlatform` | Browser UI, shared card/graph contracts, public demo content, private local authoring tools | `main`; feature branches through PRs |
+| `EconRevisionPlatform-m1` | Backend-integrated frontend for cross-repository testing; linked worktree of the frontend repository | `m1` |
+| `EconRevisionPlatform-backend` | Node/SQLite API, stored content revisions, server migrations and future authenticated workflows | Its own `main`; feature branches through PRs |
+
+Frontend `main` serves the public demo and owns user-facing UI/style development. Keep it usable without the backend. Maintain `m1` as the long-lived frontend integration branch: merge frontend `main` into it to bring over UI fixes while preserving backend adapters. Test `m1` against the backend before pushing. Promote reviewed integration changes to `main` when deployment needs them; do not delete `m1` as a routine merged-feature cleanup. Retiring this integration lane requires an owner decision.
+
+Use `EconRevisionPlatform-m1` as the integration worktree. The earlier `-m1-publish` directory was a clean publishing copy; its commits belong to `m1`, so a fourth active folder adds no role. Preserve archived copies and private files until their owner chooses to remove them.
+
+Create worktrees on each machine with Git. Keep the integration directory out of folder sync; its `.git` file points to machine-local metadata. On a fresh frontend clone, run:
+
+```sh
+git fetch origin
+git worktree add --track -b m1 ../EconRevisionPlatform-m1 origin/m1
+```
+
+If local `m1` already exists and has no attached worktree, use `git worktree add ../EconRevisionPlatform-m1 m1`. Stop if the destination contains files or the branch is checked out elsewhere; inspect rather than replacing either. Restore private authoring files only in the normal frontend checkout through [OCR operations](OCR_OPERATIONS.md). See [Git workflow](GIT_WORKFLOW.md#integration-branch) for synchronization and promotion.
+
+Use the backend's `docs/BACKEND_ROADMAP.md` for API milestones and its `docs/DEPLOYMENT_PLAN.md` for backend operations. The frontend hosting comparison records earlier alternatives; maintainers have not selected a production host.
+
 ## Runtime
 
-This is a static browser application. There is no application package manifest, build pipeline, or database. By default the demo loads the committed static packs from the same origin; `content-bootstrap.js` also exposes `EconCatalog.createHttpProvider`, an optional local HTTP catalog provider that stages one complete backend release for loopback verification. A failed refresh rejects and retains the last working catalog and graph snapshot plus the explicit legacy fallback, never reverting a previously successful release back to the static packs. There is no authenticated backend, shared account, or configured backend deployment target in the application; the main Git Pages demo serves the static files.
+This repository contains the static browser application. It has no application package manifest, build pipeline, server runtime or database. `index.html` loads relative assets so the same files work at the GitHub Pages project path. `TikTok Econ.html` preserves legacy links through a redirect.
+
+On `m1`, `content-bootstrap.js` exposes `EconCatalog.createHttpProvider` for loopback backend verification. It stages a complete release and preserves the working catalog, graph snapshot and legacy fallback if a refresh fails. Static packs remain the default; refreshing does not revert a successful backend release to them. The application has no authenticated accounts or configured backend deployment target. Frontend `main` continues to serve the static demo.
 
 `theme.js` and `adaptive-layout.js` run synchronously in the head before styles to initialize appearance/menu preference and viewport presentation respectively. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
 
