@@ -2,6 +2,7 @@
 /private-sources/
 /pi-session-*.html
 /pi-session-*.jsonl
+/for-omarchy.jsonl
 
 # Local agent configuration and credentials
 /.agents/

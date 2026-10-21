@@ -4,6 +4,8 @@ This is an operator entry point, not a replacement for `tools/ocr/README.md` on 
 
 ## Before Starting
 
+On a replacement machine, use a fresh frontend Git checkout and follow the private-sync steps below. Preserve accepted transcripts, immutable graph/card submissions and `run-intent.json`. Restore private tests with the tooling. Check durable progress before asking the agent to continue. Retired integration worktrees do not own OCR progress.
+
 1. Stop the writer on the other machine and let private sync finish. Local locks are not distributed locks.
 2. Confirm `.pi/`, `tools/ocr/` and the private corpus have synced. A Git clone alone does not provide them.
 3. Exclude `.ocr-runtime/` on every Syncthing device before setup or cleanup. The synced root is the parent Coding/Dev directory: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` to that folder's Ignore Patterns on each device, preserving existing rules. A nested project `.stignore` is insufficient.
