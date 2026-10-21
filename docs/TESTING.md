@@ -11,7 +11,7 @@ node --test tests/*.test.cjs
 git diff --check
 ```
 
-The `verify` workflow also syntax-checks tracked JavaScript and checks publication boundaries. The separate `adaptive-browser` job installs pinned Playwright tooling outside the application, runs adaptive-state, adaptive-layout, feed-controls and shared layout-proportion checks, and uploads screenshots as `adaptive-layout-screenshots` for 30 days. The other browser suites remain local checks. Green CI is not evidence that screenshots were visually inspected.
+The `verify` workflow runs for pull requests and pushes to frontend `main` and `m1`. It also syntax-checks tracked JavaScript and checks publication boundaries. The separate `adaptive-browser` job installs pinned Playwright tooling outside the application, runs adaptive-state, adaptive-layout, feed-controls and shared layout-proportion checks, and uploads screenshots as `adaptive-layout-screenshots` for 30 days. The other browser suites remain local checks. Green CI is not evidence that screenshots were visually inspected. A passing frontend `m1` run does not replace the cross-repository backend smoke check.
 
 Graph-work tests include source-inventory mismatches, explicit dot/arrow policies, incomplete fidelity checklists, screenshot/path/hash tampering, changed renderer/style hashes, legacy snapshot compatibility and pending/stale recovery. Their inspection records and PNGs are synthetic fixtures, not proof of textbook fidelity; actual source/preview comparison remains a separate operator step.
 
