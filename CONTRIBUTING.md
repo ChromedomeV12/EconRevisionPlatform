@@ -2,7 +2,7 @@
 
 ## Local Setup
 
-The app has no build step or package installation. Open `index.html` directly, or install Node.js (CI uses Node 24) and run this from the project root:
+The app has no build step or package installation. Open `index.html` directly, or install Node.js (CI uses Node 24.22.1) and run this from the project root:
 
 ```sh
 node scripts/serve.cjs 4181
