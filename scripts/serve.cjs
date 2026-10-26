@@ -13,6 +13,8 @@ const publicFiles = new Set([
   "graph.js",
   "graph.css",
   "app.js",
+  "account.js",
+  "account.css",
   "feed-controls.js",
   "feed-controls.css",
   "content.js",
