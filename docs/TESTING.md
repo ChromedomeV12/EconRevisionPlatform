@@ -116,3 +116,19 @@ A local verification of the merged worktree (2026-10-18) ran the full public sui
 - Browser process permission error: use an environment that permits launching the installed browser; preserve diagnostics and report the unrun coverage.
 
 Record the commands actually run, their outcome and any missing coverage in the PR. Automated checks do not establish economic correctness, teacher approval or publication rights.
+
+## Authenticated m1 trial
+
+`node --test tests/account.test.cjs` checks the relative same-origin account
+client and server conflict propagation. `node --test tests/*.test.cjs` includes
+these checks with existing provider and persistence tests. Runtime account assets
+are explicitly allowlisted in the static preview; no backend is required there.
+
+For actual authentication, run `npm run test:browser` in the sibling backend with
+`FRONTEND_PATH` pointing to this m1-based checkout and `PLAYWRIGHT_PATH` to isolated
+Playwright 1.62.1 tooling. Its temporary loopback fixture serves this preview
+allowlist and the API on one origin, uses synthetic accounts and an in-memory mail
+sink, and checks verification/recovery redirects, cookies, authoring, local state
+and publication through `EconCatalog.createHttpProvider`. The ordinary frontend
+browser/theme/navigation/layout suites continue to exercise the static fallback.
+Cloud Chromium checks do not prove Windows or school-network behavior.

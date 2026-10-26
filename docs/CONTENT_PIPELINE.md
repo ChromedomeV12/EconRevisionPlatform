@@ -75,3 +75,14 @@ The existing Card Studio is a device-local author/review experience. New entries
 ## Verification
 
 Run `node --test tests/card-model.test.cjs tests/card-work.test.cjs`, the full public unit suite, and browser/theme/navigation/image checks after delivery changes. Check every new card in both themes and mobile/desktop, including graph zoom, immediate explanation, notes, citations and local submission escaping. Run the Pi loader test after extension changes. No test result grants teacher approval or broad source reuse permission.
+
+## Synthetic authenticated integration on m1
+
+Card studio links to **Account and shared studio** (`#account`). This separate
+surface stores original synthetic drafts on the sibling backend, with server
+ownership, immutable revisions, independent review and separate exact-version
+reuse/publication gates. Reviewer and publisher labels do not confer school or
+teacher authority. Only existing curated graph pins are accepted. Source-library
+imports and private evidence uploads are absent. Device-local submissions remain
+available and are never silently uploaded or granted server approval. The backend
+README documents operator setup, invitation, bootstrap and recovery.

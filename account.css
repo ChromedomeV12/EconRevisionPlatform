@@ -1,0 +1,10 @@
+.account-workspace { display: grid; align-items: start; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; margin: 24px 0; }
+.account-workspace > :where(form, section) { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+.account-workspace h2, .account-workspace h3 { margin: 0 0 16px; }
+.account-workspace .field { display: flex; flex-direction: column; margin: 14px 0; }
+.account-workspace button { min-height: 44px; margin: 8px 8px 8px 0; white-space: normal; }
+.account-workspace details, .account-workspace p { overflow-wrap: anywhere; }
+.account-workspace input[type=checkbox] { width: 20px; height: 20px; vertical-align: middle; }
+.account-workspace label:has(input[type=checkbox]) { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-right: 10px; }
+.account-submission { padding: 18px 0; border-top: 1px solid var(--border); }
+#accountStatus { margin: 18px 0; }

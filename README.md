@@ -81,3 +81,15 @@ GitHub Pages serves the root of the `main` branch. Open a feature-branch pull re
 See [Git, deployment and pull requests](docs/GIT_WORKFLOW.md) for the exact commit/push workflow, deployment checks, and instructions for opening or reviewing a PR. New files must be staged explicitly: committing changes to `index.html` alone does not include a new stylesheet it references.
 
 The [deployment plan](docs/DEPLOYMENT_PLAN.md) keeps GitHub Pages for the current public MVP and defines when accounts, synchronized progress, moderation and Jev justify a backend. Repository protections are described in [repository security](docs/REPOSITORY_SECURITY.md).
+
+## Authenticated synthetic trial (m1 integration only)
+
+**Card studio → Account and shared studio** opens login, registration/recovery and
+shared authoring. It requires the sibling backend's explicitly enabled synthetic
+trial on the same origin; see that repository's README for migrations, `.invalid`
+invitations, test-mail sink and one-time operator bootstrap. Static preview still
+works without accounts and reports unavailable account service. Device-local
+cards, progress and bookmarks stay local; sign-in never uploads them. Server roles
+control independent authoring/review/publication and narrow account management.
+This branch is reviewed into `m1`, never deployed or merged into demo `main` by
+this work. No real enrollment, student data, live mail or production host is enabled.

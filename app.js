@@ -132,7 +132,7 @@
     const hash = location.hash.slice(1).split("/")[0];
     route =
       alias[hash] ||
-      (["welcome", "progress", "feed", "units", "saved", "studio"].includes(hash)
+      (["welcome", "progress", "feed", "units", "saved", "studio", "account"].includes(hash)
         ? hash
         : "feed");
     feedObserver?.disconnect();
@@ -153,6 +153,7 @@
       units: "Topic library",
       saved: "Saved cards",
       studio: "Card studio",
+      account: "Shared workspace",
     };
     $("#viewLabel").textContent = labels[route];
     document.title = `${labels[route]} / Econ`;
@@ -171,6 +172,7 @@
       renderFeed();
     }
     if (route === "studio") renderStudio();
+    if (route === "account") EconAccount.render($("#main"));
     icons();
   }
   function studyIllustration() {
@@ -823,7 +825,7 @@
       (s) => s.status === "pending",
     ).length;
     $("#main").innerHTML =
-      `${heading("Card studio", "Keep one useful idea worth coming back to.", '<span class="badge">Local workspace</span>')}<div class="studio-tabs" role="tablist" aria-label="Card studio views">${[
+      `${heading("Card studio", "Keep one useful idea worth coming back to.", '<span class="badge">Local workspace</span>')}<p><a class="btn" href="#account">Account and shared studio</a></p><div class="studio-tabs" role="tablist" aria-label="Card studio views">${[
         ["create", "Create a card"],
         ["review", `Review queue (${pending})`],
         ["history", "My submissions"],

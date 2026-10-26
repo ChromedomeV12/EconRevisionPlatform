@@ -128,3 +128,20 @@ GitHub Pages publishes the configured `main` branch root. The local preview's al
 Private OCR tooling prepares page images/text and lets the existing Pi model inspect and transcribe bounded batches. Accepted transcripts queue final referenced diagram crops for reconstruction in the same session. OCR checkpoints and graph checkpoints are independent; graph failure must not rewind accepted transcription. Outputs remain under private source directories and require human review. A public clone does not include the Pi configuration or corpus. See [OCR operations](OCR_OPERATIONS.md).
 
 Future accounts, shared moderation and Jev require server authority. The contracts in [Jev integration](JEV_INTEGRATION.md) and [deployment plan](DEPLOYMENT_PLAN.md) are plans, not implemented services. Never place credentials in client scripts to simulate that architecture.
+
+## Opt-in shared workspace (m1 only)
+
+`account.js`/`account.css` add the `#account` surface, reached from Card studio.
+The browser client uses only relative `/api` paths and same-origin HttpOnly
+cookies. The same-origin synthetic backend must be explicitly configured; an
+unavailable service is labelled and the existing device-local studio remains.
+Account records and editing buffers live only in memory. No localStorage keys,
+bookmarks, browsing or recall records are uploaded, migrated or account-synced.
+
+The backend grants author/reviewer/publisher/admin roles independently. Controls
+reflect `/api/me`, but all authorization and transitions remain on the server.
+The shared studio supports private original synthetic drafts, revision edits,
+independent review, separate reuse permission and publication. Local personal
+approval retains its existing meaning. Only existing curated graphs are offered;
+this UI does not import evidence or private materials. Authentication and shared
+moderation stay on long-lived `m1`, outside public demo `main` and Pages deployment.
