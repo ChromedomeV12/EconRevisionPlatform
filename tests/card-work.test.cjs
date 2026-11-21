@@ -54,3 +54,111 @@ test("recovery never treats an edited or stale submitted draft as complete", t =
   fs.appendFileSync(f.transcript, " ");
   assert.equal(f.work.packet("synthetic").status, "draft");
 });
+
+test("authoring packets expose bounded nearby immutable coverage without changing completion", t => {
+  const f = fixture(t); f.work.submit("synthetic");
+  const next = f.work.ensurePage("TB-01", 1);
+  assert.equal(next.nearbyCoverage.cards.length, 1);
+  assert.equal(next.nearbyCoverage.cards[0].id, "synthetic-card");
+  assert.equal(next.nearbyCoverage.cards[0].unit, "micro");
+  assert.equal(next.nearbyCoverage.cards[0].topic, "Synthetic");
+  assert.equal(next.nearbyCoverage.cards[0].level, "unmapped");
+  assert.equal(next.nearbyCoverage.cards[0].status, "private_submission_not_approval");
+  assert.equal(next.unitHint.unit, "micro");
+  assert.equal(next.schemaExample.unit, "micro");
+  assert.equal(next.nearbyCoverage.truncated, false);
+  assert.equal(f.work.pageState("TB-01", 1).status, "draft");
+  assert.equal(f.work.packet("synthetic").status, "submitted_needs_review");
+  const before = fs.readFileSync(f.draft);
+  const notes = path.join(f.root, "private-sources/card-work/synthetic/author-notes.json");
+  fs.writeFileSync(notes, "{truncated");
+  assert.equal(f.work.packet(next.id).nearbyCoverage.cards[0].id, "synthetic-card", "Historical submitted coverage is a hint, not current review approval");
+  assert.deepEqual(fs.readFileSync(f.draft), before);
+  const manifest = path.join(f.root, "private-sources/card-work/synthetic/manifest.json");
+  fs.appendFileSync(manifest, " ");
+  const warned = f.work.packet(next.id).nearbyCoverage;
+  assert.equal(warned.cards.length, 0);
+  assert.equal(warned.warnings[0].batchId, "synthetic");
+});
+
+test("validation surfaces universal and forward-reference warnings without blocking submission", t => {
+  const f = fixture(t);
+  f.pack.cards[0].headline = "Every market always clears.";
+  f.pack.cards[0].notes = "The later PPC shows this.";
+  write(f.draft, f.pack);
+  const result = f.work.validate("synthetic");
+  assert.equal(result.valid, true);
+  assert.ok(result.warnings.some(w => /universal claim/.test(w)));
+  assert.ok(result.warnings.some(w => /forward reference/.test(w)));
+});
+
+test("read-only audit lists current submissions, no-card pages, stale status and unit drift", t => {
+  const f = fixture(t);
+  const p1 = f.work.ensurePage("TB-01", 1);
+  write(path.join(f.root, p1.draftPath), { schemaVersion: 1, id: p1.id, title: "Synthetic point",
+    cards: [{ ...card(), id: "p1-test-point", sources: [{ id: "TB-01", page: 1 }] }] });
+  f.work.submit(p1.id);
+
+  const page2 = "private-sources/ocr-work/TB-01/pages/00002/transcription.json";
+  fs.mkdirSync(path.dirname(path.join(f.root, page2)), { recursive: true });
+  write(path.join(f.root, page2), { book_id: "TB-01", pdf_page: 2, status: "transcribed_needs_review" });
+  f.work.noCard("TB-01", 2, "front_matter", "Synthetic page 2 contains only front matter and no economics knowledge point.");
+
+  const page3 = "private-sources/ocr-work/TB-01/pages/00003/transcription.json";
+  fs.mkdirSync(path.dirname(path.join(f.root, page3)), { recursive: true });
+  write(path.join(f.root, page3), { book_id: "TB-01", pdf_page: 3, status: "transcribed_needs_review" });
+  const p3 = f.work.ensurePage("TB-01", 3);
+  write(path.join(f.root, p3.draftPath), { schemaVersion: 1, id: p3.id, title: "Synthetic point",
+    cards: [{ ...card(), id: "p3-test-point", unit: "intro", sources: [{ id: "TB-01", page: 3 }] }] });
+  f.work.submit(p3.id);
+
+  const dir1 = path.join(f.root, "private-sources/card-work/ocr-tb-01-p00001-cards");
+  const notesPath = path.join(f.root, p1.evidencePath);
+  const before = {
+    draft: fs.readFileSync(path.join(f.root, p1.draftPath)),
+    notes: fs.readFileSync(notesPath),
+    manifest: fs.readFileSync(path.join(dir1, "manifest.json")),
+    submissions: fs.readdirSync(path.join(dir1, "submissions")).sort()
+      .map(name => [name, fs.readFileSync(path.join(dir1, "submissions", name)).toString("base64")]),
+  };
+  const audit = f.work.audit("TB-01", 1, 3);
+  assert.equal(audit.cards.length, 3);
+  const row1 = audit.cards.find(row => row.page === 1);
+  assert.equal(row1.status, "submitted_needs_review");
+  assert.ok(row1.warnings.some(w => /unit micro differs from nearby modal unit intro/.test(w)));
+  const row2 = audit.cards.find(row => row.page === 2);
+  assert.equal(row2.status, "no_card_needed");
+  assert.equal(row2.kind, "front_matter");
+  assert.deepEqual(fs.readFileSync(path.join(f.root, p1.draftPath)), before.draft);
+  assert.deepEqual(fs.readFileSync(notesPath), before.notes);
+  assert.deepEqual(fs.readFileSync(path.join(dir1, "manifest.json")), before.manifest);
+  assert.deepEqual(fs.readdirSync(path.join(dir1, "submissions")).sort()
+    .map(name => [name, fs.readFileSync(path.join(dir1, "submissions", name)).toString("base64")]), before.submissions);
+  assert.equal(fs.existsSync(path.join(f.root, "content")), false);
+
+  fs.appendFileSync(path.join(f.root, page2), " ");
+  const staleNoCard = f.work.audit("TB-01", 1, 3).cards.find(row => row.page === 2);
+  assert.equal(staleNoCard.status, "stale_no_card");
+
+  const changed = JSON.parse(before.notes);
+  changed.concerns.push("Synthetic stale audit check.");
+  fs.writeFileSync(notesPath, JSON.stringify(changed));
+  const stale = f.work.audit("TB-01", 1, 3).cards.find(row => row.page === 1);
+  assert.equal(stale.status, "stale_submission");
+});
+
+test("nearby coverage caps context at twelve cards and excludes distant page ranges", t => {
+  const f = fixture(t);
+  for (let i = 0; i < 13; i++) {
+    const id = `nearby-${i}`, p = f.work.init(id, "TB-01", 1, 1, 1);
+    write(path.join(f.root, p.draftPath), { schemaVersion: 1, id, title: "Synthetic nearby pack", cards: [{ ...card(), id: `nearby-point-${i}` }] });
+    f.work.submit(id);
+  }
+  const p = f.work.ensurePage("TB-01", 1);
+  assert.equal(p.nearbyCoverage.cards.length, 12);
+  assert.equal(p.nearbyCoverage.truncated, true);
+  const directory = path.join(f.root, "private-sources/ocr-work/TB-01/pages/00032");
+  fs.mkdirSync(directory, { recursive: true });
+  write(path.join(directory, "transcription.json"), { book_id: "TB-01", pdf_page: 32, status: "transcribed_needs_review" });
+  assert.deepEqual(f.work.ensurePage("TB-01", 32).nearbyCoverage.cards, []);
+});
