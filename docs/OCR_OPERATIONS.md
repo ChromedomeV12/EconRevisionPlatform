@@ -53,7 +53,9 @@ Pi stores each image it reads in the session history. Compaction summarises text
 
 A fresh Pi session resets the media budget. That is the supported recovery for this resource error: stop, preserve the pending evidence, open a fresh session in the project root, call `ocr_recovery`, and resume the exact stage. Do not treat the error as `no_card`, delete page images/transcripts, or claim a visual review that did not happen.
 
-A machine-local model can set `inputLimits.images.resize` (for example 1280 by 1280) so new images enter history smaller. It affects only newly encoded images and changes the agent-harness configuration, so apply it only with owner approval; it does not evict images already in a session.
+The active machine-local model resizes new images to 1280 by 1280 before they enter history. It affects only newly encoded images, not images already in a session.
+
+The page-inspection path now uses a text-returning sidecar. `ocr_vision` sends one page image in a separate request and stores only the returned text in the OCR session, so page images no longer accumulate there. The sidecar reads its endpoint, model and API-key location from machine-local `.pi/ocr.json`; if it is unavailable, vision remains pending. Images opened directly through Pi `read`, including some diagram crops, can still accumulate; use a fresh session if the media budget recurs. Verify the sidecar on the next explicit OCR batch before relying on it.
 
 ## Durable Range and Interruption Recovery
 
