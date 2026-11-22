@@ -59,6 +59,7 @@
 .econ-graph .graph-curve-supply { stroke: var(--graph-supply); }
 .econ-graph .graph-curve-cost { stroke: var(--graph-cost); }
 .econ-graph .graph-curve-reference { stroke: var(--graph-reference); stroke-dasharray: 9 5; }
+.econ-graph .graph-curve-ppc { stroke: var(--graph-ink); }
 .econ-graph .graph-arrow { stroke: var(--graph-arrow); stroke-width: 2.5; stroke-linecap: butt; }
 .econ-graph .graph-arrowhead { fill: var(--graph-ink); }
 .econ-graph .graph-movement-arrowhead { fill: var(--graph-arrow); }

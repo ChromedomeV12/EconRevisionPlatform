@@ -28,7 +28,7 @@ The agent writes bounded JSON, not SVG, JavaScript, arbitrary CSS or evaluated f
 
 Key invariants:
 
-- Curves are piecewise-linear vertices in data coordinates; straight source lines declare `shape:"linear"` and must remain straight.
+- Curves are piecewise-linear vertices in data coordinates; straight source lines declare `shape:"linear"` and must remain straight. Curve roles are `demand`, `supply`, `cost`, `reference` and `ppc`; `ppc` is a solid neutral production-possibility curve, not a demand curve.
 - Points lie on their curve. Empty labels avoid inventing names. `marker:false` is for layout anchors, not for hiding a printed dot.
 - Arrows are either point-anchored movements or detached `start`/`end` indicators/callouts. Use bounded offsets for placement without moving economic geometry.
 - Areas carry semantic roles (`welfare`, `consumer-surplus`, `producer-surplus`); CSS supplies colors.

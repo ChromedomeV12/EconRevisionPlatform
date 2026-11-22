@@ -43,6 +43,7 @@ const invalidCases = [
   ["zero-length segment", s => s.curves[0].points[1] = [1, 9]],
   ["wrong demand slope", s => s.curves[0].points[1] = [5, 10]],
   ["wrong supply slope", s => s.curves[1].points[1] = [5, 0]],
+  ["wrong ppc slope", s => { s.curves[0].role = "ppc"; s.curves[0].points[1] = [5, 10]; }],
   ["unknown curve shape", s => s.curves[0].shape = "smooth"],
   ["bent declared-linear curve", s => { s.curves[0].shape = "linear"; s.curves[0].points[1] = [5, 5.5]; }],
   ["reversed x", s => s.curves[0].points.reverse()],
@@ -183,6 +184,15 @@ test("Surplus roles are semantic and annotation coordinates are not silently cla
   assert.ok(nodes.some(n => n.attributes.class === "graph-area graph-area-producer-surplus"));
   assert.equal(nodes.find(n => n.attributes.class === "graph-annotation").attributes.y, "244.8");
 });
+test("PPC role is a valid solid neutral curve, not a demand curve", () => {
+  const spec = fixture();
+  spec.curves[0].role = "ppc";
+  assert.equal(validate(spec).valid, true);
+  const nodes = flatten(render(spec, fakeDocument()));
+  assert.ok(nodes.some(node => node.attributes.class === "graph-curve graph-curve-ppc"));
+  assert.ok(!nodes.some(node => node.attributes.class === "graph-curve graph-curve-demand"));
+});
+
 test("Arrow offsets translate only arrows, preserving direction, length and economic geometry", () => {
   const spec = fixture();
   const original = flatten(render(spec, fakeDocument()));

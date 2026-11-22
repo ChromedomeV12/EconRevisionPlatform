@@ -100,13 +100,13 @@
         id(curve.id, `${path}.id`); text(curve.label, 24, `${path}.label`);
         if (Object.hasOwn(curve, "shape")) choice(curve.shape, ["linear", "piecewise"], `${path}.shape`);
         if (Object.hasOwn(curve, "labelPosition")) pair(curve.labelPosition, `${path}.labelPosition`);
-        choice(curve.role, ["demand", "supply", "cost", "reference"], `${path}.role`);
+        choice(curve.role, ["demand", "supply", "cost", "reference", "ppc"], `${path}.role`);
         const before = errors.length;
         array(curve.points, 64, `${path}.points`, pair, 2);
         if (errors.length === before) curve.points.slice(1).forEach((end, i) => {
           const start = curve.points[i];
           if (end[0] === start[0] && end[1] === start[1]) fail(path, "zero-length curve segment");
-          if (["demand", "supply"].includes(curve.role) && (end[0] <= start[0] || (curve.role === "demand" ? end[1] >= start[1] : end[1] <= start[1]))) fail(path, "demand/supply requires increasing x and strictly decreasing/increasing y");
+          if (["demand", "supply", "ppc"].includes(curve.role) && (end[0] <= start[0] || (curve.role === "supply" ? end[1] <= start[1] : end[1] >= start[1]))) fail(path, `${curve.role} requires increasing x and strictly ${curve.role === "supply" ? "increasing" : "decreasing"} y`);
         });
         if (errors.length === before && curve.shape === "linear" && curve.points.some(point => !onPolyline(point, [curve.points[0], curve.points.at(-1)], spec.axes))) fail(path, "linear curve vertices must lie on the straight endpoint segment");
         curves.set(curve.id, curve);
