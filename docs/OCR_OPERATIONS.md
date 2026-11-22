@@ -47,6 +47,14 @@ After graphs, the same session authors 1–3 private card points per accepted pa
 
 Diagrams are preserved as inspected original-PDF crops with provenance. Only final referenced `kind: "diagram"` crops queue for reconstruction; tables, photographs and text panels do not. A composite with independent scales is deferred, not merged. Reconstruction follows [Graph workflow](GRAPH_WORKFLOW.md).
 
+## Vision and media budget
+
+Pi stores each image it reads in the session history. Compaction summarises text but does not rewrite those image blocks. The local vision provider counts image patches across the whole request, so a long OCR session can return `media_budget_exceeded` even when the current page image is small: earlier page images are still in the request.
+
+A fresh Pi session resets the media budget. That is the supported recovery for this resource error: stop, preserve the pending evidence, open a fresh session in the project root, call `ocr_recovery`, and resume the exact stage. Do not treat the error as `no_card`, delete page images/transcripts, or claim a visual review that did not happen.
+
+A machine-local model can set `inputLimits.images.resize` (for example 1280 by 1280) so new images enter history smaller. It affects only newly encoded images and changes the agent-harness configuration, so apply it only with owner approval; it does not evict images already in a session.
+
 ## Durable Range and Interruption Recovery
 
 The durable intent records the range, batch baseline, accepted/graph/card baselines, last action and compaction diagnostics. `ocr_recovery` derives the next stage from disk, not from memory. It reports `action`, `nextTool`, `remaining` and `stopReasons`.
