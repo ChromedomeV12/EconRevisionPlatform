@@ -1,81 +1,59 @@
-# Jev integration plan
+# Jev integration boundary
 
-The demo runs without AI or a backend. `decisions.js` is the application boundary for adding Jev later. It currently performs deterministic completeness and exact-duplicate checks on personal submissions. No model output, confidence, or teacher approval is simulated.
+## Current state
 
-## Refresh-first MVP
+The app has **no live AI**. The refresh feed does not call answer assessment. `decisions.js` performs deterministic local screening (missing fields, short text, exact duplicates) and exposes a provider boundary for a future service. When no provider is available, the result is explicitly `unavailable` or `unassessed`, not a simulated grade.
 
-The primary experience is immediate knowledge refresh, not answer assessment. `refresh.js` stores opened timestamps and explicit revisit/confusing preferences; bookmarks remain in the existing workspace state. The feed makes no `assessAnswer` call and writes no FSRS review. Old review histories are retained, not inferred from swipes.
+## Product rule
 
-Future Jev experiments could suggest a related explanation for a confusing point or rank an explicitly selected revisit list. Suggestions must remain advisory and distinguish exposure/preferences from demonstrated recall. Do not introduce invisible answer grading, manufacture mastery scores, change FSRS schedules or approve submitted content through this boundary. A retrieval-practice mode, if added later, requires explicit learner participation and separate evaluation.
+AI is **advisory**. It may suggest whether a written answer meets rubric points, or flag ambiguity, level fit or source support. It must not:
 
-## Responsibilities
+- approve publication or teacher verification;
+- change a recall schedule or create a review;
+- silently replace the reference explanation;
+- turn an uncertain or failed response into a pass.
 
-| Decision | Owner | Integration point |
-| --- | --- | --- |
-| What appears in Revisit | Explicit learner choice in the current MVP | `refresh.js`: `toggle` |
-| When a recall card is due (optional future mode) | FSRS, based on an explicit rating; legacy state retained | `learning.js`: `rate`, `preview`, `queue` |
-| Whether a written answer meets a rubric (optional future mode) | Future Jev service, advisory only | `assessAnswer`, not invoked by the current feed |
-| Submission ambiguity, source support, level fit | Future Jev service with approved reference context | `screenSubmission` before entering the review queue |
-| Exact duplicate and missing fields | Local code today; server validation in production | Local screening provider |
-| Permission to publish and teacher approval | Authorized human reviewer | Future authenticated server action |
+A human reviewer remains the authority. The feed must stay usable when the provider times out, is rate-limited, returns malformed output or is disabled.
 
-Do not ask Jev to invent a retention schedule or silently change a student's recall rating. An incorrect answer can suggest a follow-up card later, but eligibility still comes from the deterministic due queue. Ranking due cards is a possible later experiment, not implemented here.
+## Backend responsibilities
 
-## Browser contract
+The browser must never hold a vendor key or private source context. A future authenticated backend:
 
-`createService(provider)` wraps a provider with a five-second timeout, response validation, and local fallback. `createHttpProvider({ baseUrl })` is an unused transport adapter for our own backend. It sends credentialed JSON requests with a 4.5-second abort signal. Never point it directly at TypeSafe or expose a vendor key in browser code. The default app creates the local provider and makes no AI network requests.
+- retrieves the canonical card version, rubric and authorized reference material instead of trusting client-supplied answer keys;
+- retrieves duplicate candidates and source support itself instead of trusting a client list;
+- sends narrow, typed questions (Choice/Score) for rubric satisfaction, ambiguity, level fit and evidence support;
+- validates the provider response, maps it into the application contract and records model/rubric/source versions, result, request ID and reviewer action;
+- enforces authentication, authorization, per-user quotas, rate limits, timeouts and a kill switch;
+- minimizes retention of student free text and keeps source material within its permitted use.
 
-Proposed application endpoints, **not existing TypeSafe endpoints**:
+Treat student answers and submissions as untrusted data, not instructions. Do not accept arbitrary models, prompts, source paths or tools from the client.
 
-- `POST /api/decisions/assess-answer`: `schemaVersion`, `cardId`, `cardVersion`, `answer`. The prototype also supplies the question, reference answer and rubric. A production server must retrieve these from its canonical card version and must not trust client-provided answer keys.
-- `POST /api/decisions/screen-submission`: `schemaVersion`, `card`, `existingCards`. A production server must retrieve duplicate candidates and reference sources itself, rather than trusting the client list.
+## Application contract
 
-Normalized answer assessment:
+Proposed application routes, not vendor endpoints:
 
-```json
-{
-  "status": "complete",
-  "provider": "jev",
-  "verdict": "partial",
-  "confidence": 0.76,
-  "rubricMatches": [0, 1]
-}
-```
+- `POST /api/decisions/assess-answer` with schema version, card ID/version and answer. The server resolves the canonical question, reference answer and rubric.
+- `POST /api/decisions/screen-submission` with schema version and the submitted card. The server resolves duplicate candidates and source support.
 
-`verdict` is `correct`, `partial`, `incorrect`, or `unassessed`. Unavailable, failed, or uncertain judgments must normalize to `status: unavailable`, `verdict: unassessed`, `confidence: null`, and an empty match list. Rubric matches are zero-based indexes into the canonical versioned rubric. The backend must reject out-of-range indexes. The browser never treats this response as a scheduling instruction.
+Normalized assessment states: `correct`, `partial`, `incorrect` or `unassessed`. Rubric matches are zero-based indexes into the canonical versioned rubric; out-of-range indexes are rejected. Unavailable, failed or uncertain judgments normalize to `unavailable`/`unassessed`, no confidence and an empty match list.
 
-Normalized submission assessment:
+Normalized screening states: `complete` with allowed flags (`missing_source`, `short_question`, `short_answer`, `duplicate_question`, `ambiguous`, `unsupported`, `level_mismatch`), confidence or null, correctness `supported`/`unsupported`/`unassessed`, and **always** `requiresHumanReview: true`. The service forces human review even if a provider says otherwise. High confidence is not permission to publish.
 
-```json
-{
-  "status": "complete",
-  "provider": "jev",
-  "flags": ["ambiguous"],
-  "confidence": 0.81,
-  "correctness": "unassessed",
-  "requiresHumanReview": true
-}
-```
+The browser validates response shape and bounds, uses a short timeout and falls back to the local provider. It never treats an assessment as a scheduling instruction. `createHttpProvider({ baseUrl })` is an unused transport adapter for our own backend, not a vendor URL.
 
-Allowed flags are defined in `decisions.js`. Source support is not the same as truth, and high confidence is not permission to publish. The service always forces human review even if a provider returns `requiresHumanReview: false`.
+## Evaluation
 
-## Backend implementation
+Use a held-out set graded by the teacher to choose confidence thresholds. Do not hard-code an arbitrary percentage as proof of correctness. Track false approvals, false rejections, abstention, SL/HL errors, latency and cost. Keep a disable switch.
 
-1. Add user authentication, server-enforced teacher roles, persistence, revision IDs, and separate draft/review/published states. Local approval in this demo is personal-only and is not a security boundary.
-2. Keep the TypeSafe API key in server environment variables. Fix the model version in server configuration. Do not accept arbitrary models, instructions, source paths, or tools from submissions.
-3. Retrieve only material authorized for the service. The Git-ignored private collection is not implicitly authorized for remote processing or public retrieval. Public-use permission remains separate from factual review.
-4. Use narrow TypeSafe Choice or Score questions for rubric satisfaction, ambiguity, level fit, and support by the supplied evidence. Treat student answers and submissions as untrusted data, not instructions.
-5. Validate TypeSafe responses, map them into the contracts above, and record model version, rubric version, source IDs, result, request ID, and reviewer action. Minimize retention of student free text.
-6. Use a held-out set graded by the teacher to choose confidence thresholds. Do not hard-code an arbitrary percentage as proof of correctness. Track false approvals, false rejections, abstention, SL/HL errors, latency, and cost.
-7. Keep a switch to disable AI. On timeout, rate limit, invalid output, or uncertain evidence, keep the reference explanation available and route submissions to human review. Avoid showing an unavailable check as a pass.
+Until that evaluation and the backend exist, no AI result should appear in the product.
 
-## TypeSafe references
+## Research references
 
-Reviewed 2026-10-03. Confirm the current API and model contract when implementing the backend.
+Reviewed 2026-10-03; confirm current contracts at implementation:
 
-- [Introduction and primitives](https://docs.typesafe.ai/introduction)
-- [Documentation index](https://docs.typesafe.ai/llms.txt)
-- [Confidence](https://docs.typesafe.ai/confidence)
-- [API reference](https://docs.typesafe.ai/api)
+- [TypeSafe introduction](https://docs.typesafe.ai/introduction)
+- [TypeSafe documentation index](https://docs.typesafe.ai/llms.txt)
+- [TypeSafe confidence](https://docs.typesafe.ai/confidence)
+- [TypeSafe API reference](https://docs.typesafe.ai/api)
 
-The integration here is an application interface, not a claim that TypeSafe has validated this educational use case.
+This is an application boundary, not a claim that a vendor has validated the educational use case.

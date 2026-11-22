@@ -1,26 +1,27 @@
-# Graph Fidelity Failures: 2026-10-14
+# Graph fidelity failure: 2026-10-14
 
-## Confirmed Causes
+This is a decision record, not a bug log. It explains why graph submission gained a source-first evidence gate.
 
-1. **Conflicting task instructions.** The previous fixed PED task in `scripts/graph-work.cjs` required a movement arrow although the inspected original only prints detached price/quantity indicators. Archived agent evidence explicitly describes adding an unprinted arrow to satisfy that requirement. This was a task-contract defect, not random file corruption.
-2. **Insufficient geometry vocabulary.** Arrows formerly had to join on-curve points, preventing faithful detached indicators and label callouts. The agent omitted printed arrows or substituted economic movements. External surplus labels were left disconnected from their regions.
-3. **Renderer defaults were mistaken for source observations.** Points defaulted to visible dots even when their label was empty. The fixed wide plot flattened some source layouts; annotation clamping moved labels independently of geometry. Adjacent surplus regions shared one fill.
-4. **Structural validation was over-trusted.** A monotone polyline can still be bent when the original is straight. Valid on-curve points do not establish correct arrow placement or economics. Screenshot generation and hash consistency do not demonstrate visual comprehension.
-5. **Evidence was too coarse.** Submission checked inspection booleans and a spec hash, but did not itself verify the four screenshot files, their manifest or the renderer/style version. Known discrepancies could be listed as uncertainties without blocking submission. There was no structured source-first inventory or per-view comparison record.
+## What failed
 
-The archived drafts and evidence establish these causes. They do not establish whether IQ3 quantization, the vision adapter or a particular compaction failure contributed to individual misreadings. No model/provider settings or compaction token budgets were changed on speculation. Accepted transcript/crop provenance remained intact; rewinding OCR would not repair these graph defects.
+1. **The task contract could require an unprinted feature.** A fixed movement arrow was demanded even when the original showed only detached price/quantity indicators. The agent added the arrow to satisfy the contract. The defect was in the instruction, not random file corruption.
+2. **The geometry vocabulary was too small.** Arrows had to join on-curve points, so detached indicators and label callouts had no faithful form. Some source arrows were omitted or replaced with economic movements; external surplus labels were left disconnected.
+3. **Renderer defaults were mistaken for source observations.** Points showed dots when the source printed none; a default wide plot flattened tall figures; annotation clamping moved labels; adjacent surplus regions shared one fill.
+4. **Structural validation was over-trusted.** A monotone polyline can be bent; a valid on-curve point does not establish arrow placement or economics. Screenshot generation and matching hashes do not demonstrate visual comprehension.
+5. **Evidence was too coarse.** Submission checked inspection booleans and a spec hash, but not the four screenshots, their manifest or the renderer/style version. Known discrepancies could be recorded as uncertainties without blocking submission.
 
-## Changes
+The archived drafts establish these causes. They do not establish whether quantization, the vision adapter or a particular compaction failure contributed to individual misreadings. No provider or compaction setting was changed on speculation. Accepted transcript/crop provenance stayed intact; rewinding OCR would not repair graph defects.
 
-- Fixed source-specific task instructions, straight-line declarations, explicit marker guidance, source-dependent aspect ratios, detached arrows, clear callout placement and semantic surplus fills.
-- `graph-review.cjs` checks text bounds, marker geometry and runtime stability, and captures source/spec/renderer/stylesheet/screenshot hashes.
-- `graph-fidelity.cjs` compares a recorded source inventory against the proposed geometry and requires eight specific inspection checks. It does not inspect pixels or certify economics.
-- `graph-work.cjs audit <id>` verifies exact four task-local PNGs and their hashes, manifest/source/spec consistency, runtime hashes and the fidelity record. New submissions/revisions must pass it. New-protocol status becomes stale after artifact/runtime changes.
-- Pi's OCR handoff, standalone graph prompt, transcription skill and graph skill require source-first observation, independent preview comparison and the audit gate. Existing one-model/sequential/bounded processing and interruption recovery remain in place.
-- Existing exact legacy snapshots remain readable and idempotent, explicitly labelled `legacy-inspection-flags`. Editing one requires the new gate; no automatic migration, fake inspection notes or checkpoint deletion occurs.
+## What changed
 
-## Remaining Limits
+- Source-specific task instructions, explicit straight-line declarations, marker guidance, source-dependent aspect ratios, detached arrows, callout placement and semantic surplus fills.
+- Capture records source/spec/renderer/stylesheet/screenshot hashes and checks text bounds. Renderer or stylesheet changes invalidate current evidence.
+- New submissions require a `fidelityReview` source inventory and eight specific inspection checks. `audit <id>` verifies the four task-local previews, manifest/spec/source consistency, runtime hashes and the record before submit.
+- Legacy snapshots remain readable as `legacy-inspection-flags`; editing one requires the new gate. No automatic migration, fabricated inspection note or checkpoint deletion.
+- Skills and prompts require source-first observation, independent preview comparison and the audit gate. One model/session and bounded, sequential work remain.
 
-A model can still record an incorrect source inventory or claim an inspection it did not understand. Counting objects and checking hashes prevents inconsistent or stale artifacts, not every visual/economic error. Keep human review before promotion. Treat missing vision/browser tools and unresolved visual mismatches as pending work; do not replace source fidelity with a passing structure check or an uncertainty disclaimer.
+## Remaining limits
 
-After private sync finishes, reload Pi in the project root to pick up the changed extension/skills. Use the existing bounded OCR or graph command. Source PDFs, accepted transcripts, crops and progress markers are unaffected. See [Graph workflow](GRAPH_WORKFLOW.md) for the current evidence contract.
+A model can still record a wrong inventory or claim an inspection it did not understand. Hashes prevent stale or inconsistent artifacts; they do not prove every visual or economic judgment. Human review remains required before promotion. Missing vision/browser tools and unresolved visual mismatches stay pending; a passing structure check is not source fidelity.
+
+See [Graph workflow](GRAPH_WORKFLOW.md) for the current contract.

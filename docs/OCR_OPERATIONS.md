@@ -1,103 +1,73 @@
-# Private OCR Operations
+# Private OCR operations
 
-This is an operator entry point, not a replacement for `tools/ocr/README.md` on the privately synced checkout. The public app needs none of these tools. This guide contains no source text, model credentials or private evidence.
+This is the operator guide for private source processing. A public clone does not include the corpus, Pi settings or the private tooling. Read `tools/ocr/README.md` and the project transcription/graph/authoring skills on the synced checkout before operating.
 
-## Before Starting
+## Boundary
 
-On a replacement machine, use a fresh frontend Git checkout and follow the private-sync steps below. Preserve accepted transcripts, immutable graph/card submissions and `run-intent.json`. Restore private tests with the tooling. Check durable progress before asking the agent to continue. Run authoring from the normal frontend checkout; create the separate `m1` integration worktree through Git as described in the architecture guide.
+Source PDFs, page images, OCR text, transcripts, crops, drafts, evidence and logs stay under private source directories. They are not public assets. Acceptance and a passing hash check do not establish accuracy, teacher review or reuse permission.
 
-1. Stop the writer on the other machine and let private sync finish. Local locks are not distributed locks.
-2. Confirm `.pi/`, `tools/ocr/`, the private OCR/Pi tests and the private corpus have synced. Git ignores these operator files; a clone alone does not provide them. Keep public application tests tracked and run private tests from the synced checkout.
-3. Exclude machine-local files on every Syncthing device before setup or cleanup. The synced root is the parent Coding/Dev directory: add `#include EconRevisionPlatform/tools/ocr/syncthing.ignore` to that folder's Ignore Patterns on each device, preserving existing rules. The include excludes `.ocr-runtime/`, both repositories' `.git` metadata, the integration worktree directories and the backend's default SQLite database/journals. If `DB_PATH` points elsewhere inside the synced tree, exclude that path and its journals too. Verify the effective rules on each device; a nested project `.stignore` is insufficient. Use Git to transfer commits and private sync to transfer source-processing files. Do not replace a fresh clone's `.git` with synced metadata from another machine.
-4. Open Pi 1.0.0 in the project root, review the local extension and reload if it arrived after Pi startup. Use standalone `node` on PATH; never substitute Pi's harness executable.
-5. Read the private tooling README and the `econ-transcription`, `econ-graphs` and `econ-authoring` skills. All three stages use the same session, sequentially.
+Use one writer across synced checkouts. Local locks are not distributed locks. Stop and check the other machine before recovery. Exclude machine-local runtimes, database files and worktree metadata from folder sync; the root-level Syncthing include points to the project exclusion list.
 
-## First Run and Resume
+## Before starting
 
-These are **Pi commands**, not terminal shell commands:
+1. Stop the writer on the other machine and let private sync finish.
+2. Confirm `.pi/`, `tools/ocr/`, the private tests and the corpus are present, and verify the sync exclusions on every device.
+3. Open Pi in the project root, reload after extension/skill changes, and use standalone `node` on PATH.
+4. Read the private tooling README and the transcription, graph and authoring skills; work sequentially in one session.
+
+## Checkpoints
+
+| State | Establishes | Does not establish |
+| --- | --- | --- |
+| Prepared/raw page | Page image, embedded text and independent OCR exist with provenance. | Accepted transcript, graph or card. |
+| `transcribed_needs_review` | Structural and hash validation passed. | Accurate transcription, teacher review or permission to publish. |
+| Pending graph task | A referenced crop is queued for reconstruction. | A finished or reviewed graph. |
+| `drafted_needs_review` | A private reconstruction/evidence snapshot exists. | Public approval or app activation. |
+| `deferred_needs_review` | Unsupported work with a recorded reason. | Completion or automatic retry. |
+
+Accepted transcripts survive graph failure. Graph work never rewinds OCR page completion. Report prepared pages, accepted pages and human-reviewed pages separately; a tool launch or planned batch is not completion.
+
+## Run and resume
+
+Pi commands:
 
 ```text
 /ocr-setup
 /ocr-status
 /ocr-work TB-01 1
-```
-
-Wait for setup to complete, inspect status, then start with one page. `TB-01` and `TB-02` are configured book IDs, not page numbers; the final `1` requests a bounded page batch. Check the private source index for their exact titles. Resume uses checkpoints rather than a guessed next page. Larger batches are capped at ten pages, and pending diagram work can prevent page advancement before that batch count is reached.
-
-Setup prepares local Python/CPU OCR dependencies; it does not call Qwen. The pipeline prepares PDF images, embedded text and independent CPU OCR first. The current Pi model then inspects the images through Pi's built-in `read` pipeline and reconciles the evidence into a transcript. Neither raw OCR nor a schema-valid transcript proves accuracy.
-
-Preserve each diagram as an inspected original-PDF crop with provenance and a transcript asset reference. After transcript acceptance, final referenced diagram crops enter the reconstruction queue. The same model/session creates bounded JSON drafts, validates geometry, captures both themes/mobile/desktop and inspects the results. At most three reconstructions run per OCR turn; no second model/session or concurrent inference should start.
-
-## Checkpoint Meanings
-
-| State | What it establishes | What it does not establish |
-| --- | --- | --- |
-| Prepared/raw OCR page | Page image, embedded text and independent OCR exist with provenance. | An accepted transcript, graph reconstruction or card draft. |
-| `transcribed_needs_review` | Transcript accepted by structural/hash checks. | Accurate transcription, teacher review or permission to publish. |
-| Pending graph task | Referenced crop registered for reconstruction. | A finished or reviewed reconstruction. |
-| `drafted_needs_review` | Private reconstruction/evidence snapshot submitted. | Public approval or activation in the app. |
-| `deferred_needs_review` | Unsupported work recorded with a reason. | Completion or an automatic future retry. |
-
-Accepted transcripts remain durable if graph registration/rendering fails. Graph checkpoints do not advance or rewind OCR page completion.
-
-Report these counts separately. Neither prepared pages nor scratch drafts increase the accepted-transcript count. Verify each claimed completion from its canonical artifact; a tool launch, summary or planned batch is not completion. Keep the global next-page cursor distinct from a saved range's next page.
-
-After graphs, the same OCR command drafts 1-3 swipe points per accepted page, using `ocr_cards` and stable private page tasks. At most THREE card-producing page tasks complete per explicit batch. A page decided `no_card_needed` is recorded separately and does not consume a card slot; a revision of an already-counted page does not add another. The page batch still caps total pages; no extra slash command is needed. New page work is blocked until pending graphs and card drafts are settled. All card submissions remain `submitted_needs_review`; no automatic approval/export/publication. Content-free or already-covered pages need a pinned `no_card_needed` reason, never a resource-failure excuse. See [Content Pipeline](CONTENT_PIPELINE.md).
-
-## Durable Range and Interruption Recovery
-
-After private code sync and a Pi reload, start a topic range with this Pi command:
-
-```text
-/ocr-range TB-01 110 176 10
-```
-
-This persists the requested range and a bounded batch baseline, then sends exactly one model prompt. It does not authorize all 67 pages in one unbounded turn. After the batch stops, use the explicit Pi command:
-
-```text
+/ocr-range TB-01 START END [1-10]
 /ocr-continue
 ```
 
-The read-only `ocr_recovery` tool reports actual range progress, the next unfinished range page, pending graphs, pages/graphs completed in the current batch, card-producing pages and no-card pages, last OCR operation and recent compaction diagnostics. `cardPagesSkipped` counts content-only pages decided in the current batch; they do not consume card slots. It differs from `ocr_status`, whose next_page is global. State lives privately in `private-sources/ocr-work/run-intent.json`; accepted page and graph records remain authoritative. Graph budget is derived from immutable submission files, so compaction or a process restart does not reset it. Only an explicit continuation starts a new budget baseline.
+Setup prepares local Python/CPU OCR; it does not call the model. The pipeline prepares page images, embedded text and independent OCR, then the current Pi model inspects images and reconciles evidence. A prepared page is not a transcript.
 
-Use the packet's `nextTool` hint with its `action`; `remaining` reports page, graph and card-page slots, and `stopReasons` names exhausted limits. A finished range returns `range_complete` even when it uses the last slot. Recovery rejects missing baseline transcripts and malformed run metadata instead of treating them as permission to start over. Restore or investigate missing files before continuing; do not recreate accepted pages from memory.
+Use a bounded range rather than a whole book. The saved range and durable intent are authoritative; do not start a different batch, create another task ID, or reset a budget to recover context. New pages wait until pending graphs and card drafts are settled.
 
-For `resume_graph`, use `node scripts/graph-work.cjs packet EXACT_TASK_ID` from `nextTool`. This read-only lookup keeps the saved range's task selection; `next BOOK` selects the book-wide queue and may return a different pending page. It remains useful for standalone graph work.
+After graphs, the same session authors 1–3 private card points per accepted page. At most three card-producing pages complete per explicit batch. A source-pinned `no_card_needed` page is tracked separately and does not consume a card slot; a revision of an already-counted page does not add one. The page batch still caps total pages. All outputs remain private and `submitted_needs_review`.
 
-Fresh runs receive a small disk-derived reminder; successful compaction adds passive context without triggering a new turn, and failed/aborted compaction records a bounded diagnostic and warns the operator. No startup process, new session, background retry or inference is launched. If compaction itself fails, preserve the failure, wait for the current run to settle, then explicitly continue. Do not fabricate completed work or erase checkpoints to get past the failure.
+Diagrams are preserved as inspected original-PDF crops with provenance. Only final referenced `kind: "diagram"` crops queue for reconstruction; tables, photographs and text panels do not. A composite with independent scales is deferred, not merged. Reconstruction follows [Graph workflow](GRAPH_WORKFLOW.md).
 
-For Qwen/flash runs, call recovery before loading instructions and read only the skill for its selected stage. Read one source page/task at a time; use bounded text slices when the packet reports omitted evidence. Keep source inventories and concerns in their private artifact files. After interruption reread those files and the actual images rather than loading the full book or relying on a compressed chat summary. Keep provider and compaction settings unchanged until an observed failure supports a configuration change.
+## Durable Range and Interruption Recovery
 
-Recovery also reports pending card page tasks and immutable card-history budget. It checks for accepted-but-unqueued diagrams before cards, then finishes graphs and cards before new pages. `/ocr-work` now saves a durable intent too. Explicit continuation upgrades legacy intents to include card backfill within their saved range, without rewriting accepted transcripts. Startup only reads state and never upgrades or starts work.
+The durable intent records the range, batch baseline, accepted/graph/card baselines, last action and compaction diagnostics. `ocr_recovery` derives the next stage from disk, not from memory. It reports `action`, `nextTool`, `remaining` and `stopReasons`.
 
-If card initialization was interrupted, `ocr_cards packet` restores missing templates only. Surviving malformed drafts stay preserved for repair. Exact submitted snapshots avoid duplicates after lost replies; changed source/graph hashes block completion. Do not delete drafts, manifests, snapshots or locks to hide errors, or create another task ID. Only explicit continuation resets budgets. The guards do not protect against an agent deliberately bypassing tools/editing state. After compaction re-read source/render images and private card drafts/notes, not just inspection flags.
+- Follow the returned action exactly. `register_graphs` runs `sync-ocr`; `resume_graph` uses the exact packet task; `resume_cards` uses the pending page packet; `transcribe` uses `ocr_next` for the saved page.
+- `stop_batch` and `range_complete` stop. Only an explicit human `/ocr-continue` starts a new budget baseline. An agent does not invoke it or start a session automatically.
+- A resource, provider, vision, browser, context or interruption failure stays pending. It is never a `no_card` or `deferred` decision. Only a real content reason supports a no-card record.
+- If a submit or no-card reply disappears, call recovery first. An exact retry of the completed action returns the existing result without a new record or slot. Changed drafts, sources or reasons do not qualify.
+- If the process restarts after a timeout or compaction, re-read the exact draft/notes, source image and current render. Hashes and disk artifacts override summaries and prior inspection claims.
 
-If a card `submit` or `no_card` reply disappears, call `ocr_recovery` first. An exact retry of the completed action returns its existing current result with `recovered: true`, even when the batch has stopped. It writes no new record and consumes no extra slot. Changed drafts, source hashes or no-card reasons do not qualify for that replay. Follow the returned action rather than repeating completed work.
+## Recovery rules
 
-Existing free-text runs have no saved range until `/ocr-range` is invoked. Existing incorrect budget-only deferrals still need owner-authorized recovery; these changes do not reopen them automatically. The current compaction token settings are deliberately unchanged: exact provider/Pi failure logs are needed before attributing failures to a token threshold or changing it. Test the recovery helper with `node --test tests/ocr-recovery.test.mjs`.
+- **Filenames:** new files use ASCII letters, digits, `-`, `_`, `.`; UTC `YYYYMMDDTHHMMSSZ` in filenames. Reject Windows-reserved characters/device names, control characters, trailing dots/spaces and case-only collisions. Do not rename source files, accepted crops or immutable snapshots without owner authorization and reference/hash checks. Inspect new paths before reporting completion.
+- **Locks:** inspect the recorded PID, host and start time. Do not clear a lock merely because it is old. Confirm the writer has stopped on every machine. Never delete drafts, manifests, snapshots or locks to hide an error.
+- **Stale setup/writer:** check the exact runtime install lock or writer lock and its worker. Remove only that lock after confirming its owner stopped; retry explicit setup.
+- **Sync:** check the root-level exclusion on every device. Verify exclusion before deleting a foreign-platform runtime, or the deletion may propagate to its owner.
+- **Missing vision/browser:** leave work pending and preserve the error. Never claim inspection or set evidence flags to pass validation.
+- **Incorrect accepted page:** preserve the original evidence and record the correction for review. Do not erase completion markers, transcripts or checkpoints independently.
 
-## Recover Interrupted Registration
+## Human review and publication
 
-These are **terminal commands**, run from the project root while no other writer is active:
+Accepted means structurally accepted, not correct. Teacher review and reuse permission are separate human decisions. Only the human operator may review/export selected work and promote it into a public pack after checking the exact revision and graph fidelity. Do not publish private transcripts, screenshots or source paths.
 
-```sh
-node scripts/graph-work.cjs sync-ocr TB-01
-node scripts/graph-work.cjs next TB-01
-node scripts/graph-work.cjs status
-```
-
-Inspect returned errors before resuming Pi. Use exact task IDs and paths from the returned packet; do not guess them. `sync-ocr` recovers registration from accepted transcripts; it is not a re-transcription command. `/graph-reconstruct 1` remains a separate bounded Pi command when you want to work on the graph queue alone.
-
-## Recovery Rules
-
-- Cross-platform names: follow the filename rules in `AGENTS.md` for all new recovery archives, notes and generated directories. Use compact UTC timestamps such as `recovery-note-20261014T061143Z.json`, never colon-containing ISO filenames. ISO strings inside JSON are fine. Check planned names and inspect newly created paths before reporting completion; preserve files on collisions. Reject Windows-reserved characters/device names, trailing dots/spaces and case-only collisions. Existing source files, referenced crops and immutable records must not be renamed without owner authorization and reference/hash checks. This is an agent/operator rule, not an automated scanner.
-
-- Stale setup lock: inspect the exact runtime `install.lock`, recorded PID and active setup/OCR workers. Only remove that exact lock after confirming its worker is stopped; retry explicit setup afterward. Do not delete the whole runtime as the first remedy.
-- Stale writer lock: stop/check workers on both synced machines. Use the documented token-based unlock from the private tooling README, not speculative file deletion.
-- Recovery-intent lock: inspect `private-sources/ocr-work/.recovery.lock` and its PID, host and start time. Older empty locks provide no ownership evidence. Confirm the writer has stopped on every machine before operator recovery; the tools do not clear a lock on age alone. Preserve `run-intent.json` and pending recovery files while investigating.
-- Sync failures: check the root-level ignore include on every device. Verify exclusion before deleting a foreign-platform runtime locally, or deletion may propagate to the machine using it.
-- Missing vision or browser: leave work pending and preserve the error. Never claim inspection or set evidence flags just to satisfy validation.
-- Incorrect accepted page: preserve the original evidence and record the correction for review. Do not erase completion markers, transcripts or checkpoint files independently; acceptance revisions require coordinated handling.
-- Changed source PDF: preserve/archive the old run intentionally. Do not overwrite sources to make existing hashes pass.
-
-Generated page images, OCR, crops, drafts, transcripts and render evidence stay under the private source directories. Neither acceptance nor reconstruction automatically authorizes publication. Promotion into a built-in app card is a separate reviewed change; follow [Graph workflow](GRAPH_WORKFLOW.md) and the selected [public asset permission record](../assets/diagrams/README.md).
+See [Content pipeline](CONTENT_PIPELINE.md), [Graph workflow](GRAPH_WORKFLOW.md) and [Testing](TESTING.md).

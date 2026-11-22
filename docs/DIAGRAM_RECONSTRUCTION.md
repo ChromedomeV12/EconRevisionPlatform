@@ -1,24 +1,16 @@
-# Diagram Reconstruction Plan
+# Diagram reconstruction: historical proposal
 
-## Current Assets
+**Status: superseded.** Do not treat this file as the current rendering plan. Native D3/SVG is the implemented website path; see [Graph workflow](GRAPH_WORKFLOW.md) and [DECISIONS.md](DECISIONS.md).
 
-The selected textbook extracts listed in `assets/diagrams/README.md` are used temporarily. The owner confirmed public reuse permission on 2026-10-12. They remain textbook extracts, not app-authored drawings, and are not teacher verified. The remaining private source collection is not cleared by this decision.
+## What remains true
 
-## Current Direction: Native JavaScript / SVG
+- Selected textbook extracts are temporary. They are textbook images, not app-authored drawings, and are not teacher verified.
+- The owner confirmed public reuse permission for the selected extracts; that narrow permission does not clear the rest of the source collection.
+- A redraw needs its own content review and publication decision. Redrawing does not erase source obligations or create teacher approval.
+- Do not invent numerical coordinates, exact elasticities or syllabus claims that the source does not provide.
 
-The native D3/SVG architecture and local Pi draft workflow are described in [Graph workflow](GRAPH_WORKFLOW.md). Use `/graph-reconstruct 1` on the synced Omarchy project to begin a bounded figure reconstruction. The renderer is implemented; the textbook reconstructions themselves remain pending local-agent work and human review. The app continues to show the approved original extracts.
+## Why the Python proposal was superseded
 
-## Previous Proposal: Python Reconstructions
+The earlier plan generated diagrams with Matplotlib. That would add a second rendering stack, produce static images that need separate theme/responsive handling, and hide geometry inside pixels. Browser-native SVG keeps the diagram inspectable, themeable, responsive and testable, and makes invented geometry easier to detect.
 
-The earlier proposal below is retained as a reference for possible offline export. Native SVG now replaces Matplotlib as the planned website rendering path; do not build both pipelines without a concrete need.
-
-Replace the selected extracts with reproducible Python-generated diagrams, preserving their economics rather than relying on screenshot tracing or OCR guesses.
-
-1. Review each original figure and record all axes, units, curves, point coordinates, arrows, assumptions and captions in structured figure specifications. Mark schematic values explicitly; do not invent numerical coordinates where the textbook only gives symbolic labels.
-2. Implement a small deterministic Matplotlib rendering script using those specifications. Keep source PDFs and extraction inputs private; commit only approved specifications, script and generated public assets.
-3. Use consistent readable typography, light diagram paper in both themes, and matching accessible text. Preserve correct curve/point relationships and label placement at mobile sizes. Offer a full-size view where needed.
-4. Add tests for economic invariants, deterministic output, asset loading, label legibility and responsive framing. Compare output visually with the originals and check that card explanations match.
-5. Obtain content review and document the reuse basis and attribution for the reconstructions. A redraw does not automatically remove source rights obligations or establish teacher approval.
-6. Switch the cards to the generated files, update credits/provenance and remove unused extracts from current publication inputs. Previously published originals remain in Git history unless a separate history-removal decision is made.
-
-The original image assets have not yet been replaced. Do not describe them as reconstructed or original app content.
+Python remains an option for offline analysis or export, not a required parallel pipeline. The current renderer, source-fidelity gate and publication boundary are described in [Graph workflow](GRAPH_WORKFLOW.md).

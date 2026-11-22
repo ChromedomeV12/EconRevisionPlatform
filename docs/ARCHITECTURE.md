@@ -1,12 +1,10 @@
-# Architecture Reference
+# Architecture
 
-## Swipe Controls
+This guide records the system boundaries and the reasons they exist. It does not narrate call order or CSS implementation; the source, tests and command help own those details.
 
-In compact/portrait feeds, `feed-controls.js` mounts the previous/actions/next rail; `feed-controls.css` defines the portrait reading surface, acrylic action menu and side dial. Both are explicit public preview assets. The swipe view hides workspace headers, navigation strips, feed heading/filters and desktop queue; other views retain them. Card actions, feed selection and appearance remain reachable through the action menu. The dial opens Refresh, Library, Dashboard, Saved and Studio, with icons inset on its face rather than on its rim.
+## Product boundaries
 
-A tap opens card actions. Holding the center control for 360ms opens the dial; vertical movement selects one view per 46px and release commits it. A hold without movement leaves the dial available for direct selection. Pointer cancellation, lost capture, window blur, hidden document, card change and route rerender dismiss transient controls without navigation. Keyboard users can open Switch view from the menu (or Shift+F10 on the center button), use arrows/Home/End, Enter and Escape. Event listeners/timers are disposed on rerender. The component owns no persisted learning state: actions use existing app handlers, and bookmark/manual revisit never create FSRS reviews.
-
-Touch-driven dial selection changes request an optional 8ms vibration, capped at one request per 50ms. Mouse/keyboard interaction and reduced-motion preference do not trigger vibration. Dismissal/disposal cancels a requested pulse. Missing, denied or throwing Vibration APIs never block navigation; physical feedback is device/browser dependent and unavailable in iOS Safari. Browser tests stub API requests, not physical motor behavior.
+The public product is a static frontend that runs without a backend. It owns the feed, browsing state, appearance and local personal library. The optional API owns shared content, identity and AI only when a backend is justified. Private OCR and graph work is an operator workflow, not part of the public runtime. See [DECISIONS.md](DECISIONS.md) for the choices behind these boundaries.
 
 ## Repositories and Working Copies
 
@@ -18,85 +16,24 @@ Use two repositories with three active working directories:
 | `EconRevisionPlatform-m1` | Backend-integrated frontend for cross-repository testing; linked worktree of the frontend repository | `m1` |
 | `EconRevisionPlatform-backend` | Node/SQLite API, stored content revisions, server migrations and future authenticated workflows | Its own `main`; feature branches through PRs |
 
-Frontend `main` serves the public demo and owns user-facing UI/style development. Keep it usable without the backend. Maintain `m1` as the long-lived frontend integration branch: merge frontend `main` into it to bring over UI fixes while preserving backend adapters. Test `m1` against the backend before pushing. Promote reviewed integration changes to `main` when deployment needs them; do not delete `m1` as a routine merged-feature cleanup. Retiring this integration lane requires an owner decision.
+Frontend `main` stays demo-ready without the backend. The long-lived `m1` integration branch receives frontend updates from `main` while preserving backend adapters; it is tested against the backend before pushing. Promote reviewed integration changes to `main` when deployment needs them. Retiring the `m1` lane is an owner decision, not routine cleanup.
 
-Use `EconRevisionPlatform-m1` as the integration worktree. The earlier `-m1-publish` directory was a clean publishing copy; its commits belong to `m1`, so a fourth active folder adds no role. Preserve archived copies and private files until their owner chooses to remove them.
-
-Create worktrees on each machine with Git. Keep the integration directory out of folder sync; its `.git` file points to machine-local metadata. On a fresh frontend clone, run:
+Use a Git worktree for `m1`, not a second clone. A linked worktree shares the main repository's object store. Keep the worktree directory and its `.git` metadata out of folder sync; both are machine-local.
 
 ```sh
 git fetch origin
 git worktree add --track -b m1 ../EconRevisionPlatform-m1 origin/m1
 ```
 
-If local `m1` already exists and has no attached worktree, use `git worktree add ../EconRevisionPlatform-m1 m1`. Stop if the destination contains files or the branch is checked out elsewhere; inspect rather than replacing either. Restore private authoring files only in the normal frontend checkout through [OCR operations](OCR_OPERATIONS.md). See [Git workflow](GIT_WORKFLOW.md#integration-branch) for synchronization and promotion.
+If local `m1` exists without an attached worktree, attach it with `git worktree add ../EconRevisionPlatform-m1 m1`. Stop if the destination already contains files or the branch is checked out elsewhere; inspect rather than replace either. If a worktree was created on another OS or moved, run `git worktree repair <path>` from the main checkout. Do not copy `.git` worktree pointer files between machines. Restore private authoring files only in the normal frontend checkout; see [OCR operations](OCR_OPERATIONS.md).
 
-Use the backend's `docs/BACKEND_ROADMAP.md` for API milestones and its `docs/DEPLOYMENT_PLAN.md` for backend operations. The frontend hosting comparison records earlier alternatives; maintainers have not selected a production host.
+## Runtime boundaries
 
-## Runtime
+The frontend has no build step, package manager, server runtime or database. `index.html` loads relative assets so the same files work under the GitHub Pages project path; `TikTok Econ.html` preserves legacy links. Appearance and layout initialization run before first paint, while the application scripts expose globals rather than using a bundler. Keep the load order in `index.html` consistent when adding a runtime asset.
 
-This repository contains the static browser application. It has no application package manifest, build pipeline, server runtime or database. `index.html` loads relative assets so the same files work at the GitHub Pages project path. `TikTok Econ.html` preserves legacy links through a redirect.
+The browser stores convenience state; it does not hold server authority. The backend, when present, owns identity, shared content, moderation and credentials. The private operator workflow owns source processing and evidence, not publication.
 
-`theme.js` and `adaptive-layout.js` run synchronously in the head before styles to initialize appearance/menu preference and viewport presentation respectively. Styles load in order: `styles.css`, `acrylic.css`, `theme.css`, `graph.css`, `feed-controls.css`. Later layers override earlier ones; changing base CSS alone may not change the final component.
-
-Deferred scripts run in document order: vendored Lucide, FSRS and D3, then `graph.js`, legacy `content.js`, `card-model.js`, selected `content/*.js` packs, `content-bootstrap.js`, `learning.js`, `refresh.js`, `decisions.js` and `app.js`. Keep that dependency order. These browser scripts expose globals rather than using a bundler. Several logic modules also export CommonJS interfaces for Node tests.
-
-## Routes and Workspace Navigation
-
-Empty and unrecognized hashes enter `#feed`; existing compatibility aliases still work. `#welcome` is an optional introduction, not a gate before studying. The brand and the menu's **About this study space** link open it explicitly. `#progress` opens the dashboard: actual browsing statistics precede the continuation entry and topic catalog. A continuation uses the last opened point, not a predicted recall schedule. `#units`, `#saved` and `#studio` retain their existing routes.
-
-The shared header sits outside `.workspace-layout`. There is one `#workspaceMenu`, not cloned desktop/mobile navigation: `theme.js` moves it into the native `#mobileMenu` dialog at widths up to 1023px and on the introduction at every width. Other wide views use the collapsible sidebar. The saved desktop collapse preference is applied in the head before styles load; drawer-open state is temporary and never overwrites it.
-
-Escape, the close button and backdrop dismissal return focus to the menu toggle. The open drawer locks background page scrolling and contains its own overflow. Selecting a route closes the drawer and focuses the new main content; Study settings closes the drawer before opening the settings dialog. Open dialogs suppress the feed's global arrow/Page Up/Page Down shortcuts. The skip link focuses the current main content without changing the hash or route.
-
-
-## Ownership and Data Flow
-
-`card-model.js` defines versioned knowledge-card packs shared by the frontend and private authoring CLI. `content/*.js` contains selected public projections; `content-bootstrap.js` loads them through `EconCardRepository` and preserves legacy cards outside current coverage. A future backend provider can replace these files using `listPacks()` and `EconCatalog.refresh(provider)` without changing card rendering. Private drafts/reviews remain separate; see [Content pipeline](CONTENT_PIPELINE.md). The prototype does not yet have an authenticated backend.
-
-```text
-content.js ----------------------------> app.js -> feed/library/dialog DOM
-localStorage -> learning.js ------------> app.js -> local personal library
-localStorage -> refresh.js -------------> app.js -> exposure/preferences
-decisions.js ---------------------------> app.js -> local submission checks
-reviewed built-in graphSpec -> graph.js + D3 ----> bounded SVG
-theme.js -> data-theme -> theme.css / graph.css -> appearance
-```
-
-`app.js` handles routing, DOM rendering, feed observation, dialogs, search and personal submission review. It combines built-in cards with locally approved personal submissions. An opened point requires at least 65% intersection with the feed viewport; this is an exposure signal, not evidence of comprehension.
-
-`decisions.js` provides local screening and a future provider boundary. No live AI request is enabled. FSRS is retained for legacy state and a possible separate recall mode; the current refresh feed does not collect recall ratings.
-
-## Surface and Proportion Ownership
-
-Workspace wrappers (`.workspace-layout`, `.shell`, `main`) are unframed layouts, not cards. All workspace shells, including Refresh, and the inline sidebar are transparent; only the sidebar's separator remains. Shared surface defaults use `:where()` so a grouped `.feed-mode .shell` selector cannot accidentally raise the specificity of every card/wrapper default. Component rules own actual card surfaces, borders and insets. Keep app-only graph controls in `theme.css`, not the renderer stylesheet, so adjusting a zoom button does not invalidate private graph renderer evidence.
-
-The inline sidebar aligns to the start of its grid row and sizes to its content on every workspace route. Refresh's viewport-locked frame must not stretch the sidebar and push Study settings below its position on other pages. Narrow layouts retain the shared menu drawer.
-
-The desktop workspace reserves a 240px navigation column and a 40px gutter within the 1200px header/content alignment. Narrower breakpoints use the existing drawer/column behavior. Library grids size from available content width (300px minimum, bounded by the container), not a fixed desktop column count. Card actions remain in one row; studio form/help columns have independent readable widths. Compact-height desktop feeds reduce diagram height and vertical spacing while preserving reachable actions and text. `tests/layout.cjs` guards these boundaries in all six views and both themes at six widths; inspect screenshots as well as metrics.
-
-Desktop Refresh uses the same `--workspace-top-gap` as the other workspace pages: 40px normally and 24px below 768px. Its `.refresh-stage` owns the common 24px horizontal inset; the heading, reading canvas, queue and controls do not add competing edge padding. The capped reading column remains centered inside the canvas. Stage/header/action spacing preserves the available reading height without reducing text or diagram sizes. Swipe mode keeps its edge-to-edge, full-viewport stage with no workspace top gap.
-
-## Adaptive Presentation
-
-`adaptive-layout.js` sets `html[data-layout]` before styles and first paint using the layout viewport's CSS-pixel width and height. It uses no user-agent detection, device list or stored layout preference. The initial body is the feed shell; deferred `app.js` resolves the route as usual.
-
-| Geometry | Presentation | Rationale |
-| --- | --- | --- |
-| Width < 600px | Swipe | Reading and conventional workspace controls compete for space even in a short window. |
-| Width 600–999px, width/height < 1.2 | Swipe | Portrait tablets and tall narrow windows get the focused reader. Square windows are included. |
-| Width 600–999px, height ≤ 500px | Swipe | Landscape phones keep the touch rail and can scroll long card bodies. |
-| All other sizes | Desktop | A 1000px viewport always has room for the conventional workspace; medium landscape tablets/windows use it at ratios ≥ 1.2. |
-
-Thus 768×1024 and 844×390 use swipe; 1024×768, 1000×1400 and 900×600 use desktop. Exactly 600px enters the ratio test, exactly 1.2 selects desktop unless the short-screen rule applies, and exactly 1000px selects desktop. These are presentation choices for windows as well as devices: a sufficiently narrow desktop window deliberately gets swipe. The desktop queue collapses below 1280px in the redesigned frame; navigation, title bar, filters and conventional actions remain available.
-
-On coarse-pointer devices, height-only resize events retain the chosen layout until width or orientation changes, so browser chrome and software keyboards cannot change it. Height-only changes while an editable control is focused also retain it on fine-pointer devices. Explicit `screen.orientation` changes reevaluate geometry. Desktop height resizing otherwise reevaluates the ratio. No `visualViewport` resize listener is used; keyboard/zoom changes to the visual viewport alone do not change presentation. Viewport height can still change the reading surface and scroll area.
-
-`feed-controls.css` scopes the PR #9 distraction-free presentation to swipe. Desktop presentation/controls were recovered from `0397980`, the parent of merge `1dd2a55`; current content, graph gates, scheduling and action logic remain in place. Both presentations use one card DOM, catalog, session, `feedFilter`, learning/browsing state and delegated actions. After bookmark/revisit/confusing actions, `syncCardPreferences` updates every matching card control, including the hidden presentation: desktop buttons use `aria-pressed`, menu checkboxes use `aria-checked`. CSS `display: none` removes the alternate controls from keyboard and accessibility navigation; IDs are not duplicated.
-
-Geometry notifications pause feed intersection observation, dismiss menus/dials (including active pointer capture/haptics), and re-anchor the existing active card on the next frame before observation resumes. A `ResizeObserver` covers workspace width changes such as menu collapse. The feed is not rendered again to switch layout. Reattaching observation to that same card during geometry changes does not rewrite its opened timestamp. Each newly rendered feed has a pending first exposure, so initial load, filter rendering and returning from another view still record the first card that reaches 65% visibility even if the initial size-observer callback runs first. Pending geometry from the replaced feed is cancelled. Focus moves to the feed if the previously focused control becomes hidden; an open dialog retains focus and returns to the feed on close if its opener became hidden. Layout changes do not write persistent preferences or recall history.
-
-## Persistent State
+## State ownership
 
 | Key | Owner | Meaning |
 | --- | --- | --- |
@@ -105,24 +42,67 @@ Geometry notifications pause feed intersection observation, dismiss menus/dials 
 | `econ-theme-v1` | `theme.js` | Explicit light/dark choice; otherwise follow the OS. |
 | `econ-menu-hidden-v1` | `theme.js` | Desktop sidebar collapse preference; temporary drawer state is not persisted. |
 
-Storage is browser-profile and origin local, not an authenticated shared record. `file:`, localhost (including different ports) and GitHub Pages are different storage contexts; do not expect progress to move between them. Storage failures fall back to in-memory behavior; changes may then last only for the visit.
+Storage is browser-profile and origin local. `file:`, localhost ports and GitHub Pages are different contexts. Storage failures fall back to in-memory behavior. Export is not a complete backup, and there is no import/restore UI; do not describe it as one.
 
-Study settings export `{ learning, browsing }` as JSON. Theme and menu preferences are not included. There is no app import/restore interface; do not describe export as a complete one-click backup. Reset reviews is narrower than clearing browser storage and keeps saved cards/submissions; do not use it to reset browsing preferences.
+**Exposure is not recall.** Opened timestamps and saved/revisit choices are browsing signals. Only an explicit recall rating may alter FSRS history. Never derive reviews from swipes, views or automated assessments. See [DECISIONS.md](DECISIONS.md#d4-exposure-is-not-recall).
 
-## Visual Paths
+## Rendering and visual paths
 
-The app supports three diagram paths:
+The app supports three visual paths:
 
-1. Selected permitted textbook PNGs in `assets/diagrams/`, with accessible descriptions, light paper, contain fitting and enlargement.
-2. Existing illustrative canvas diagrams drawn by `app.js`; their theme-dependent colors are redrawn when appearance changes.
-3. Declarative native SVG through `graph.js` and pinned D3 scales. Activation requires a built-in card, `review.status: "reviewed"`, a nonempty reviewer, and valid geometry. Private drafts and local submissions do not self-activate.
+1. Selected permitted textbook PNGs with accessible descriptions, light paper and enlargement.
+2. Illustrative canvas diagrams drawn by the app and redrawn on theme changes.
+3. Declarative native SVG through `graph.js` and pinned D3 scales.
 
-Graph specifications contain bounded data, not executable equations, scripts or arbitrary styles. CSS semantic graph roles determine colors, including separate consumer/producer surplus fills. Optional plot aspect ratios preserve source proportions; detached arrows occupy bounded annotation margins without invented curve anchors. Schematic coordinates describe layout, not measurements. See [Graph workflow](GRAPH_WORKFLOW.md) for the specification and human review process.
+Native graphs activate only for a built-in card with `review.status: "reviewed"`, a nonempty reviewer and valid geometry. Private drafts and local submissions do not self-activate. Graph specifications contain bounded data, not executable equations, scripts or styles. CSS semantic roles own colors; schematic coordinates describe layout, not measurements. See [Graph workflow](GRAPH_WORKFLOW.md).
 
-## Publication and Private Processing
+## Surface and Proportion Ownership
 
-GitHub Pages publishes the configured `main` branch root. The local preview's allowlist is a separate protection, not a Pages deployment filter. Any committed file in the publication source must be treated as potentially public. Git ignore rules prevent accidental staging; they do not authorize reuse or restrict HTTP access.
+Workspace wrappers (`.workspace-layout`, `.shell`, `main`) are unframed layouts, not cards. Workspace shells, including Refresh, and the inline sidebar are transparent; only the sidebar separator remains. Shared surface defaults use `:where()` so a grouped selector cannot raise the specificity of every card and wrapper. Component rules own actual card surfaces, borders and insets. Keep app-only graph controls in `theme.css`, not the renderer stylesheet, so a control change does not invalidate private renderer evidence.
 
-Private OCR tooling prepares page images/text and lets the existing Pi model inspect and transcribe bounded batches. Accepted transcripts queue final referenced diagram crops for reconstruction in the same session. OCR checkpoints and graph checkpoints are independent; graph failure must not rewind accepted transcription. Outputs remain under private source directories and require human review. A public clone does not include the Pi configuration or corpus. See [OCR operations](OCR_OPERATIONS.md).
+The inline sidebar aligns to the start of its grid row and sizes to its content on every workspace route. The viewport-locked Refresh frame must not stretch it and push Study settings below its position elsewhere. Narrow layouts use the shared menu drawer. The desktop workspace reserves the navigation column and gutter; library grids size from available content width rather than a fixed column count. Card actions stay in one row. Compact-height desktop feeds reduce diagram height and spacing while keeping actions and text reachable.
 
-Future accounts, shared moderation and Jev require server authority. The contracts in [Jev integration](JEV_INTEGRATION.md) and [deployment plan](DEPLOYMENT_PLAN.md) are plans, not implemented services. Never place credentials in client scripts to simulate that architecture.
+`tests/layout.cjs` guards these boundaries in all six views, both themes and six widths. Passing metrics do not approve an unintended design; inspect screenshots as well.
+
+## Swipe interaction
+
+Compact and portrait feeds use a previous/actions/next rail and a hold/drag view dial; desktop uses the conventional workspace. The rail keeps the feed reachable on touch screens, and the dial switches views without cloning a separate mobile navigation. Both presentations share one card DOM, actions and state. Pointer cancellation, keyboard alternatives, focus restoration and reduced-motion behavior are required. Interaction never creates recall state; bookmark and revisit use the existing explicit handlers.
+
+## Routes
+
+`#feed` is the default. `#welcome` is an optional introduction, `#progress` is the browsing dashboard, `#units` is the library, `#saved` is the personal library and `#studio` is the card studio. Unknown hashes fall back to the feed; `TikTok Econ.html` preserves legacy links. Route changes do not imply recall or mastery.
+
+## Appearance and type
+
+The feed is the fast surface; the dashboard, library and studio stay serious, readable and teacher-friendly. Knowledge headlines and library titles use a Georgia/system serif; interface headings use Manrope; body text uses DM Sans; feed position counters use system monospace. Keep letter spacing at zero and do not add remote fonts. Light mode uses the Catppuccin Latte palette, dark mode Mocha, through semantic theme tokens rather than hard-coded component colors. Diagrams keep light paper in both modes. Dialogs have a fixed serif-title header and independently scrolling content. Reduced-motion and reduced-transparency preferences are honored.
+
+These are product requirements, not decoration: the app is used for sustained reading on varied screens, and the approved appearance should survive refactors.
+
+## Adaptive presentation
+
+`adaptive-layout.js` sets `html[data-layout]` before styles and first paint from the layout viewport's CSS-pixel width and height. It uses no user-agent detection, device list or stored preference.
+
+| Geometry | Presentation | Why |
+| --- | --- | --- |
+| Width < 600px | Swipe | Conventional workspace controls compete with reading space. |
+| Width 600–999px and width/height < 1.2 | Swipe | Portrait tablets and tall narrow windows get the focused reader. |
+| Width 600–999px and height ≤ 500px | Swipe | Landscape phones keep the touch rail; long bodies scroll. |
+| All other sizes | Desktop | There is room for the conventional workspace. |
+
+Presentation is a choice about the window, not a claim about the device. Both presentations share one card DOM, catalog, session, filters, actions and learning/browsing state; switching layout does not rewrite exposure, saved/revisit choices or recall history. Height-only browser chrome or keyboard changes retain the chosen layout where the geometry contract requires it. Physical keyboard/browser chrome and vibration still need a real-device spot check.
+
+## Publication and private processing
+
+GitHub Pages publishes the configured `main` root. The local preview's allowlist is a separate protection, not a Pages filter. Treat every committed file in the publication source as potentially public. Git ignore rules prevent accidental staging; they do not restrict HTTP access or authorize publication.
+
+Private OCR prepares page images and text for bounded model-assisted transcription; selected diagram crops enter private graph reconstruction. Accepted OCR is not accurate transcription or publication approval, and graph work never rewinds OCR checkpoints. Outputs stay in private source directories under human review. A public clone does not include the corpus or Pi configuration. See [OCR operations](OCR_OPERATIONS.md).
+
+Future accounts, shared moderation and AI require server authority. The contracts in [Jev integration](JEV_INTEGRATION.md) and [deployment plan](DEPLOYMENT_PLAN.md) are plans, not services. Never put credentials in client code to simulate them.
+
+## Where the mechanics live
+
+- Runtime order and route aliases: `index.html`, `app.js`.
+- Card/graph validation and repository adapters: `card-model.js`, `graph.js`.
+- State behavior and tests: `learning.js`, `refresh.js`, `tests/`.
+- Preview allowlist: `scripts/serve.cjs`.
+- Private operations: `docs/OCR_OPERATIONS.md`, `docs/GRAPH_WORKFLOW.md`, and the private tooling README.

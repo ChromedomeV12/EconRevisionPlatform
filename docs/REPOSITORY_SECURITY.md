@@ -1,31 +1,37 @@
-# Repository Security Controls
+# Repository security controls
 
-## Verified Remote Settings
+## Current controls
 
-The repository owner verified these settings on 2026-10-12:
+The owner verified these GitHub settings on 2026-10-12:
 
-- GitHub private vulnerability reporting is enabled.
-- Secret scanning and push protection are enabled.
-- Dependabot alerts are enabled.
-- Actions defaults to read-only workflow token permissions and cannot approve pull request reviews.
+- Private vulnerability reporting enabled.
+- Secret scanning and push protection enabled.
+- Dependabot alerts enabled.
+- Actions default to read-only workflow tokens and cannot approve pull-request reviews.
 
-These are GitHub settings, not controls provided by the frontend. Recheck them after repository permission or hosting changes. Report vulnerabilities using the private reporting link in [SECURITY.md](../SECURITY.md).
+These are repository settings, not frontend controls. Recheck them after changing repository permissions or hosting.
 
-## Verification Workflow
+The active [Protect main ruleset](https://github.com/ChromedomeV12/EconRevisionPlatform/rules/24907180) has ID `24907180`. Its committed intent is `.github/rulesets/main.json`; editing that file does not update GitHub. The ruleset requires a pull request, the `verify` and `adaptive-browser` checks on an up-to-date branch, resolved review threads and linear history. It blocks force pushes and deletion and has no bypass actors.
 
-`.github/workflows/verify.yml` exposes the stable job/status name `verify` on pull requests, pushes to `main`, and manual runs. It uses Node.js 24 with no package installation or automatic package-manager caching, runs `node --test tests/*.test.cjs`, checks tracked JavaScript syntax, and performs a public packaging smoke check. Actions are pinned to immutable commits verified against the official `actions/checkout` v7.0.1 and `actions/setup-node` v7.1.0 tag references on 2026-10-12.
+Zero mandatory approvals lets the solo owner merge a checked PR. It is not independent review. Both required checks are restricted to the GitHub Actions integration, so a layout failure blocks merging even when unit tests pass.
 
-The workflow has `contents: read`, disables checkout credential persistence, and uses `pull_request`, not `pull_request_target`. Its `adaptive-browser` job installs pinned Playwright tooling outside the app, runs adaptive state/layout, feed-control and six-view layout-proportion checks, and publishes their screenshots as an Actions artifact. Both `verify` and `adaptive-browser` are required before merging; neither deploys the site. Private OCR tests and environments remain outside this public workflow. Other browser suites remain local checks documented in [Testing](TESTING.md).
+## Verification workflow
 
-The packaging check rejects tracked private/local directories, environment files other than `.env.example`, and symbolic links; requires core runtime files to be tracked; checks runtime text for private source/runtime paths; and builds a temporary copy of root HTML/CSS/JavaScript plus `assets/`, `vendor/`, and `.nojekyll`. It is a smoke check, not a secret scanner, license audit, content provenance check, or replacement for reviewing the actual Pages publication input. Documentation and other committed paths can also be exposed by branch-root Pages publishing.
+`verify` runs on pull requests and pushes to `main`/`m1`. It uses Node 24, runs public unit tests, syntax-checks tracked JavaScript and performs a packaging smoke check. It has `contents: read`, does not persist checkout credentials and runs on `pull_request`, not `pull_request_target`.
 
-## Main Branch Ruleset
+`adaptive-browser` installs pinned Playwright tooling outside the app, runs adaptive state/layout, feed-control and six-view layout-proportion checks, and uploads screenshots. It does not deploy. Private OCR tests and environments stay outside the public workflow.
 
-The active [Protect main ruleset](https://github.com/ChromedomeV12/EconRevisionPlatform/rules/24907180) has ID `24907180`. It was created on 2026-10-12 after the first GitHub Actions `verify` run passed. Its payload is maintained in `.github/rulesets/main.json`; changing that file alone does not update GitHub.
+The packaging check rejects tracked private/local directories, environment files other than `.env.example`, and symlinks; requires core runtime files; checks runtime text for private paths; and builds a temporary copy of the public runtime. It is a smoke check, not a secret scanner, license audit, provenance check or replacement for reviewing the actual Pages input. Documentation and other committed paths can also be exposed by branch-root publishing.
 
-The protection requires a pull request, the GitHub Actions `verify` and `adaptive-browser` checks on an up-to-date branch, resolved review threads, and linear history. It blocks force pushes and branch deletion and has no bypass actors. Zero mandatory approvals allows the solo owner to merge a checked PR; it does not constitute independent review. Extra approval for unattributed changes is disabled so it does not unexpectedly require another reviewer. Both required statuses are restricted to GitHub Actions integration ID `15368`; layout failures must block merging even when unit tests pass.
+## Publishing boundary
 
-After reviewing any configuration change, an administrator can apply it with:
+GitHub Pages publishes the `main` branch root. Branch-based publishing is independent of the verification workflow: a failed workflow alone does not stop a deployment, but the ruleset gates the merge. A future allowlisted Pages artifact workflow would provide a narrower publication boundary.
+
+Before merging, inspect the diff for private material, credentials, new external requests, dependency changes and rendering of untrusted strings. CI cannot enforce teacher review, reuse rights, graph accuracy or future backend authorization. Public diagrams and explanations need their own content and provenance review.
+
+## Maintenance
+
+Apply an approved ruleset change as an administrator, then inspect the remote result:
 
 ```sh
 gh api --method PUT repos/ChromedomeV12/EconRevisionPlatform/rulesets/24907180 --input .github/rulesets/main.json
@@ -33,10 +39,4 @@ gh api repos/ChromedomeV12/EconRevisionPlatform/rulesets/24907180
 gh api repos/ChromedomeV12/EconRevisionPlatform/rules/branches/main
 ```
 
-Keep the remote response and committed intent consistent. Normal release work uses a feature branch and PR; do not disable the ruleset just to push directly. An administrator can repair a misconfigured check through repository settings after inspecting the configuration.
-
-## Publishing and Review Boundaries
-
-GitHub Pages currently publishes the `main` branch root. Branch-based Pages publishing is independent of this verification workflow, so a workflow failure alone does not stop deployment. The active ruleset requires both checks before merging. A future allowlisted Pages artifact workflow can provide a narrower publication boundary.
-
-Before merging, review the diff for private reference material, credentials, new external requests, dependency changes, and rendering of untrusted strings. CI does not automatically enforce teacher review, textbook reuse rights, graph accuracy, or Jev backend authorization. Public diagrams and explanations need their own content/provenance review. Future shared submissions, accounts, or AI services require a backend security design before enabling those features.
+Keep the committed intent and remote response consistent. Normal releases use a feature branch and PR; do not disable the ruleset to push directly. Repair a misconfigured check through repository settings after inspecting it. See [Security policy](../SECURITY.md) and [Git workflow](GIT_WORKFLOW.md).

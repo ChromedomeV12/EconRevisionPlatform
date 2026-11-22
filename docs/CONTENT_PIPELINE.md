@@ -1,83 +1,86 @@
-# Content Pipeline
+# Content pipeline
 
-## Ownership
+## Editorial goal
 
-Cards are versioned domain data, not scattered markup. `card-model.js` is the shared browser/Node contract and validator. `content/*.js` are selected delivery projections grouped into topic packs. `content-bootstrap.js` adapts those packs to the current app and retains legacy sample cards outside the new coverage. Card IDs remain stable; revisions increase when published wording changes. Browsing/recall state is never manufactured or migrated merely because content changes.
+Each card teaches **one declarative economics idea** with an immediately visible explanation. Copy is independently written, source-pinned where applicable, and honest about uncertainty. Cards are revision material, not a syllabus, textbook substitute or practice-question bank.
 
-The current public demo includes 13 independently worded points and 11 selected native graph specifications. These are editorial drafts, not teacher-verified material. Their selected publication was explicitly authorized by the owner on 2026-10-14. This does not clear source PDFs, transcripts, other crops or the remaining graph queue. See [delivery records](../content/README.md).
+Publication requires two separate human decisions:
 
-## Common Contract
+1. **Editorial review** — correctness, scope, assumptions, level and diagram fidelity.
+2. **Reuse permission** — a documented right to distribute the text/asset to the intended audience.
 
-A version-1 pack has `schemaVersion`, `id`, `title`, `cards`. Each card has:
+Attribution, OCR acceptance, a passing validator or a graph audit does none of these. Teacher verification remains pending unless established separately.
 
-- Stable `id`, positive `revision`, `unit`, `topic`, library `title`.
-- One declarative `headline` (130 characters), immediate `summary` (480), deeper `notes` (1600), compact `takeaway`, and misconception `caution`.
-- `sources:[{id,page,figure?}]`: bibliography IDs and exact PDF viewer pages, never file paths. The static prototype accepts TB-01/TB-02 or an original contribution. A production source catalog must register additional teacher sources before expanding this vocabulary.
-- Explicit provisional `level`, `related` IDs, and a curated registry `graphId` or null. No executable HTML, raw SVG, graph code, private images or inline graphSpec are submission fields.
+## Card requirements
 
-Strings are rendered as escaped text. Validation is neither economics verification nor publication permission. Qualitative cards should not introduce HL calculations or claim official syllabus mapping from the incomplete source collection. Keep one idea per swipe; no answer reveal or practice gate is introduced.
+A card has a stable ID, positive revision, unit, topic, library title, one declarative headline, an immediate summary, deeper notes, a compact takeaway, a misconception caution, exact sources, a provisional level, related IDs and a curated graph reference or null.
 
-## Private Authoring
+- Use exact source IDs and PDF-viewer pages, never private file paths. The static prototype accepts the configured textbook IDs or an original contribution.
+- Keep syllabus level provisional. Do not introduce HL calculations or claim official mapping from an incomplete guide.
+- Render strings as escaped text. No executable HTML, raw SVG, graph code, private images or inline graph specs.
+- Keep one idea per swipe. No answer reveal or compulsory practice gate is introduced by the MVP.
+- Prefer a few useful points over a forced target. A page may yield one card or none.
 
-Card drafting is integrated into `/ocr-work`, `/ocr-range` and `/ocr-continue`; there is no separate card slash command. The same model/session runs accepted transcription -> graph reconstruction -> private card submission before advancing. `ocr_recovery` returns the next stage from durable artifacts, including legacy accepted pages in the explicitly resumed range.
+## Private authoring
 
-The `ocr_cards` tool initializes/resumes a stable per-page task (for example `ocr-tb-01-p00110-cards`), submits it, or records an explicit content-only no-card decision. Each page yields 1-3 useful points, with at most THREE card-producing page tasks per explicit batch. The page, graph and card budgets survive compaction/restart. No model/session is started automatically, and no card is approved or published by this process.
+Card drafting is part of the integrated OCR workflow, not a separate slash command. Accepted transcription leads to graph reconstruction and then private card submission in the same bounded session. Per page, produce 1–3 useful points or a source-pinned content-only no-card decision.
 
-Manual operator tooling for larger topic packs remains available (not another Pi command):
+A card-page task is stable per page. Its packet pins accepted transcript/graph hashes and lists nearby submitted coverage, a `unitHint` and non-blocking warnings. Use them to avoid repeated points and classification drift, not as approval. Compare public packs too.
 
-```sh
-node scripts/card-work.cjs init demand-next TB-01 113 126 4
-node scripts/card-work.cjs packet demand-next
-node scripts/card-work.cjs validate demand-next
-node scripts/card-work.cjs submit demand-next
-```
+Private drafts and `author-notes.json` hold assumptions, source conflicts and concerns. Submit saves an immutable `submitted_needs_review` snapshot. Changing submitted content requires a higher revision and a new snapshot. Never overwrite or delete history to hide a duplicate; flag it for human selection.
 
-The packet lists accepted transcript paths/hashes and completed graph references. Missing pages are listed, not invented or transcribed again. The agent edits only the private draft and `author-notes.json`. It records assumptions, source conflicts and concerns separately from public copy. It must inspect graph labels before linking them to a claim. Submit saves an immutable `submitted_needs_review` snapshot; it does not approve or activate cards.
-
-Packets include `nearbyCoverage`: up to twelve matching submitted cards within twenty source pages, plus truncation/conflict warnings. They also include a `unitHint` derived from the nearby cards. These private summaries help the agent check repetition and classification after compaction; they do not establish approval, accuracy or exhaustive duplicate detection. Compare public packs too. Use a source-pinned `duplicate_coverage` no-card decision with existing IDs before drafting a repeated point. Preserve already-submitted duplicates and flag them for human selection rather than deleting history.
-
-`node scripts/card-work.cjs validate ID` returns non-blocking warnings for unit drift from the nearby modal unit, universal claims and unpinned forward references. `node scripts/card-work.cjs audit [BOOK [START [END]]]` is a read-only listing of submitted cards, no-card pages and those warnings; it neither approves nor publishes.
-
-Before linking a graph, inspect its exact `graph-work.cjs packet ID`. A legacy `captureWarning` means its screenshots use another renderer or stylesheet. Stop for fresh graph review rather than treating historical submission as current visual evidence. Do not edit graph artifacts from the card stage or hide the problem with a no-card decision.
-
-After interruption call `ocr_recovery`, then resume its exact card page with `ocr_cards packet`. Re-read the draft/notes and pinned sources/render images; hashes override summaries. If submit completed before the response was lost, the matching immutable snapshot is already recognized and authoring is not repeated. Card budget counts completed card-producing pages: editing a current draft cannot refund a page, and a revision does not add another slot. Only explicit human continuation resets the baseline.
-
-Initialization repairs absent templates only, never a surviving draft. Malformed/truncated drafts remain visible for careful repair; stale source/graph hashes block submission instead of silently refreshing provenance. Immutable records use temporary-file publication. Pending locks are never cleared automatically. `no_card_needed` requires front matter, no knowledge point or a specific duplicate-coverage explanation; tool/vision/context/provider/budget failures remain pending. A no-card record pins the source manifest and cannot replace existing drafted/submitted work. No OCR marker is rewound or accepted transcript rewritten for card recovery.
-
-## Human Selection and Projection
-
-The operator reads the exact submitted revision and private notes, refines wording as needed, verifies graph fidelity/assumptions, and confirms reuse permission. Only then:
+Manual operator tooling for larger packs remains available:
 
 ```sh
-node scripts/card-work.cjs review demand-next SUBMISSION_SHA "Reviewer name" --permission-confirmed
-node scripts/card-work.cjs export demand-next SUBMISSION_SHA
+node scripts/card-work.cjs init PACK TB-01 START END LIMIT
+node scripts/card-work.cjs packet PACK
+node scripts/card-work.cjs validate PACK
+node scripts/card-work.cjs audit [BOOK [START [END]]]
+node scripts/card-work.cjs submit PACK
 ```
 
-Replace `SUBMISSION_SHA` with the exact hash returned by submit. Review binds that hash and source-manifest hash. Teacher verification remains pending unless established separately. The local model is instructed never to invoke these commands or fabricate reviewer identities. These CLI flags are operator controls, not authentication: the local owner can alter files, so do not expose this CLI as a production API.
+`validate` returns non-blocking warnings for unit drift, universal claims and unpinned forward references. `audit` is a read-only listing of submitted cards, no-card pages, hashes and warnings. Neither approves nor publishes.
 
-Export emits only selected card data and native graph geometry. It excludes transcript contents, file paths, author concerns, review logs and source screenshots. Existing public projections are archived privately before a reviewed replacement. Add new pack scripts to `index.html` and the explicit preview allowlist; this registration remains a contributor action. Commit only public projection/code/docs/tests through a reviewed PR. Never stage `private-sources/` or `.pi/`.
+## Budgets and recovery
 
-## Backend Compatibility for 1.0.0
+The page, graph and card budgets survive compaction and restarts. At most three card-producing page tasks complete per explicit batch. A `no_card_needed` page is tracked separately and does not consume a card slot; a revision of an already-counted page does not add one. The page batch still caps total pages. Only an explicit human continuation resets a batch.
 
-The static packs are an interim delivery adapter, not the future authoring database. `EconCards.createRepository` supplies `list`, `catalog`, and atomic `reload(provider)`. A provider implements `listPacks()` returning the same validated pack DTOs. `EconCatalog.refresh(provider)` replaces app content and re-renders without touching recall history. Malformed responses leave the current catalog intact. Source and graph registries must be delivered/resolved separately; unreviewed user graph data never enters the curated registry automatically.
+After interruption, call `ocr_recovery`, then resume its exact card page. Re-read the draft, notes and pinned sources/render images; hashes override summaries. If submit completed before the reply was lost, the matching immutable snapshot is already recognized and authoring is not repeated.
 
-For 1.0.0, move card revisions, drafts, private evidence, reviews and publication decisions into backend storage. Remove the `content/*.js` scripts from the frontend deployment; load selected card DTOs through the provider. Public/authorized visitors can inspect any card text/geometry delivered to their browser. Backend ownership protects unpublished records and enforces access, not secrecy of rendered pixels/text.
+Initialization repairs missing templates only; surviving malformed drafts remain for careful repair. Stale source/graph hashes block submission rather than silently refreshing provenance. `no_card_needed` requires front matter, no knowledge point or a specific duplicate-coverage reason; tool, vision, context, provider or budget failures stay pending. A no-card record pins the manifest and cannot replace existing work.
 
-Proposed HTTP boundary (not yet a deployed backend):
+## Human selection and projection
 
-| Route | Server responsibility |
+The operator reads the exact submitted revision and private notes, refines wording if needed, verifies graph fidelity and assumptions, and confirms reuse permission. Then:
+
+```sh
+node scripts/card-work.cjs review PACK SUBMISSION_SHA "Reviewer name" --permission-confirmed
+node scripts/card-work.cjs export PACK SUBMISSION_SHA
+```
+
+Review binds the exact hash and source manifest. Export emits selected card data and native graph geometry only; it excludes transcripts, private paths, concerns, review logs and screenshots. Existing public projections are archived privately before replacement. Add new pack scripts to `index.html` and the preview allowlist through a reviewed public change.
+
+The CLI flags are operator controls, not authentication. The local owner can alter files; do not expose this CLI as a production API.
+
+## Backend transition
+
+The static pack files are an interim delivery adapter. A backend should own card revisions, drafts, evidence, reviews and publication decisions for 1.0.0. The browser contract remains pack-shaped: a provider returns validated pack DTOs; `EconCatalog.refresh(provider)` replaces content without touching recall history, and malformed responses leave the current catalog intact.
+
+A future server boundary should keep transitions explicit and auditable:
+
+| Route | Responsibility |
 | --- | --- |
-| `GET /api/v1/catalog` | Return visible published pack/card revisions, cursor/ETag, approved graph references and public source citations only. |
-| `GET /api/v1/graphs/:id/:revision` | Return reviewed, publication-cleared declarative geometry; never original private crops or arbitrary executable SVG. |
-| `POST /api/v1/submissions` | Validate the shared card contract, source ownership and tenant scope; assign author from authenticated identity, not JSON. Support idempotency keys. |
-| `PATCH /api/v1/submissions/:id` | Author-owned draft/revision edit with optimistic concurrency; changing content invalidates previous review. |
-| `POST /api/v1/submissions/:id/reviews` | Authorized teacher/editor records approval or changes requested against exact content/graph hashes. Authors cannot approve themselves. |
-| `POST /api/v1/publications` | Publisher role verifies editorial decision, permissions, revision/hash and graph clearance before atomically publishing. |
+| `GET /api/v1/catalog` | Return visible published revisions, cursor/ETag, approved graph refs and public citations. |
+| `GET /api/v1/graphs/:id/:revision` | Return reviewed, publication-cleared geometry; never private crops or executable SVG. |
+| `POST /api/v1/submissions` | Validate the shared contract; assign author from identity, not JSON; support idempotency. |
+| `PATCH /api/v1/submissions/:id` | Author-owned revision with optimistic concurrency; content changes invalidate review. |
+| `POST /api/v1/submissions/:id/reviews` | Authorized reviewer records a decision against exact hashes; authors cannot approve themselves. |
+| `POST /api/v1/publications` | Publisher verifies editorial decision, permission, revision and graph clearance before publishing. |
 
-Keep `draft -> submitted -> changes_requested/approved -> published` transitions server-authoritative and auditable, with author/editor/publisher roles enforced from verified sessions and tenant membership. Teacher approval and reuse permission are separate decisions. Never trust client status, reviewer names or `--permission-confirmed` equivalents. Use immutable revisions, schema versioning, rate/size limits, CSRF protections where applicable, and server-side validation even though the browser validates too. An AI or Jev recommendation is an untrusted suggestion, not a transition authority.
+Server authority must enforce roles, tenant scope, rate/size limits and CSRF protections. Teacher approval and reuse permission remain separate. An AI recommendation is an untrusted suggestion, not a transition authority.
 
-The existing Card Studio is a device-local author/review experience. New entries use the same card DTO, but approval still means personal-library use only; it neither publishes nor creates teacher authority. Its legacy `pending/returned/approved` state is not the production moderation database. Replace its persistence adapter with authenticated submission endpoints when a backend is introduced.
+The device-local Card Studio is a personal author/review experience. Its approval means personal-library use only; it is not the production moderation database.
 
 ## Verification
 
-Run `node --test tests/card-model.test.cjs tests/card-work.test.cjs`, the full public unit suite, and browser/theme/navigation/image checks after delivery changes. Check every new card in both themes and mobile/desktop, including graph zoom, immediate explanation, notes, citations and local submission escaping. Run the Pi loader test after extension changes. No test result grants teacher approval or broad source reuse permission.
+Run `node --test tests/card-model.test.cjs tests/card-work.test.cjs`, the public unit suite, and browser/theme/navigation/image checks after delivery changes. Inspect new cards in both themes at mobile and desktop widths, including enlargement, notes, citations and escaping. Run the Pi loader test after extension changes. No test grants teacher approval or broad reuse permission.

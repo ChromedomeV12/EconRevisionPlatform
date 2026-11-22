@@ -1,126 +1,98 @@
 # Deployment plan
 
-Hosting research checked: 2026-10-12. This document records production-hosting proposals. Read alongside [README](../README.md), [Jev integration](JEV_INTEGRATION.md), and [AGENTS.md](../AGENTS.md). Recheck provider terms and limits before choosing a host.
+This records the hosting requirements and the evidence that would justify moving beyond static Pages. It is a decision guide, not a provider manual.
 
-## Scope and Current Implementation
+## Current MVP
 
-Keep frontend release and Pages instructions here. For API deployment, use `docs/DEPLOYMENT_PLAN.md` and `docs/BACKEND_ROADMAP.md` in the sibling `EconRevisionPlatform-backend` repository. Maintainers have since implemented a local Node 24/SQLite catalog service and placed the frontend HTTP provider on the `m1` branch. They have not selected or deployed a production backend.
+GitHub Pages serves the public static demo from `main`. Progress is local to the browser. There are no accounts, shared submissions, server-side student records or live AI. This is deliberate: the product is validating the refresher experience and content, not operating a learning platform.
 
-The Workers/Supabase sections below record the earlier hosting proposal. Treat them as alternatives when evaluating hosting; do not read them as instructions to replace the implemented Node/SQLite service. Running that service on Workers would require changes to HTTP handling and storage. Keep authentication, moderation and student-data collection behind their backend roadmap decisions.
+The frontend needs no build or server runtime. A public release is the committed file set; the preview allowlist is only a local protection. See [DECISIONS.md](DECISIONS.md) for the static-first choice.
 
-## Earlier Hosting Proposal
+## What would force a backend
 
-Keep GitHub Pages for the current public MVP and GitHub for source review. The original pilot proposal used Cloudflare Workers Static Assets with managed Supabase Auth/Postgres. Maintainers have since built a local Node/SQLite service. Compare hosting options against that implementation and school requirements in the backend deployment guide before selecting a host.
+A backend is justified when one of these becomes a real requirement:
 
-This is an interactive learning app that happens to have a static frontend. Its present hosting requirements resemble a documentation site; accounts, private drafts, moderation, and AI calls will not. A documentation framework or frontend rewrite would not solve those backend requirements. Keep vanilla JavaScript and the current swipe-first experience unless product needs justify a change.
+- Accounts, cross-device progress or class membership.
+- Shared moderation or a teacher review queue.
+- Server-authoritative content revisions and publication.
+- Live AI that needs credentials, canonical sources, rate limits and audit records.
+- Shared analytics that cannot be computed from local data.
 
-Do not migrate merely because the app has grown beyond a demo visually. Migrate when a feature needs server authority or a hosting capability is materially missing.
+A visual redesign, more cards or a larger static site does not justify a backend by itself.
 
-## Provider comparison
+## Candidate shapes and tradeoffs
 
-| Option | Fit for this project | Constraints and operating implications |
+| Shape | Fits | Costs |
 | --- | --- | --- |
-| GitHub Pages now | Existing public static app, versioned releases, minimal administration; no database required. | Cannot execute our API or keep server secrets. Current documented limits include a 1 GB published site and soft 100 GB/month bandwidth limit. Pages is unsuitable for sensitive transactions and has restrictions on commercial SaaS use; reassess before accounts or monetization. [Official limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits). |
-| Cloudflare Pages plus Functions | Static hosting with branch previews and a small HTTP backend; reasonable if the team already uses Pages. | Static requests that bypass Functions are free and unlimited under the documented model; Functions consume Workers quotas. Route static files outside Functions. [Functions billing](https://developers.cloudflare.com/pages/functions/pricing/). |
-| Cloudflare Workers Static Assets | Preferred Cloudflare route for a new full app: deploy frontend assets and API together, potentially under one origin. | Cloudflare recommends this over Pages for new projects. Workers have runtime/CPU/memory limits; the current memory limit is 128 MB and static assets are limited to 25 MiB per file. Suitable for authentication checks and short Jev HTTP calls, not our GPU/Python OCR pipeline. [Recommendation](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/), [static assets](https://developers.cloudflare.com/workers/static-assets/), [limits](https://developers.cloudflare.com/workers/platform/limits/). |
-| Vercel | Static frontend, preview environments, functions, and straightforward Git integration. Consider if its runtime or reviewer workflow saves real effort. | Hobby is restricted to non-commercial personal use; a teacher/school service must check eligibility rather than assume it. Function duration depends on runtime/plan; documented request/response payload limit is 4.5 MB. Keep large uploads and OCR outside these endpoints. [Fair use](https://vercel.com/docs/limits/fair-use-guidelines), [environments](https://vercel.com/docs/deployments/environments), [function limits](https://vercel.com/docs/functions/limitations). |
-| Managed auth/database, independent of frontend host | Supabase is the recommended initial candidate: Auth integrated with Postgres suits ownership, class membership, card versions, and moderation. | It adds data operations, authorization policies, email delivery, and backups. Enable row-level security on exposed tables; secret/service-role keys stay server-side. Free projects can pause after low activity over seven days, so a free tier is a prototype choice, not an availability promise for a school term. [Auth](https://supabase.com/docs/guides/auth), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [key security](https://supabase.com/docs/guides/database/secure-data), [pausing](https://supabase.com/docs/guides/platform/free-project-pausing). |
+| GitHub Pages + static frontend | Public cards, local progress, no shared authority. | No accounts, server secrets, moderation or shared data. |
+| Static frontend + small API (e.g. Cloudflare Workers) + managed identity/Postgres (e.g. Supabase) | First classroom pilot; one origin, server enforcement, managed auth/data. | New operational surface: auth, email, backups, regional/privacy review, quotas, incident response. |
+| Vercel or another app host | Preview environments and functions if the team values them. | Plan eligibility, runtime limits, vendor lock-in and the same backend security work. |
+| Full LMS/backend framework now | Not justified by the current product. | More code and policy before the learning loop is validated. |
 
-Managed auth/database complements a host; it does not replace static hosting. Using Supabase also avoids assembling separate identity, SQL, and storage services immediately. A separate managed identity provider plus managed Postgres remains an alternative if school identity integration requires it; evaluate that requirement before choosing vendors.
-
-All limits above are research snapshots, not capacity commitments. Recheck them at implementation. No fixed subscription price or assumption of permanent free service is built into this plan.
+The recommended first shared-service shape is a static frontend plus a small API and managed identity/Postgres, with the API in a separate backend repository. Hosting and data decisions remain subject to school requirements, provider terms, region and actual network access.
 
 ## Phase 1: reliable public MVP
 
-Stay on Pages while content is public, progress is local, and submitted cards remain personal. Gather teacher feedback through the feed and diagrams. Keep account signup and live Jev disabled until maintainers implement the required authenticated workflows and the owner approves deployment.
+Keep Pages while content is public and progress is local. Make releases inspectable:
 
-Improve delivery before changing providers:
-
-1. Build a release artifact in a clean CI checkout from an explicit runtime allowlist. Include HTML, application JS/CSS, required vendored dependencies, licensed assets, and `.nojekyll`. Check every referenced file is present. A packaging step need not introduce an app compilation step.
-2. Run the existing learning/refresh unit tests, browser tests, and theme tests with a pinned CI browser installation. Check keyboard/touch navigation, five widths, both themes, diagram rendering, and unchanged review history.
-3. Reject private/source-processing paths in the artifact and verify they return 404 on the deployed site. Publish only that checked artifact using a Pages Actions workflow. GitHub documents artifact upload, deployment permissions, and the `github-pages` environment in its [custom workflow guide](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
-4. Gate production merges through meaningful required checks and review, with a narrowly controlled recovery path appropriate to a small team. A one-person repository should not require an unavailable second approver. Confirm the real configured check names before requiring them.
-5. Record the commit SHA and deployed URL; smoke-test the live release. Roll back by redeploying a known good artifact or reverting a commit through the same checks.
-
-Do not deploy a developer workspace with a recursive copy or CLI upload of `.`. Git ignore rules and a private repository do not establish access controls for deployed files. Even committed files should pass an explicit public release allowlist.
+- Build the published artifact from an explicit runtime allowlist in CI, not by serving the workspace root.
+- Run public unit, syntax, packaging, browser and layout checks; keep private OCR out of public CI.
+- Gate merges through required checks and review; the solo owner may merge their own checked PR.
+- Record the merged SHA and verify the Pages build for that SHA. Roll back by reverting through the same checks.
+- Keep private source material out of the artifact. `.gitignore` is not HTTP access control.
 
 ## Phase 2: shared classroom pilot
 
-Start this phase when students need cross-device progress or teachers need a shared submission queue. Recommended design:
+When accounts or shared moderation become necessary, add only the authority the pilot needs:
 
 ```text
-Browser -> public frontend + /api on Cloudflare Workers
-                        -> managed identity + Postgres
-                        -> Jev service, only when explicitly enabled
+Browser -> public frontend + /api
+                  -> managed identity + Postgres
+                  -> Jev service only when explicitly enabled
 
-Local OCR workstation -> private research/review workspace
-                      -> separately cleared public card/asset release
+Private workstation -> private OCR/review -> separately cleared public release
 ```
 
-Use one frontend/API origin where possible to simplify cookies and CORS. Validate identity on the server, authorize every action, and enforce class membership and teacher roles in database policies/server code. A hidden button or client-supplied role is not authorization. Keep private responses out of shared CDN caches. For cookie sessions, include CSRF protection and appropriate secure cookie attributes.
-
-Use managed authentication instead of implementing password handling. Decide with the teacher who may register, which class data a teacher can see, and the minimum student identity needed. Choose region, retention/deletion policy, recovery owner, and school approval before collecting student records. Test login and email delivery on actual school networks.
-
-Start with versioned SQL migrations and a small schema:
-
-- Users, classes, memberships, and server-controlled roles.
-- Stable card IDs, immutable card versions, public release manifests, and asset versions.
-- Private submissions and revisions, moderation actions, and published-version pointers.
-- Per-user bookmarks, revisit/confusing choices, and opened events or bounded aggregates.
-- Separate explicit recall reviews only if an optional recall mode ships; do not derive these from swipes.
-
-Anonymous local browsing should continue to work. Offer an explicit, validated import into the signed-in account; do not silently upload personal drafts or all localStorage. Use unique event IDs/idempotency keys for retries and revisions/tombstones for edits and deletions. Define conflict rules before enabling multi-device writes. Exposure remains exposure; local approval never becomes teacher approval during migration.
-
-Keep browser contracts provider-neutral and place backend operations behind a small API. Use Postgres migrations and conventional SQL for core data. D1 or another store can be considered if measured workload warrants it, but there is no need to adopt Workers, D1, KV, queues, and multiple identity services at once.
+- Use one frontend/API origin where possible to simplify cookies and CORS.
+- Enforce identity, roles and class membership on the server. A hidden button or client-supplied role is not authorization.
+- Prefer managed authentication over handling passwords.
+- Start with versioned migrations for users/classes/memberships, card versions and release manifests, private submissions/revisions, moderation actions and published pointers.
+- Keep anonymous local browsing working. Offer explicit export/import; do not silently upload all localStorage or personal drafts.
+- Define conflict and deletion rules before enabling multi-device writes. Exposure remains exposure; local approval never becomes teacher approval during migration.
+- Keep previews restricted and use synthetic data and separate credentials. A random preview URL or `noindex` is not authentication.
 
 ## Phase 3: moderated content and Jev
 
-Make publication a server-authorized action against an exact immutable card version. Maintain two independent gates:
+Publication remains a server-authorized action against an exact immutable version. Two independent gates remain:
 
 | Gate | Required evidence |
 | --- | --- |
-| Editorial approval | Authorized human reviewer, reviewed version/hash, correctness, axes/labels/assumptions, SL/HL scope, uncertainty, and curriculum revision. Syllabus mapping stays provisional until the official guide/amendments are checked. |
-| Publication permission | Recorded permission or an appropriate licensed/original asset basis, permitted audience/use, attribution requirements, and any expiry or withdrawal requirement. Attribution, OCR acceptance, and teacher approval do not establish redistribution permission. |
+| Editorial | Authorized human review of correctness, assumptions, axes/labels, SL/HL scope and curriculum revision. Syllabus mapping stays provisional until the official guide/amendments are checked. |
+| Reuse permission | Recorded permission or a licensed/original basis, audience, attribution and expiry/withdrawal terms. |
 
-Only versions passing both gates enter a public manifest. An edit invalidates the affected approvals. Preserve the private provenance chain: source ID, PDF/printed page conventions, source hash, crop bounds/hash, transcript version, interpretation, reviewer, and timestamps. Public records expose only metadata cleared for public use; never expose local paths or private excerpts through a provenance panel.
+Only versions passing both gates enter a public manifest. An edit invalidates affected approvals. Keep the private provenance chain (source ID, page, hash, crop bounds, transcript version, reviewer and timestamps); expose only public-cleared metadata.
 
-Textbook crops, transcripts, page images, draft briefs, and model evidence remain in `private-sources/` on the private workflow. Crops are not automatically eligible for public diagrams. The owner has confirmed public reuse permission for the selected copies listed in `assets/diagrams/README.md`; this is a narrow exception, not clearance for the collection. A [Python reconstruction task](DIAGRAM_RECONSTRUCTION.md) is recorded. A redraw needs its own review and publication decision; redrawing is not a blanket permission workaround. Authentication alone also does not grant permission to distribute sources to a class.
+Jev requires an authenticated proxy, canonical card/source retrieval, validated output, timeout/abstention, rate limits, quotas and a kill switch. AI may advise moderation; it cannot approve publication or rewrite a recall schedule. Test against teacher-reviewed examples before enabling it.
 
-Implement Jev through the contracts in [JEV_INTEGRATION.md](JEV_INTEGRATION.md): server-held credentials, canonical card/rubric retrieval, authorized reference context, validated responses, timeout/abstention, rate limits, per-user quotas, and a kill switch. Test against teacher-reviewed examples before enabling it. Log versions and reviewer outcomes while minimizing student text. AI can advise moderation; it cannot approve publication or rewrite a recall schedule.
+## Storage, domain and migration
 
-Keep lengthy OCR/transcription and GPU inference on the existing workstation. If asynchronous shared processing becomes necessary, use an authenticated job queue and dedicated worker with bounded tasks; do not run whole textbooks in a request handler. Remote processing of source material requires a separate authorization decision.
+localStorage belongs to an origin. Moving from `chromedomev12.github.io` to a custom domain or another host does not transfer it. Before a move, implement versioned JSON export/import for `econ-refresh-v1`, `econ-workspace-v2` and optional theme/menu preferences; validate schema/size, show a summary, preserve timestamps and never invent recall events. Keep the old origin available long enough to export.
 
-## Previews and environments
+Once data is shared, a frontend rollback cannot undo a destructive database migration. Prefer additive migrations and a separate recovery procedure. Back up SQL, object files and permission/provenance records separately, and test restoration.
 
-PR checks should work without production credentials. For the present Pages setup, use local Playwright previews and screenshots or a separate public-safe preview project; do not overwrite production for each PR. GitHub Pages does not provide the same automatic branch preview workflow as the specialist hosts.
+## Costs and ownership
 
-Cloudflare Pages provides branch/commit previews, but they are public by default; use Cloudflare Access when restricting viewers. Vercel provides preview environments and deployment protection; verify the chosen plan's access features. A random preview URL or `noindex` is not authentication. [Cloudflare previews](https://developers.cloudflare.com/pages/configuration/preview-deployments/), [Vercel environments](https://vercel.com/docs/deployments/environments), [Vercel protection](https://vercel.com/docs/deployment-protection).
+Budget separately for static hosting, API/CPU, database compute/storage/backups, auth/email, object egress, previews, logs and AI usage. Set usage alerts and application quotas; billing alerts are not a hard cap. Assign an owner for renewals, backups, failed releases and account recovery. Recheck provider terms and limits at implementation; no permanent free tier is assumed.
 
-Every preview must use synthetic or specifically approved data, separate credentials, and a staging database/project. Keep production references, student data, and Jev keys out of fork builds. Untrusted PR code must never execute with production secrets. Protect all aliases, asset endpoints, and APIs needed for a restricted preview, not just its landing URL. CI and deployment permissions should be minimal, with third-party actions pinned and a production environment gate when needed.
-
-## Domain and data migration
-
-A custom domain is optional for the demo, but establish a stable app origin before inviting users who rely on saved progress. GitHub Pages already supports custom domains; verify domain ownership and enforce HTTPS. Preserve hashes and the `TikTok Econ.html` compatibility URL during moves. [GitHub domain configuration](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
-
-localStorage belongs to an origin. Moving from `chromedomev12.github.io` to a custom domain or another provider hostname cannot automatically transfer it. Implement versioned JSON export/import for `econ-refresh-v1`, `econ-workspace-v2`, and optional `econ-theme-v1` preferences before such a move. Validate size/schema, show an import summary, preserve timestamps, and never manufacture recall events. Keep the old origin available long enough to export; a redirect alone does not migrate browser storage.
-
-Later keep the custom hostname stable when switching hosts, update DNS/TLS and auth callback allowlists, verify legacy routes and cache behavior, and test rollback before cutover. Persist API/schema compatibility through a rollout. Once data is shared, a frontend rollback cannot safely undo a destructive database migration: prefer additive migrations and a separate recovery procedure.
-
-Keep user exports and deletion available after accounts arrive. Back up SQL, object files, and permission/provenance records separately, and test restoration. Supabase database backups exclude Storage objects; free-tier projects should arrange their own exports rather than assume managed recovery. Auth migration needs a separate tested identity/session plan; a SQL export alone does not guarantee seamless login portability. [Backup scope and recovery](https://supabase.com/docs/guides/platform/backups).
-
-## Costs, operations, and decision triggers
-
-Budget for the frontend/CDN, dynamic requests/CPU, database compute/storage/backups, auth/email, object egress, previews, logs, and Jev usage independently. The model and database may dominate a small school's cost; this is a planning assumption to validate with pilot measurements. Use current [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/), [Vercel plan information](https://vercel.com/docs/plans), and [Supabase billing guidance](https://supabase.com/docs/guides/platform/billing-on-supabase) when approving a budget, including staging and recovery needs.
-
-Set a modest approved pilot budget, usage alerts, application-enforced AI quotas, and a provider disable switch. Billing alerts alone should not be treated as a hard spending cap. Assign a maintainer for renewals, backups, failed releases, and account recovery. Avoid operating a public always-on server or GPU just to serve static cards.
+## Decision triggers
 
 | Trigger | Next decision |
 | --- | --- |
-| Public cards, local progress, no shared authority | Stay on Pages; improve release checks and content quality. |
-| Need reviewer previews or custom response headers before accounts | Evaluate Cloudflare hosting without introducing a database or framework. |
-| First cross-device sync or shared moderation pilot | Select managed identity/Postgres and implement server authorization; prefer Workers Static Assets/API for the new deployment. |
-| Jev goes live | Add the authenticated proxy and evaluation/cost gates; keep the reading feed usable during provider failure. |
-| Paid offering, institutional availability, or procurement requirements | Reassess service terms, paid plan/recovery needs, ownership, regions, and support before expansion. |
-| Long jobs, uploads, or runtime limits become material | Add isolated job processing/object storage or select a suitable server runtime; keep the frontend static. |
+| Public cards, local progress, no shared authority | Stay on Pages; improve content and release checks. |
+| Reviewer previews or custom response headers before accounts | Evaluate a static host with functions; no database yet. |
+| First cross-device sync or shared moderation pilot | Choose managed identity/Postgres and implement server authorization. |
+| Live Jev | Add the authenticated proxy and evaluation/cost gates. |
+| Paid offering, institutional use or procurement | Reassess terms, paid plans, regions, recovery and support. |
+| Long jobs, uploads or runtime limits become material | Add isolated job processing/object storage; keep the frontend static. |
 
-The next deployment work should be the explicit public artifact, CI checks, and browser-data export/import. The next product decision should be whether the teacher actually needs shared accounts and moderation for the pilot. That requirement determines when a backend is worth operating.
+The next product decision is whether the teacher actually needs shared accounts and moderation for the pilot. That answer determines when the backend is worth operating.

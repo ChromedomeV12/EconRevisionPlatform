@@ -1,52 +1,47 @@
 # Contributing
 
-## Local Setup
+Start with [Project README](README.md), [Documentation](docs/README.md), [Decision log](docs/DECISIONS.md) and [AGENTS.md](AGENTS.md). The decision log explains why the app is static, local-first and refresh-first; a change that reverses one of those choices needs an explicit decision, not a quiet edit.
 
-The app has no build step or package installation. Open `index.html` directly, or install Node.js (CI uses Node 24) and run this from the project root:
+## What a good change preserves
 
-```sh
-node scripts/serve.cjs 4181
-```
+- **The feed comes first.** One knowledge point, its explanation and one visual per screen. Deeper notes stay behind Closer look; the dashboard and library stay secondary.
+- **Exposure stays exposure.** Swipes, opens, saves and revisits must not create recall reviews or mastery claims. Only an explicit recall rating may change FSRS history.
+- **The app stays static and local-first.** No build step, server runtime, account system or new runtime dependency without a demonstrated need. Progress remains in localStorage in the MVP.
+- **Accessibility is part of the feature.** Keyboard alternatives, visible focus, readable contrast, reduced-motion/transparency support and responsive layouts must survive.
+- **Private material stays private.** Source PDFs, transcripts, crops, drafts, credentials and machine-local runtimes do not enter the public repository or the deployed site.
 
-Open <http://127.0.0.1:4181>. Stop the preview with Ctrl+C. If the port is occupied, choose another port. Do not substitute a general workspace-root server: the provided server binds to loopback and serves an explicit public-file allowlist.
+## Working agreement
 
-A public clone is enough for app development and public tests. Private PDFs, OCR outputs and `.pi/` settings arrive only through the owner's private sync. Do not invent missing source references or download private materials to make public tests pass.
+1. Read [AGENTS.md](AGENTS.md) and the guide for the surface you are changing.
+2. Check `git status --short --branch` before editing. Preserve other people's work, especially untracked private tooling.
+3. Start a feature branch from current `main`. Keep the change focused; do not mix unrelated cleanup with a product change.
+4. Stage explicit public files, not the workspace root. Review `git diff --cached` before committing.
+5. Run the checks appropriate to the risk; say what you ran and what remains unverified. See [Testing](docs/TESTING.md).
+6. Open a pull request with the reasoning, the rejected alternative and the verification. Required checks and resolved review threads gate the merge.
 
-Use this checkout for frontend UI/style changes, `EconRevisionPlatform-m1` on the frontend `m1` branch for backend integration tests, and `EconRevisionPlatform-backend` for API changes. Read [repository and working-copy roles](docs/ARCHITECTURE.md#repositories-and-working-copies) for setup. Create the integration worktree with Git on each machine; do not sync its directory or Git metadata. Restore private authoring files in the normal frontend checkout after configuring sync exclusions.
+## Where to look
 
-## Working Agreement
-
-Read [AGENTS.md](AGENTS.md) before editing. Keep the first screen a usable knowledge feed, with the explanation immediately visible. Preserve typography, approved PR #5 appearance, keyboard access and responsive layouts. Keep the application vanilla JavaScript and GitHub Pages compatible.
-
-Check `git status --short --branch` first. Preserve other people's changes and untracked private tooling. Start a feature branch from current `main`; follow the exact commands in [Git workflow](docs/GIT_WORKFLOW.md). Stage explicit public files, not the entire workspace.
-
-## Change Map
-
-| Change | Files and constraints |
+| Changing | Read |
 | --- | --- |
-| Knowledge point | Add structured content in `content.js`; preserve stable IDs and source references. |
-| Feed, dialog, search or personal review | `app.js` and `index.html`; escape untrusted strings and preserve focus behavior. |
-| Layout or typography | `styles.css`, `acrylic.css` and theme-independent workspace composition in `theme.css`; inspect the final cascade and [surface ownership](docs/ARCHITECTURE.md#surface-and-proportion-ownership). |
-| Appearance | Semantic roles in `theme.css`, behavior in `theme.js`; keep diagram paper light. |
-| Browsing preferences | `refresh.js`; exposure is not recall evidence. |
-| Recall state | `learning.js`; only explicit recall ratings may create reviews. |
-| Native diagram | `graph.js`, `graph.css`, structured `graphSpec`; follow [graph review gates](docs/GRAPH_WORKFLOW.md). |
-| Public asset | Add its relative URL and preview allowlist entry in `scripts/serve.cjs`, tests and credits. |
+| Feed, navigation, dialogs or personal review | [Architecture](docs/ARCHITECTURE.md), [Testing](docs/TESTING.md) |
+| Layout, appearance or accessibility | [Architecture § Surface and Proportion Ownership](docs/ARCHITECTURE.md#surface-and-proportion-ownership), [Testing](docs/TESTING.md) |
+| Cards, sources or publication | [Content pipeline](docs/CONTENT_PIPELINE.md) |
+| Native graphs | [Graph workflow](docs/GRAPH_WORKFLOW.md) |
+| Private OCR or reconstruction | [OCR operations](docs/OCR_OPERATIONS.md) |
+| Branches, worktrees or releases | [Git workflow](docs/GIT_WORKFLOW.md) |
+| Accounts, hosting or AI | [Deployment plan](docs/DEPLOYMENT_PLAN.md), [Jev integration](docs/JEV_INTEGRATION.md) |
 
-## Adding Content
+## Content changes
 
-Use one economic idea per card. Supply a concise `refresh.headline` and `refresh.summary`, then use the retained `answer`, `trap` and `rubric` for deeper context. Match the explanation to the diagram's actual labels; do not derive numerical PED or quantities from schematic geometry. Use existing cards as the field reference rather than inventing a second content format.
+Use one economic idea per card. Write original copy, cite exact source pages, keep the syllabus level provisional, and record assumptions and concerns privately. Do not copy textbook prose or question sets. A card may be published only after content review and a separate reuse-permission decision; an agent, validator or OCR acceptance cannot approve either.
 
-For sourced work, read the private collection's `START_HERE.md`, `CONTENT_NOTES.md` and `SOURCE_INDEX.md` first. Keep source ID, exact PDF-viewer/printed page distinction, figure ID, SL/HL scope, assumptions and review status in the private working record. Public copy needs a deliberate publication decision and appropriate attribution; teacher review and public-use permission are separate gates. Do not add private source paths to runtime code.
+Native reconstructions stay private until a human inspects the source and the current render, records the fidelity evidence and approves publication. Do not infer numerical values from schematic geometry or present an extract as an original drawing.
 
-Native reconstructions remain private drafts until human fidelity/content review and a separate publication decision. Only reviewed built-in cards may activate `graphSpec`; a local submission cannot do so. Do not relabel original extracts as independently authored drawings.
+## Before opening a pull request
 
-## Before Opening a PR
+- Run the risk-appropriate checks and inspect UI screenshots in both themes where relevant.
+- Confirm that no private file, credential, local runtime, generated screenshot or absolute private path is staged.
+- Update the guide whose requirement, boundary, command, state key or permission changed. Do not paste code walkthroughs into docs.
+- Describe the user-visible result, the tradeoff and any remaining limitation. A green check is not teacher approval or publication permission.
 
-1. Run the checks appropriate to the change using [Testing](docs/TESTING.md).
-2. Inspect screenshots for UI changes. For shared CSS/layout changes, run `node tests/layout.cjs` and inspect fresh-document captures of all six views in both themes at phone and desktop widths. Check computed wrapper borders, radii and backgrounds, card insets, wrapping and action rows against the documented surface contract. Passing checks do not make an unintended page frame an acceptable design.
-3. Run `git diff --check` and inspect `git diff --cached` after explicit staging.
-4. Confirm no private material, credentials, local runtimes or screenshots are staged.
-5. Update affected guides and describe behavior, verification and remaining limitations in the PR.
-
-Merge only after required checks pass and review conversations are resolved. A feature-branch push does not deploy the app. After merging, verify Pages built the merged `main` commit, not merely that an older deployment succeeded.
+Merge through a reviewed PR. A feature-branch push does not deploy; after merge, verify that GitHub Pages built the merged `main` commit. See [Git workflow](docs/GIT_WORKFLOW.md).

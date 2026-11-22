@@ -1,36 +1,16 @@
-# Git, Deployment and Pull Requests
+# Git, review and deployment
 
-Run these commands from the EconRevisionPlatform project root. Git and the GitHub CLI (`gh`) must be installed. The Git commands work in PowerShell and Linux shells; replace example branch names, messages, PR numbers and run IDs with your own.
+## Model
 
-For local setup and choosing checks, see [Contributing](../CONTRIBUTING.md) and [Testing](TESTING.md). Commands below are terminal commands, not Pi slash commands. Run one line at a time; placeholders such as `PR_NUMBER` must be replaced before execution.
+`main` is the deployable demo and is protected. Changes arrive through a feature branch and a pull request. Required `verify` and `adaptive-browser` checks, resolved review threads and linear history gate the merge. Direct pushes, force pushes and branch deletion are blocked. The solo owner may merge their own checked PR; that is not independent review.
 
-## What Each Step Does
+A feature-branch push does not deploy. Merging to `main` starts GitHub Pages. GitHub Pages publishes the `main` root; the local preview's allowlist is a separate protection.
 
-- `git add` selects the files for the next commit, including new files.
-- `git commit` records those selected changes locally.
-- `git push` sends local commits to GitHub.
-- GitHub Pages automatically builds and publishes commits pushed or merged to `main` in this repository.
-- A pull request proposes merging a branch into `main`, with a place to discuss and review the changes first.
+## Authentication
 
-This repository is `ChromedomeV12/EconRevisionPlatform`. Pages uses **Deploy from a branch**, branch **main**, folder **/ (root)**. There is no application build step and no separate deploy CLI command. `.nojekyll` is committed for static-file hosting.
+Run `gh auth login` and `gh auth setup-git` once per machine. Use the browser login; credentials stay in GitHub CLI, not in the repository.
 
-Live site: <https://chromedomev12.github.io/EconRevisionPlatform/>.
-
-## One-Time Authentication
-
-```sh
-gh auth login
-gh auth setup-git
-gh auth status
-```
-
-Use the interactive browser login. Authentication is stored by GitHub CLI, not in the repository.
-
-## Commit and Propose a Deployment
-
-The protected default branch uses pull requests and the required `verify` and `adaptive-browser` checks. Direct pushes to `main` are blocked. The policy is recorded in `.github/rulesets/main.json`; editing that file alone does not update GitHub's live ruleset. See `REPOSITORY_SECURITY.md` for the settings and maintenance commands.
-
-Before starting edits, update your branch. Commit or otherwise preserve any existing tracked work before switching branches or pulling.
+## Normal change
 
 ```sh
 git status --short --branch
@@ -39,84 +19,32 @@ git pull --ff-only origin main
 git switch -c codex/my-change
 ```
 
-Make the changes and check them locally. Opening `index.html` works, or run the loopback-only preview below and stop it with Ctrl+C when finished:
+Edit, run the risk-appropriate checks in [Testing](TESTING.md), then stage explicit public files:
 
 ```sh
-node scripts/serve.cjs 4181
-```
-
-Open <http://127.0.0.1:4181>. Then run the checks:
-
-```sh
-node --test tests/*.test.cjs
-node tests/browser.cjs
-node tests/theme.cjs
-node tests/diagrams.cjs
-node tests/navigation.cjs
-node tests/graphs.cjs
-node tests/graph-review.cjs
-git diff --check
-git status --short
-git diff
-```
-
-The browser check needs Playwright. You can point `PLAYWRIGHT_PATH` at an existing package and set `BROWSER_CHANNEL=msedge` to use installed Edge. On this Windows machine, the bundled package can be selected in PowerShell:
-
-```powershell
-$env:PLAYWRIGHT_PATH = "$env:USERPROFILE/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"
-$env:BROWSER_CHANNEL = "msedge"
-node tests/browser.cjs
-```
-
-Stage the exact public files you changed. For example:
-
-```sh
-git add index.html styles.css acrylic.css app.js scripts/serve.cjs tests/browser.cjs
+git add index.html styles.css app.js
 git diff --cached --stat
 git diff --cached
-git commit -m "Refine the acrylic refresh interface"
+git commit -m "Describe the user-visible change"
 git push -u origin codex/my-change
-gh pr create --base main --head codex/my-change --title "Refine the acrylic refresh interface" --body "Explain the change and how it was tested."
+gh pr create --base main --head codex/my-change --title "..." --body "..."
 ```
 
-`git diff` shows unstaged edits; `git diff --cached` shows what the commit will contain. New files appear as `??` in `git status` and are not included by `git commit -am`. Remember to add new stylesheets, scripts, fonts or images and update the preview server's public allowlist when needed. Stage changed documentation explicitly too.
+Stage explicit paths, not `git add .`. The workspace contains private sources, Pi settings, OCR runtimes and generated screenshots. Use `.gitignore` as accident prevention, not as authorization or HTTP access control.
 
-The local checkout also contains private references and OCR tooling. Use explicit public-file staging instead of `git add .`. Keep `private-sources/`, `.pi/`, `.ocr-runtime/`, credentials and generated screenshots out of commits. Local OCR tooling is maintained separately from this public app release.
-
-Root-level Pi session exports (`pi-session-*.html` and `pi-session-*.jsonl`) are private too: they can contain source excerpts and tool results. They are ignored locally and rejected by the publication-boundary CI check; do not force-add them.
-
-After CI passes, inspect the PR diff and merge using the guarded workflow below. A feature-branch push does not deploy the public app; merging to `main` does. If the branch falls behind `main`, bring in the current base and rerun checks. Do not force-push to `main`.
-
-### Merge the Reviewed Revision
-
-For a draft PR, mark it ready only after the work is ready for review. Replace `123` consistently with the actual PR number:
+## Merge and verify
 
 ```sh
-gh pr ready 123
 gh pr checks 123 --watch --interval 10
 gh pr view 123 --json headRefOid --jq .headRefOid
-```
-
-Use the returned **full** SHA, not its abbreviated form, in the merge command:
-
-```sh
 gh pr merge 123 --squash --delete-branch --match-head-commit FULL_REVIEWED_HEAD_SHA
-```
-
-This guards against merging a different revision if the branch changes after review. If it fails because the head changed, inspect the new commits and rerun the relevant checks. Do not bypass protections with an admin merge. Squashing changes commit IDs; do not use old branch SHAs as the expected deployment SHA.
-
-## Verify the Deployment
-
-Merging to `main` starts deployment automatically. Switch back to `main`, pull the merged commit, and locate the Pages run for it:
-
-```sh
 git switch main
 git pull --ff-only origin main
 git rev-parse HEAD
 gh run list --branch main --limit 5
 ```
 
-Find **pages build and deployment**, then substitute its numeric ID for `RUN_ID`:
+Use the full reviewed head SHA. If the head changed, inspect the new commits and rerun the relevant checks rather than bypassing the protection. After merge, find the `pages build and deployment` run for the merged commit:
 
 ```sh
 gh run view RUN_ID
@@ -124,107 +52,32 @@ gh run watch RUN_ID --exit-status --interval 10
 gh api repos/ChromedomeV12/EconRevisionPlatform/pages/builds/latest
 ```
 
-Confirm the run succeeded and the latest Pages build has `status: "built"`, no error, and `commit` equal to the merged `main` SHA from `git rev-parse HEAD`. An older successful build is not enough. A successful push alone does not establish that deployment finished. If the run fails:
+Confirm the run succeeded and the latest Pages build is `built`, without error, for the merged `main` SHA. An older successful deployment is not enough. If it fails, inspect `gh run view RUN_ID --log-failed`.
+
+## Reviewing a pull request
+
+Read the proposal and diff, then test the actual behavior:
 
 ```sh
-gh run view RUN_ID --log-failed
-```
-
-Open the live site and hard-refresh with Ctrl+F5 if it still looks old. Check the feed, navigation, typography and diagrams. The browser's Network panel should show `acrylic.css` and other required assets loading successfully. A `?v=COMMIT_SHA` suffix can help test a fresh document request; a hard refresh also refreshes linked assets.
-
-The configuration is visible at **Repository -> Settings -> Pages**. Run history is under **Actions**. GitHub documents the [branch publishing setup](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
-
-## Open a Pull Request
-
-Use a branch when you want review before deployment. Start before making your edits:
-
-```sh
-git switch main
-git pull --ff-only origin main
-git switch -c codex/my-change
-```
-
-Edit, test, then stage the relevant files and publish the branch:
-
-```sh
-git add index.html acrylic.css app.js
-git diff --cached
-git commit -m "Describe the improvement"
-git push -u origin codex/my-change
-gh pr create --base main --head codex/my-change --title "Describe the improvement" --body "Explain the change and how it was tested."
-```
-
-Use `--draft` on `gh pr create` for unfinished work, or `gh pr create --web` to write the description in GitHub. For a longer description saved in a file, use `--body-file path/to/description.md`. Subsequent commits pushed to the same branch automatically update the PR. See the [PR creation reference](https://cli.github.com/manual/gh_pr_create).
-
-A feature-branch push does not update this site's Pages deployment. Once the PR is reviewed and ready, replace `123` with its number:
-
-```sh
-gh pr checks 123 --watch --interval 10
-gh pr view 123 --json headRefOid --jq .headRefOid
-gh pr merge 123 --squash --delete-branch --match-head-commit FULL_REVIEWED_HEAD_SHA
-git switch main
-git pull --ff-only origin main
-```
-
-Merging updates `main` and starts Pages deployment. The `verify` workflow must pass and review conversations must be resolved. There is currently no mandatory second-person approval because this is a solo-maintained repository; approval and merging remain separate actions. Run browser tests locally as well as checking CI.
-
-## Clean Up Completed Branches
-
-```sh
-git fetch origin --prune
-git branch -avv
-git ls-remote --heads origin
-```
-
-`--prune` removes stale remote-tracking references; it does not delete local branches. `--delete-branch` during merge removes the completed GitHub branch. Keep branches with unique or unreviewed work. For a normally merged local branch, use `git branch -d BRANCH_NAME` from another branch. A squash merge may fail this ancestry check even when its changes were integrated: verify the merged PR and resulting content before considering forced local deletion. Never delete `main` or use branch cleanup as a reason to discard working files.
-
-## Review Someone Else's Pull Request
-
-Start by reading the proposal and diff:
-
-```sh
-gh pr list --state open
 gh pr view 123
 gh pr diff 123
 gh pr checks 123
-gh pr view 123 --web
 ```
 
-On GitHub, open **Files changed**, click a line's **+** to leave a comment, then use **Review changes** to submit the review. A useful finding names the file/line, the action that triggers the issue, the incorrect result, and the expected result.
-
-For local testing, preserve your current work first. Read the changed code and scripts before executing them:
-
-```sh
-gh pr checkout 123
-node --test tests/*.test.cjs
-node tests/browser.cjs
-```
-
-Check the requested behavior, regressions, mobile layout, keyboard access, state persistence and whether private files were accidentally included. Run additional suites from [Testing](TESTING.md) for the changed surface. Then submit **one** appropriate review:
-
-```sh
-gh pr review 123 --approve --body "Checked the diff and verified desktop/mobile behavior. Tests pass."
-```
-
-Or request fixes for a concrete issue:
-
-```sh
-gh pr review 123 --request-changes --body "At 360px width the bottom controls overlap navigation. Please fix the layout before merging."
-```
-
-Or leave non-blocking feedback:
-
-```sh
-gh pr review 123 --comment --body "Consider making the empty-state label more specific."
-```
-
-Write what you actually verified; these review messages are examples. Return to your branch afterward with `git switch main` (or your previous branch). The CLI supports [checking out a PR](https://cli.github.com/manual/gh_pr_checkout) and [submitting reviews](https://cli.github.com/manual/gh_pr_review).
+A useful finding names the file/line, the action that triggers the issue, the incorrect result and the expected result. Check keyboard/touch behavior, responsive layout, state persistence, private-file inclusion and the risk-appropriate suites. Submit one review: approve, request changes, or comment. Return to your branch afterward.
 
 ## Integration Branch
 
-Keep frontend `main` demo-ready. Use `../EconRevisionPlatform-m1` on the long-lived `m1` branch to test the backend with current frontend UI. Create the worktree through [the architecture guide](ARCHITECTURE.md#repositories-and-working-copies); keep its directory outside folder sync.
+Keep frontend `main` demo-ready. Use `../EconRevisionPlatform-m1` on the long-lived `m1` branch to test the backend with current frontend UI. Create it as a Git worktree, not a second clone:
 
-Before synchronizing, inspect both working trees and fetch the frontend remote. With a clean integration tree, run from that worktree:
+```sh
+git fetch origin
+git worktree add --track -b m1 ../EconRevisionPlatform-m1 origin/m1
+```
+
+If local `m1` exists without an attached worktree, use `git worktree add ../EconRevisionPlatform-m1 m1`. Stop if the destination contains files or the branch is checked out elsewhere. Keep the worktree directory and its `.git` metadata out of folder sync. After moving machines or changing OS, run `git worktree repair <path>`; never copy `.git` worktree pointer files between machines. See [repositories and working copies](ARCHITECTURE.md#repositories-and-working-copies).
+
+With a clean integration tree:
 
 ```sh
 git fetch origin
@@ -232,6 +85,20 @@ git merge origin/main
 node --test tests/*.test.cjs
 ```
 
-Resolve conflicts by preserving the UI changes and backend adapters; inspect each conflicting hunk. Do not reset `m1` to `main` or replace complete files to suppress conflicts. Run the backend's `npm run smoke -- --frontend ../EconRevisionPlatform --content-frontend ../EconRevisionPlatform-m1`, plus the checks for any changed runtime surface. Push `m1` after validation. Record which frontend and backend commits you tested.
+Resolve conflicts by preserving the UI change and backend adapters; inspect each hunk. Do not reset `m1` to `main` or replace whole files to suppress conflicts. From the backend repository, run the cross-repository smoke:
 
-Promote integration changes to `main` through a reviewed feature PR when the owner requests deployment integration. Keep backend calls optional until that PR changes the startup contract. A merge to `m1` does not deploy Pages. Retain the integration branch and active worktree after promotion unless the owner retires that testing role. The separate `-m1-publish` copy is unnecessary; push from the clean `m1` worktree.
+```sh
+npm run smoke -- --frontend ../EconRevisionPlatform --content-frontend ../EconRevisionPlatform-m1
+```
+
+Push `m1` after validation and record which frontend and backend commits were tested. A merge to `m1` does not deploy Pages. Promote reviewed integration changes to `main` through a PR when deployment needs them. Retire `m1` only by owner decision.
+
+## Branch cleanup
+
+```sh
+git fetch origin --prune
+git branch -avv
+git ls-remote --heads origin
+```
+
+Keep branches with unique or unreviewed work. A squash merge may fail the ancestry check even when the content is integrated; verify the merged PR and resulting content before deleting a local branch. Never delete `main` or use cleanup as an excuse to discard working files.
