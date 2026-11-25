@@ -1022,8 +1022,8 @@ body { font-family: var(--font-body); }
 .view-heading h1 { color: var(--band-ink); }
 .view-heading p { color: var(--slate-600); font-size: 15px; margin-top: 8px; }
 :root[data-theme="dark"] .view-heading p { color: var(--muted); }
-.view-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.view-heading-row > div { min-width: 0; }
+.view-heading-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; }
+.view-heading-row > div { min-width: 0; flex: 1 1 220px; }
 .crumb { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 .crumb-pill {
   display: inline-flex; align-items: center; gap: 6px;
