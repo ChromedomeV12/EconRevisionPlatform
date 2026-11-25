@@ -77,15 +77,15 @@
   :root[data-layout="swipe"] .refresh-canvas .refresh-meta span { font-size: 10px; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-body { padding: 0; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-art { padding-inline: 10px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 28px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 15px; line-height: 1.6; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 24px; line-height: 1.22; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 14.5px; line-height: 1.55; }
   .feed-action-menu { right: 50px; }
 }
 @media (max-height: 760px) {
   :root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 14px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-meta { margin-bottom: 10px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 23px; line-height: 1.16; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 13.5px; line-height: 1.45; margin-block: 10px 12px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 22px; line-height: 1.18; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 13.5px; line-height: 1.45; margin-block: 9px 10px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-art { padding: 6px 10px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 140px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-art small { margin-top: 2px; }
