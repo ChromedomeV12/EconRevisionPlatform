@@ -225,12 +225,14 @@
       <div class="overview-bottom"><section class="refresh-overview-list"><div class="section-heading"><h2>Recently opened</h2><span class="subtle">Your browsing</span></div>${opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id])).slice(0,4).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon(unitOf(c).icon)}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">Your opened points will appear here.</p>'}</section>
       <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon("history")}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section></div>`;
   }
-  function libraryCard(card) {
+  // Library art is a plain solid colour block, one hue per card in a fixed
+  // cycle, so no two neighbouring cards share a colour and no image asset is
+  // needed. The block is decorative; the card text carries the meaning.
+  const artHues = ["gold", "green", "blue", "red", "teal", "orange", "navy"];
+  function libraryCard(card, index) {
     const unit = unitOf(card),
       saved = state.saved.includes(card.id);
-    // Library art is a solid per-unit colour block with the unit icon, not a
-    // photograph: every card is distinct by unit and needs no remote asset.
-    return `<article class="library-card"><div class="library-art unit-art ${unit.color}" role="img" aria-label="${escape(unit.name)}"><span class="unit-art-icon" aria-hidden="true">${icon(unit.icon)}</span>${card.tag ? `<span class="image-tag">${escape(card.tag)}</span>` : ""}</div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
+    return `<article class="library-card"><div class="library-art unit-art ${artHues[index % artHues.length]}" role="img" aria-label="${escape(unit.name)}">${card.tag ? `<span class="image-tag">${escape(card.tag)}</span>` : ""}</div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
   }
   function renderLibrary() {
     const savedView = route === "saved";
@@ -250,7 +252,7 @@
     $("#resultCount").textContent =
       `${results.length} ${results.length === 1 ? "card" : "cards"}`;
     $("#libraryResults").innerHTML = results.length
-      ? `<div class="library-grid">${results.map(libraryCard).join("")}</div>`
+      ? `<div class="library-grid">${results.map((card, i) => libraryCard(card, i)).join("")}</div>`
       : empty(
           route === "saved" && !state.saved.length
             ? "Keep a thought for later"
