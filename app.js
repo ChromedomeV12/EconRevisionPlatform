@@ -225,39 +225,12 @@
       <div class="overview-bottom"><section class="refresh-overview-list"><div class="section-heading"><h2>Recently opened</h2><span class="subtle">Your browsing</span></div>${opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id])).slice(0,4).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon(unitOf(c).icon)}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">Your opened points will appear here.</p>'}</section>
       <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon("history")}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section></div>`;
   }
-  // Bespoke unit marks replace the shared stock photographs in the library.
-  // They are inline SVG on light paper: themeable, resolution-independent and
-  // described for assistive technology, with no remote asset or image request.
-  const unitMarks = {
-    intro: {
-      label: "A production possibility curve bowing away from the origin",
-      art: '<path class="mark-area" d="M34 148V42c84 10 168 56 252 106Z"/><path class="mark-line" d="M34 42c84 10 168 56 252 106"/><path class="mark-guide" d="M34 64c80 8 158 52 238 84"/><circle class="mark-dot" cx="150" cy="79" r="5"/>'
-    },
-    micro: {
-      label: "Demand and supply crossing at an equilibrium price and quantity",
-      art: '<path class="mark-line" d="M58 46l204 92"/><path class="mark-line-2" d="M58 138L262 46"/><path class="mark-guide" d="M160 92H34M160 92v56"/><circle class="mark-dot" cx="160" cy="92" r="5"/>'
-    },
-    macro: {
-      label: "Rising national output shown as ascending bars with a trend line",
-      art: '<g class="mark-bars"><rect x="52" y="120" width="26" height="28" rx="4"/><rect x="94" y="102" width="26" height="46" rx="4"/><rect x="136" y="84" width="26" height="64" rx="4"/><rect x="178" y="64" width="26" height="84" rx="4"/><rect x="220" y="44" width="26" height="104" rx="4"/></g><path class="mark-line" d="M56 122l42-20 42-18 42-20 46-22"/><circle class="mark-dot" cx="228" cy="42" r="5"/>'
-    },
-    global: {
-      label: "A globe with two trade arrows passing across it",
-      art: '<circle class="mark-line" cx="160" cy="90" r="50"/><ellipse class="mark-line-2" cx="160" cy="90" rx="22" ry="50"/><path class="mark-guide" d="M110 90h100M160 40c-16 16-24 32-24 50s8 34 24 50 24-32 24-50-8-34-24-50Z"/><path class="mark-line-2" d="M30 126c26-2 44-12 58-26"/><path class="mark-line-2" d="m88 100-13-2 9-9Z"/><path class="mark-line-2" d="M290 54c-26 2-44 12-58 26"/><path class="mark-line-2" d="m232 80 13 2-9 9Z"/>'
-    }
-  };
-  function unitMark(unit, seed = 0) {
-    const mark = unitMarks[unit.id] || unitMarks.micro,
-      shift = (seed % 3) - 1;
-    // A small deterministic offset keeps a unit's cards from looking stamped
-    // while the mark still reads as the same idea.
-    return `<svg class="unit-mark" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escape(mark.label)}"><path class="mark-axis" d="M34 148h252M34 148V26"/><g transform="translate(${shift * 7} ${shift * 4})">${mark.art}</g></svg>`;
-  }
   function libraryCard(card) {
     const unit = unitOf(card),
-      seed = [...card.id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0),
       saved = state.saved.includes(card.id);
-    return `<article class="library-card"><div class="library-art">${unitMark(unit, seed)}${card.tag ? `<span class="image-tag">${escape(card.tag)}</span>` : ""}</div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
+    // Library art is a solid per-unit colour block with the unit icon, not a
+    // photograph: every card is distinct by unit and needs no remote asset.
+    return `<article class="library-card"><div class="library-art unit-art ${unit.color}" role="img" aria-label="${escape(unit.name)}"><span class="unit-art-icon" aria-hidden="true">${icon(unit.icon)}</span>${card.tag ? `<span class="image-tag">${escape(card.tag)}</span>` : ""}</div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
   }
   function renderLibrary() {
     const savedView = route === "saved";
