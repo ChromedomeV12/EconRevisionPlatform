@@ -23,6 +23,12 @@ async function resize(page, size) {
         await resize(page,{width,height}); await page.goto(base);
         assert.equal(await page.locator('html').getAttribute('data-layout'),choose(width,height));
         assert.equal(await page.locator('.topbar').isVisible(),choose(width,height)==='desktop');
+        // The swipe feed always shows its own bar and relocates the header's own
+        // menu/theme controls into it; nothing is duplicated.
+        assert.equal(await page.locator('.swipe-bar').isVisible(),choose(width,height)==='swipe');
+        assert.equal(await page.locator('.swipe-bar [data-action="menu-toggle"]').count(),choose(width,height)==='swipe'?1:0);
+        assert.equal(await page.locator('[data-action="menu-toggle"]').count(),1);
+        assert.equal(await page.locator('[data-action="theme-toggle"]').count(),1);
       }
       await page.unroute('**/app.js'); await resize(page,{width:1440,height:900}); await page.goto(base);
       await page.evaluate(() => document.fonts.ready);
@@ -55,7 +61,11 @@ async function resize(page, size) {
         assert.deepEqual(await page.evaluate(()=>[localStorage.getItem('econ-workspace-v2'),localStorage.getItem('econ-refresh-v1')]),before);
         const swipe=choose(width,height)==='swipe';
         assert.equal(await page.locator('.feed-rail').isVisible(),swipe);
-        assert.equal(await point.locator('.refresh-actions').isVisible(),!swipe);
+        assert.equal(await page.locator('.swipe-bar').isVisible(),swipe);
+        assert.equal(await page.locator('.swipe-bar [data-action="menu-toggle"]').isVisible(),swipe);
+        // Both presentations keep the card actions and a way out of the feed.
+        assert.equal(await point.locator('.refresh-actions').isVisible(),true);
+        assert.equal(await point.getByRole('button',{name:'Save point',exact:true}).isVisible(),true);
         assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
         assert.ok(await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(el=>el.id);return ids.length===new Set(ids).size;}));
       }
@@ -65,25 +75,22 @@ async function resize(page, size) {
       assert.equal(await page.getByRole('menuitemcheckbox',{name:'Bookmark card'}).getAttribute('aria-checked'),'true');
       await page.keyboard.press('Escape'); assert.ok(await multi.evaluate(el=>el===document.activeElement));
       await page.screenshot({path:path.join(out,`phone-${theme}.png`)});
-      // Switching an open keyboard dial transfers focus away from hidden controls.
-      await page.keyboard.press('Shift+F10'); assert.ok(await page.locator('.feed-dial').isVisible());
+      // An open action menu closes when geometry changes and focus returns to the feed.
+      await page.keyboard.press('Enter');
+      assert.ok(await page.locator('#feedActionMenu').isVisible());
       await resize(page,{width:1440,height:900});
       await page.waitForFunction(()=>document.activeElement===document.querySelector('.refresh-scroll'));
-      assert.equal(await page.locator('.feed-dial').isVisible(),false);
-      await resize(page,{width:390,height:844});
-      const bounds=await multi.boundingBox();
-      await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2); await page.mouse.down();
-      await page.waitForTimeout(430); assert.ok(await page.locator('.feed-dial').isVisible());
-      await resize(page,{width:1440,height:900}); await page.mouse.up();
-      assert.equal(await page.locator('.feed-dial').isVisible(),false);
       assert.equal(await page.locator('#feedActionMenu').isVisible(),false);
       assert.equal(new URL(page.url()).hash,'');
+      assert.equal(await page.locator('.feed-dial').count(),0,'The swipe feed has no view dial');
       await point.getByRole('button',{name:'Closer look',exact:true}).click();
       await resize(page,{width:390,height:844});
       assert.ok(await page.locator('#modal').isVisible());
       assert.ok(await page.evaluate(()=>document.activeElement.closest('#modal')!==null));
       await page.keyboard.press('Escape');
-      await page.waitForFunction(()=>document.activeElement===document.querySelector('.refresh-scroll'));
+      // Focus returns to the control that opened the dialog, which is now visible
+      // in the swipe presentation too.
+      await page.waitForFunction(()=>document.activeElement?.getAttribute('data-action')==='detail');
       await resize(page,{width:1440,height:900});
       const openedBefore = await page.evaluate(id=>JSON.parse(localStorage.getItem('econ-refresh-v1')).opened[id],id);
       await page.getByRole('button',{name:'Previous point',exact:true}).click();
@@ -94,8 +101,17 @@ async function resize(page, size) {
       // All sequential focus targets belong to the visible layout.
       await page.locator('.refresh-scroll').focus();
       for (let i=0;i<6;i++) { await page.keyboard.press('Tab'); assert.ok(await page.evaluate(()=>!document.activeElement.closest('.feed-gesture-controls'))); }
-      await resize(page,{width:390,height:844}); await multi.focus();
-      for (let i=0;i<6;i++) { await page.keyboard.press('Tab'); assert.ok(await page.evaluate(()=>!document.activeElement.closest('.refresh-actions,.refresh-heading,.sidebar,.topbar,.desktop-feed-navigation'))); }
+      await resize(page,{width:390,height:844});
+      // Focus reaches the card actions that are now visible in swipe, and never
+      // the desktop-only chrome the presentation hides.
+      await page.locator('.refresh-scroll').focus();
+      let reachedActions=false;
+      for (let i=0;i<8 && !reachedActions;i++) {
+        await page.keyboard.press('Tab');
+        assert.ok(await page.evaluate(()=>!document.activeElement.closest('.refresh-heading,.sidebar,.topbar,.desktop-feed-navigation')));
+        reachedActions = await page.evaluate(()=>document.activeElement.closest('.refresh-actions')!==null);
+      }
+      assert.ok(reachedActions,'Keyboard reaches the visible card actions in swipe');
       assert.deepEqual(errors,[]); await context.close();
     }
     const touch=await browser.newContext({viewport:{width:900,height:1000},hasTouch:true,isMobile:true});

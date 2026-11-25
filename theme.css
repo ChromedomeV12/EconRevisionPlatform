@@ -472,6 +472,12 @@ html:has(#mobileMenu[open]) { overflow: hidden; }
 #mobileMenu { padding: 24px; margin: 0; border: 0; border-radius: 0; width: min(340px, calc(100% - 32px)); max-width: none; height: 100dvh; max-height: 100dvh; background: var(--panel); color: var(--text); overscroll-behavior: contain; }
 #mobileMenu::backdrop { background: var(--scrim); backdrop-filter: none; }
 #mobileMenu .sidebar { display: flex; position: static; width: 100%; max-height: none; border: 0; padding: 0; background: transparent; }
+/* The drawer is navigation, not a bottom bar: restore the row layout the narrow
+   breakpoints replace with an icon-over-label tab. */
+#mobileMenu .primary-nav { display: flex; flex-direction: column; height: auto; justify-content: flex-start; gap: 8px; padding: 0; }
+#mobileMenu .primary-nav a { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 48px; padding: 12px 16px; }
+#mobileMenu .primary-nav a > span:not(.nav-count) { display: inline; font-size: 14px; font-weight: inherit; }
+#mobileMenu .nav-label { margin-left: 16px; }
 #mobileMenu .drawer-close { display: grid; margin: 0 0 20px auto; }
 
 /* Economics sketches frame the introduction; ink stays legible on light and dark paper. */

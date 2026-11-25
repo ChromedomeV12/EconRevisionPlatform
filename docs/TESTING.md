@@ -25,7 +25,7 @@ Graph-work tests include source-inventory mismatches, explicit dot/arrow policie
 | Card contract/private authoring/public projections | `node --test tests/card-model.test.cjs tests/card-work.test.cjs` and `node tests/card-content.cjs` |
 | Adaptive state synchronization | `node tests/adaptive-state.cjs`: both themes, phone-to-desktop preference selection, desktop-to-phone deselection, unchanged card DOM/recall history, initial/repeated feed entries updating exposure, resize/menu-collapse preserving exposure |
 | Adaptive presentation | `node --test tests/adaptive-layout.test.cjs` and `node tests/adaptive-layout.cjs`: synchronous pre-app layout, exact ratio/width/short-screen boundaries, both themes, rotation/resizing, unchanged card DOM/filter/bookmarks/revisit/opened timestamps/recall history, hidden controls/focus and duplicate IDs |
-| Swipe action menu and side dial | `node tests/feed-controls.cjs`: five compact/portrait widths/both themes, keyboard navigation, hold/drag/release, browser touch cancellation, active-card targeting, short-screen wrapping and unchanged recall history |
+| Swipe action menu | `node tests/feed-controls.cjs`: five compact/portrait widths/both themes, click-to-open menu, menu keyboard handling, touch tap, active-card targeting, short-screen wrapping, absence of a view dial and unchanged recall history |
 | Integrated OCR/graph/card interruption recovery | `node --test tests/ocr-recovery.test.mjs` and `node tests/pi-ocr.test.mjs` (privately synced tooling; actual Pi loader required) |
 | Textbook figures and copy | `node --test tests/diagram-data.test.cjs` |
 | Preview assets or privacy boundary | `node --test tests/preview.test.cjs` |
@@ -74,7 +74,7 @@ Reload the document after CSS edits: hash-only navigation reuses the loaded styl
 
 ## Adaptive Layout Review
 
-Run `node tests/adaptive-state.cjs`, `node tests/adaptive-layout.cjs`, `node tests/feed-controls.cjs` and the other browser suites for layout changes. Inspect `test-output/adaptive/desktop-{light,dark}.png` and `phone-{light,dark}.png`; the CI artifact contains these and action-menu/dial/short-screen captures. Screenshots stay Git-ignored and out of the Pages publication source. Link the Actions artifact in the PR.
+Run `node tests/adaptive-state.cjs`, `node tests/adaptive-layout.cjs`, `node tests/feed-controls.cjs` and the other browser suites for layout changes. Inspect `test-output/adaptive/desktop-{light,dark}.png` and `phone-{light,dark}.png`; the CI artifact contains these and action-menu/short-screen captures. Screenshots stay Git-ignored and out of the Pages publication source. Link the Actions artifact in the PR.
 
 The adaptive suite blocks `app.js` during initial-load checks to verify the geometry attribute and workspace chrome before deferred application rendering. It tests both sides of the 600px, 1000px, 1.2 ratio and 500px height decisions, preserving a non-first saved/revisit card with a nonempty recall log across switches. Coarse-pointer height-only browser chrome is simulated independently of orientation (Playwright viewport resizing can generate orientation events); Node VM coverage also simulates an editable keyboard and a fine-pointer height resize. Touch dispatch in `feed-controls.cjs` checks hold/drag/release, cancellation and optional haptics including unavailable/throwing APIs and reduced motion. Physical keyboard/browser chrome and vibration still warrant a real-device spot check; emulation does not establish hardware behavior.
 

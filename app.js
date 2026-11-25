@@ -318,7 +318,7 @@
     list.forEach(card=>renderConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
     const current=list.find(c=>c.id===activeCard()?.id) || list[0];
     session.index=session.ids.indexOf(current.id);
-    feedControls = EconFeedControls.mount($(".feed-gesture-controls"), { navigate, icons, current: () => {
+    feedControls = EconFeedControls.mount($(".feed-gesture-controls"), { icons, current: () => {
       const card = activeCard(); return card && { id: card.id, saved: state.saved.includes(card.id), revisit: refreshState.revisit.includes(card.id), confusing: refreshState.confusing.includes(card.id), filter: feedFilter };
     } });
     feedSizeObserver.disconnect();
