@@ -41,10 +41,10 @@ Keep the locked Python dependencies in `tools/ocr/` separate from the app runtim
 - Open the refresh feed, not a marketing landing page. Show explanations on each card; put deeper notes behind Closer look. Keep feature explanations out of the primary interface.
 - Use dense but clear study UI: stats, progress, unit cards, chapters, and quick actions.
 - Keep deep explanations readable and academic.
-- Preserve the owner-approved PR #5 design: bright white light-mode reading surfaces, layered Mocha dark surfaces, restrained Sapphire accents and rounded controls. Use semantic theme tokens over hard-coded component colors. Keep textbook images and native SVG diagrams on high-contrast light paper. Respect reduced motion/transparency preferences.
-- Use Georgia/system serif for knowledge headlines and library titles, Manrope for interface headings, DM Sans for body text, and system monospace for feed position counters. Keep letter spacing at zero. Do not add remote font dependencies.
-- Light mode uses the official Catppuccin Latte palette; dark mode uses Mocha. Keep light/dark-specific overrides limited to colors and shadows; preserve the shared layout, typography, blur and light diagram surfaces. Follow the OS preference until the user selects a mode.
-- PR #5 replaces PR #4's white/navy/sky-blue dialog overrides. Dialogs use a fixed serif-title header and close button, independently scrolling content, neutral theme text and backdrop. Do not restore the superseded PR #4 overrides.
+- Appearance is one token-driven system in `theme.css`: navy ink (#032254) on a #f4f4f4 page, white cards on hairline borders, pale-sky selection tints and a single bright blue action colour (--accent #0073c0, at least 4.5:1 with white text). The Catppuccin `--ctp-*` names survive only as compatibility aliases for `styles.css`; do not add new hard-coded colours.
+- Type: Manrope 800 for knowledge headlines, library titles and interface headings with negative display tracking; DM Sans for body text; system monospace for feed position counters. Do not add remote font dependencies.
+- `theme.css` owns colour, type and component skins. `acrylic.css` still owns real layout (queue rows, workspace grid, some control structure) and is not a decorative layer to delete. Later layers override earlier ones, so verify the rendered cascade rather than one file.
+- Keep textbook images and native SVG diagrams on high-contrast light paper in both themes. Respect reduced motion and reduced transparency preferences.
 - Treat `.workspace-layout`, `.shell` and `main` as unframed layout wrappers, not cards. Non-feed shells and the inline sidebar stay transparent. Follow [surface and proportion ownership](docs/ARCHITECTURE.md#surface-and-proportion-ownership); use low-specificity `:where()` for shared surface defaults so one complex selector cannot restyle every page.
 - Add dependencies only for a demonstrated project need.
 

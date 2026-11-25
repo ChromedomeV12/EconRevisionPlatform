@@ -39,6 +39,14 @@ This repository contains the static browser application. It has no application p
 
 Deferred scripts run in document order: vendored Lucide, FSRS and D3, then `graph.js`, legacy `content.js`, `card-model.js`, selected `content/*.js` packs, `content-bootstrap.js`, `learning.js`, `refresh.js`, `decisions.js` and `app.js`. Keep that dependency order. These browser scripts expose globals rather than using a bundler. Several logic modules also export CommonJS interfaces for Node tests.
 
+## Visual System
+
+The appearance comes from the [Revision Village](https://www.revisionvillage.com/) reference, chosen for its confident editorial hierarchy rather than its marketing sections. Borrowed: deep-navy ink (#032254) on a #f4f4f4 page, white cards on hairline borders, pale-sky selection tints, one bright blue action colour, Manrope 800 headings with negative display tracking, pill primary actions, generous section padding and near-flat shadows. Rejected: hero underline art, testimonial walls, pricing calls to action and every statistic claiming outcomes or usage - this project must not fabricate activity (D15).
+
+`theme.css` is the single authority for colour, type and component skin. Its token layer defines the brand palette, maps the legacy `--ctp-*` names onto it so `styles.css` follows, and restates light values on `:root:not([data-theme="dark"])` because the older sheet targets that selector with higher specificity. `acrylic.css` still owns real layout - queue rows, the workspace grid and some control structure - so it is structural, not decorative, and deleting it drops layout rather than styling.
+
+The action blue is #0073c0 rather than the reference's brighter #0081d6: white text on the brighter blue reaches only 4.11:1 and fails AA for normal text. Muted ink is #526687 for the same reason. Diagram roles keep light paper in both themes through `--diagram-mat` and `--diagram-mat-edge`, while `--plot-*` supplies line colours. Type is all-sans: Manrope 800 for knowledge and interface headings with tracking between -0.02em and -0.035em, DM Sans for body text, system monospace for counters. There are no remote font requests.
+
 ## Routes and Workspace Navigation
 
 Empty and unrecognized hashes enter `#feed`; existing compatibility aliases still work. `#welcome` is an optional introduction, not a gate before studying. The brand and the menu's **About this study space** link open it explicitly. `#progress` opens the dashboard: actual browsing statistics precede the continuation entry and topic catalog. A continuation uses the last opened point, not a predicted recall schedule. `#units`, `#saved` and `#studio` retain their existing routes.
