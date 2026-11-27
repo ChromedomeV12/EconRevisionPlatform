@@ -55,7 +55,22 @@
 :root[data-layout="swipe"] body.feed-mode .shell { margin: 0; padding: 0; border: 0; border-radius: 0; min-height: 0; height: calc(100dvh - var(--swipe-bar-height) - env(safe-area-inset-top, 0px)); }
 :root[data-layout="swipe"] body.feed-mode main { margin: 0 auto; padding: 0 24px; max-width: 620px; height: 100%; min-height: 0; }
 :root[data-layout="swipe"] body.feed-mode .refresh-workspace { display: flex; gap: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-canvas { width: 100%; padding-right: 64px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-canvas { width: 100%; padding-right: 0; }
+/* Previous/actions/next share the existing bottom bar. Removing the side rail's
+   reserved gutter makes the diagram itself larger, not just its empty frame. */
+:root[data-layout="swipe"] body.feed-mode .feed-gesture-controls {
+  position: relative; inset: auto; flex: 0 0 auto; overflow: visible; pointer-events: auto;
+}
+:root[data-layout="swipe"] body.feed-mode .feed-rail {
+  position: static; transform: none; flex-direction: row; gap: 8px;
+}
+:root[data-layout="swipe"] body.feed-mode .feed-rail::before {
+  inset: 0 0 auto; width: auto; height: 3px;
+  background: repeating-linear-gradient(90deg, var(--atlas-rule) 0 1px, transparent 1px 8px);
+}
+:root[data-layout="swipe"] body.feed-mode .feed-action-menu {
+  inset: auto 0 calc(100% + 8px) auto; transform: none; max-height: min(480px, 70dvh);
+}
 /* Actions stay visible: the rail and its menu are shortcuts, not the only route. */
 :root[data-layout="swipe"] body.feed-mode .refresh-actions { padding: 8px 0; gap: 8px; border-top: 1px solid var(--border); }
 :root[data-layout="swipe"] body.feed-mode .refresh-actions > button { min-height: 44px; padding: 0 14px; font-size: 14px; }
@@ -63,21 +78,24 @@
 :root[data-layout="swipe"] body.feed-mode .refresh-actions .icon-button { width: 44px; height: 44px; min-width: 44px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); }
 :root[data-layout="swipe"] body.feed-mode .refresh-actions .icon-button[aria-pressed=true] { background: var(--selected); color: var(--accent); border-color: var(--accent); }
 :root[data-layout="swipe"] body.feed-mode .refresh-scroll { border: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 16px; padding-bottom: 8px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 8px; padding-bottom: 8px; }
 :root[data-layout="swipe"] body.feed-mode .refresh-body { display: flex; flex-direction: column; justify-content: safe center; padding: 4px 2px; }
-:root[data-layout="swipe"] body.feed-mode .refresh-meta { flex-shrink: 0; margin-bottom: 14px; }
-:root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 32px; line-height: 1.2; flex-shrink: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 16px; line-height: 1.65; margin-block: 14px 16px; flex-shrink: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-art { flex-shrink: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(150px, 24dvh, 240px); }
-:root[data-layout="swipe"] body.feed-mode .refresh-takeaway { flex-shrink: 0; margin-block: 14px 6px; font-size: 13px; }
-:root[data-layout="swipe"] body.feed-mode .refresh-controls { width: 100%; max-width: none; padding: 8px 64px max(12px, env(safe-area-inset-bottom)); }
+:root[data-layout="swipe"] body.feed-mode .refresh-meta { flex-shrink: 0; margin-bottom: 8px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 32px; line-height: 1.18; flex-shrink: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 16px; line-height: 1.5; margin-block: 10px 12px; flex-shrink: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-art { flex-shrink: 0; padding: 8px 10px 6px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(180px, 28dvh, 280px); }
+:root[data-layout="swipe"] body.feed-mode .visual-label { padding-bottom: 4px; margin-bottom: 6px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-art small { margin-top: 2px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-takeaway { flex-shrink: 0; margin-block: 10px 4px; padding: 6px 10px; font-size: 13px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-controls { width: 100%; max-width: none; gap: 12px; padding: 4px 0 max(8px, env(safe-area-inset-bottom)); }
+:root[data-layout="swipe"] body.feed-mode .refresh-actions { padding-block: 4px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-controls .set-position { min-width: 0; }
 :root[data-layout="swipe"] body.feed-mode .refresh-controls .set-position { font-size: 11px; }
 @media (max-width: 600px) {
-  :root[data-layout="swipe"] body.feed-mode main { padding-inline: 16px 8px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-canvas { padding-right: 52px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-controls { padding-right: 52px; }
-  .feed-rail { right: 0; gap: 14px; }
+  :root[data-layout="swipe"] body.feed-mode main { padding-inline: 16px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-canvas { padding-right: 0; }
+  .feed-rail { right: 0; gap: 8px; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-point { padding-inline: 0; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-actions { padding: 8px 0; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-actions > button { font-size: 13px; padding: 0 10px; }
@@ -89,15 +107,15 @@
   :root[data-layout="swipe"] .refresh-canvas .refresh-art { padding-inline: 10px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 24px; line-height: 1.22; }
   :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 14.5px; line-height: 1.55; }
-  .feed-action-menu { right: 50px; }
+  :root[data-layout="swipe"] body.feed-mode .feed-action-menu { right: 0; }
 }
 @media (max-height: 760px) {
-  :root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 14px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-meta { margin-bottom: 10px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 6px; padding-bottom: 4px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-meta { margin-bottom: 6px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 22px; line-height: 1.18; }
   :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 13.5px; line-height: 1.45; margin-block: 9px 10px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-art { padding: 6px 10px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 140px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 180px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-art small { margin-top: 2px; }
   :root[data-layout="swipe"] body.feed-mode .refresh-takeaway { margin-block: 10px 4px; padding: 6px 10px; font-size: 12px; }
 }
