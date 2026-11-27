@@ -15,6 +15,8 @@ const { createServer } = require("../scripts/serve.cjs");
       await page.evaluate(() => document.fonts.ready);
       const multi = page.getByRole("button", { name: "Card actions", exact: true });
       assert.equal(await page.locator(".feed-rail button").count(), 3);
+      assert.ok(await page.locator('.feed-gesture-controls').evaluate(el => el.parentElement.classList.contains('refresh-controls')), 'Swipe navigation shares the bottom control bar');
+      assert.equal(await page.locator('.refresh-canvas').evaluate(el => getComputedStyle(el).paddingRight), '0px', 'The reading and diagram column uses the full width');
       for (const selector of [".topbar", ".sidebar", ".refresh-heading", ".refresh-queue"]) assert.equal(await page.locator(selector).isVisible(), false, "Swipe view has no workspace chrome");
       assert.equal(await page.getByRole("button", { name: "Previous point", exact: true }).isDisabled(), true);
       const initialLogs = await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem("econ-workspace-v2") || "{}").logs || []));
