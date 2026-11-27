@@ -833,13 +833,14 @@ html:has(#mobileMenu[open]) { overflow: hidden; }
 
 /* ---- Base ---------------------------------------------------------------- */
 html, body, body.feed-mode { color: var(--text); background: var(--page); }
-/* Subtle dot grid gives the page a paper texture instead of anonymous flat gray. */
-body:not(.feed-mode) {
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--navy-900) 7%, transparent) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-position: 11px 11px;
+/* Registration marks live on the tools, not behind the reading column. */
+:root {
+  --atlas-ticks: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 8px);
+  --atlas-ease: cubic-bezier(.2,.75,.25,1);
+  --atlas-rule: color-mix(in srgb, var(--muted) 38%, var(--page));
+  --plate-grid: color-mix(in srgb, var(--slate-500) 10%, transparent);
 }
-body { font-family: var(--font-body); }
+body { font-family: var(--font-body); font-kerning: normal; text-rendering: optimizeLegibility; }
 /* Interface headings: Manrope 700, not 800 - confidence without the billboard. */
 :is(h1, h2, h3, h4, .refresh-heading h1, .section-heading h2, .welcome-card-heading h2) {
   font-family: var(--font-display);
@@ -859,7 +860,15 @@ body { font-family: var(--font-body); }
 
 /* ---- Header -------------------------------------------------------------- */
 .topbar, .feed-mode .topbar { background: var(--panel); border-bottom: 1px solid var(--border); }
-.global-brand { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.03em; }
+.global-header .global-brand, .swipe-bar a.swipe-brand {
+  font: 500 clamp(20px, 2vw, 25px)/1 var(--reading-serif); letter-spacing: -.035em;
+}
+.atlas-sign { display: grid; place-items: center; color: var(--link); }
+.atlas-sign svg { width: 26px; height: 26px; stroke-width: 1.5; }
+.topbar::after, .swipe-bar::after {
+  content: ""; position: absolute; inset: auto 0 0; height: 3px;
+  color: var(--atlas-rule); background: var(--atlas-ticks); pointer-events: none;
+}
 .global-brand .brand-mark {
   width: 30px; height: 30px; font-size: 19px;
   border-radius: var(--radius-sm);
@@ -945,7 +954,11 @@ body { font-family: var(--font-body); }
    outrank a bare class. Restate them at the same weight: the diagram mat must
    stay light paper in dark mode, and cards must not inherit the reading panel. */
 :root[data-theme] .refresh-art, :root:not([data-theme]) .refresh-art {
-  background: var(--diagram-mat);
+  margin: 0; border-radius: 3px;
+  background-color: var(--diagram-mat);
+  background-image: linear-gradient(var(--plate-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--plate-grid) 1px, transparent 1px);
+  background-size: 16px 16px;
   border-color: var(--diagram-mat-edge);
 }
 :root[data-theme] .stat, :root[data-theme] .topic-card, :root[data-theme] .library-card:not(.unit-card) {
@@ -979,7 +992,20 @@ body { font-family: var(--font-body); }
 
 /* ---- Feed ---------------------------------------------------------------- */
 .refresh-heading { padding-block: 18px; }
-.refresh-heading h1 { font-size: 26px; letter-spacing: -0.03em; }
+.refresh-heading h1 { font: 500 clamp(24px, 2.5vw, 38px)/1.08 var(--reading-serif); letter-spacing: -.035em; }
+.refresh-stage .refresh-heading { border-bottom: 2px solid var(--text); }
+.refresh-unit .atlas-unit-tab {
+  display: inline-block; font: 600 12px/1.4 var(--font-body);
+  color: var(--text); border-right: 1px solid var(--atlas-rule); padding-right: .65em;
+}
+.refresh-stage .refresh-point .refresh-summary { color: var(--text); max-width: 62ch; line-height: 1.65; }
+.refresh-point h2 { text-wrap: balance; }
+.refresh-art .visual-label, .refresh-art small { background-color: var(--diagram-mat); }
+.refresh-art .visual-label { font-family: var(--reading-serif); font-size: 15px; }
+.refresh-art small { width: fit-content; max-width: 100%; }
+.queue-heading > span:first-child { font: 500 18px/1.2 var(--reading-serif); }
+.queue-list button[aria-current] { box-shadow: inset 3px 0 var(--accent); }
+.queue-number, .desktop-point-position, .stat-value, .library-count { font-variant-numeric: tabular-nums; }
 .refresh-filters { background: var(--secondary); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 4px; }
 .refresh-filters button { border-radius: var(--radius-pill); color: var(--muted); font-weight: 600; }
 .refresh-filters button:hover { color: var(--text); background: var(--panel); }
@@ -991,9 +1017,9 @@ body { font-family: var(--font-body); }
 .visual-label { color: var(--slate-500); font-weight: 600; border-bottom: 1px solid var(--diagram-mat-edge); padding-bottom: 6px; margin-bottom: 8px; }
 .refresh-art small { color: var(--slate-500); }
 .refresh-takeaway {
-  background: var(--selected);
-  border: 1px solid var(--diagram-mat-edge);
-  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 0; border-inline-start: 3px solid var(--accent);
+  border-radius: 0;
   padding: 9px 13px;
   font-size: 14px;
   font-weight: 500;
@@ -1028,13 +1054,27 @@ body { font-family: var(--font-body); }
 .view-heading h1 { font-size: 34px; letter-spacing: -0.03em; }
 .section-heading h2 { font-size: 20px; letter-spacing: -0.02em; }
 
-/* ---- Inner-page band (Revision Village breadcrumb + hero pattern) -------- */
+/* ---- Atlas chapter divider ----------------------------------------------- */
+.atlas-engraving {
+  position: absolute; top: 0; right: 0; height: 100%; width: min(34%, 300px);
+  color: var(--muted); pointer-events: none; opacity: .32;
+}
+.view-heading > :not(.atlas-engraving), .atlas-cover-copy { position: relative; }
+.view-heading-row :is(.btn, .badge) { background: var(--panel); color: var(--text); }
+.view-heading .view-heading-row h1 {
+  font: 500 clamp(32px, 4vw, 50px)/1.08 var(--reading-serif); letter-spacing: -.035em;
+}
+@media (max-width: 640px) {
+  .view-heading .atlas-engraving { width: 96px; height: 64px; }
+}
 .view-heading {
   flex-direction: column;
   align-items: stretch;
   gap: 18px;
-  background: var(--band);
-  border-radius: var(--radius-lg);
+  position: relative; isolation: isolate; overflow: hidden;
+  background: var(--secondary);
+  border-block: 1px solid var(--atlas-rule); border-top: 3px solid var(--text);
+  border-radius: 0;
   padding: 22px 26px;
   margin-bottom: 28px;
 }
@@ -1051,7 +1091,7 @@ body { font-family: var(--font-body); }
   padding: 5px 12px; font-size: 12px; font-weight: 600; text-decoration: none;
 }
 .crumb-pill:hover { color: var(--text); border-color: var(--border-hover); }
-.crumb-home { padding: 5px 8px; }
+.crumb-home { min-height: 44px; padding: 4px 8px; border: 0; border-radius: 3px; }
 .crumb-home .lucide { width: 14px; height: 14px; }
 .crumb-pill.current { background: transparent; border-color: transparent; color: var(--band-ink); padding-left: 4px; }
 .crumb-sep { display: inline-flex; color: var(--slate-400); }
@@ -1069,7 +1109,9 @@ body { font-family: var(--font-body); }
 }
 .stat { padding: 20px; border: 1px solid var(--border); }
 .stats-grid { gap: 14px; }
-.stats-grid .stat { border: 1px solid var(--border); border-radius: var(--radius-md); }
+.stats-grid .stat { border: 1px solid var(--border); border-radius: 3px; box-shadow: none; border-top: 2px solid var(--atlas-rule); }
+.stats-grid .stat-value { font-family: var(--reading-serif); font-weight: 500; }
+.feature-banner .banner-entry h2 { font: 500 clamp(24px, 3vw, 38px)/1.15 var(--reading-serif); }
 
 .stat-symbol { width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--sky-100); color: var(--accent); }
 .stat-value { font-family: var(--font-display); font-weight: 700; font-size: 32px; letter-spacing: -0.02em; color: var(--text); }
@@ -1141,7 +1183,15 @@ body { font-family: var(--font-body); }
 :root[data-theme="dark"] .unit-card.navy { background: #163e75; }
 .library-body h3 { font-size: 21px; line-height: 1.32; letter-spacing: 0; }
 /* White-on-colour blocks keep the sans voice; serif thins over saturated fills. */
-.unit-card .library-body h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; }
+.unit-card .library-body h3 { font: 600 22px/1.22 var(--font-display); letter-spacing: -.025em; text-wrap: balance; }
+.library-card.unit-card { position: relative; border-radius: 3px 12px 3px 3px; }
+.unit-card::after {
+  content: ""; position: absolute; right: 14px; bottom: 0; width: 48px; height: 4px;
+  background: var(--atlas-ticks); color: rgba(255,255,255,.6); pointer-events: none;
+}
+.unit-card .library-body p { font-size: 15px; line-height: 1.55; }
+.unit-card .library-bottom { border-top-style: dashed; }
+.unit-card :focus-visible { outline-color: white; }
 .library-bottom { border-top: 1px solid var(--border); }
 .library-bottom .icon-button { border: 1px solid var(--border); }
 
@@ -1150,7 +1200,13 @@ body { font-family: var(--font-body); }
 .studio-tabs button { border-radius: var(--radius-pill); border: 0; background: transparent; color: var(--muted); font-weight: 600; padding: 9px 14px; font-size: 13px; }
 :root .studio-tabs button.active { background: var(--panel); color: var(--blue-700); box-shadow: var(--shadow); }
 .form-aside { border-left: 1px solid var(--border); }
-.form-aside h3 { font-size: 17px; }
+.form-aside h3 { font: 500 21px/1.25 var(--reading-serif); }
+#cardForm .field :is(input, textarea, select) { border-radius: 3px; font-size: 16px; }
+#cardForm .field { font-size: 14px; font-weight: 600; }
+#cardForm .field ::placeholder, .library-tools input::placeholder { color: var(--muted); opacity: 1; }
+.form-aside p { font-size: 14px; line-height: 1.65; }
+.studio-layout .form-aside { border-left: 3px double var(--atlas-rule); }
+#modal .detail-section p { line-height: 1.68; max-width: 62ch; }
 .related-links button { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel); }
 
 /* ---- Welcome ------------------------------------------------------------- */
@@ -1158,12 +1214,28 @@ body { font-family: var(--font-body); }
   margin: 24px auto 0;
   padding: 72px 24px 56px;
   background-color: var(--navy-900);
-  background-image: radial-gradient(120% 140% at 50% 0%, var(--navy-700) 0%, var(--navy-900) 60%, #021838 100%);
+  background-image: none; border-inline-start: 8px double var(--sky-200);
   border-radius: 24px;
   color: #ffffff;
   overflow: hidden;
 }
-.welcome-hero .eyebrow { color: #bcd9f2; font-weight: 700; }
+.welcome-hero .atlas-engraving { top: -2%; height: 78%; width: 42%; color: var(--sky-200); }
+.welcome-hero .atlas-cover-copy { text-align: left; max-width: 1040px; margin: 0 auto; }
+.atlas-cover-copy .hero-secondary { margin-inline: 0; }
+.welcome-hero .atlas-cover-copy h1 {
+  font: 500 clamp(40px, 5.8vw, 80px)/1.02 var(--reading-serif);
+  letter-spacing: -.045em; margin: 0 0 20px; max-width: 13ch;
+}
+.welcome-hero .atlas-cover-copy p { margin-inline: 0; max-width: 42ch; }
+.welcome-hero .hero-diagrams { position: relative; }
+.welcome-hero .hero-diagram {
+  inset: auto; position: static; width: auto; max-width: none; transform: none;
+  background: var(--white); border-radius: 3px; box-shadow: none;
+}
+@media (max-width: 1099px) {
+  .welcome-hero .hero-diagrams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 0; }
+  .welcome-hero .atlas-engraving { width: 28%; height: 16%; }
+}
 .welcome-hero h1 { color: #ffffff; font-size: 52px; line-height: 1.06; letter-spacing: -0.035em; margin: 18px auto 20px; }
 .welcome-hero p { color: #cfe0f4; font-size: 18px; }
 .welcome-hero .hero-cta { background: var(--accent); border-color: var(--accent); color: #ffffff; }
@@ -1207,6 +1279,27 @@ body { font-family: var(--font-body); }
 .toast { background: var(--navy-900); color: #ffffff; border: 0; border-radius: var(--radius-pill); font-weight: 600; }
 :root[data-theme="dark"] .toast { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
 .app-footer { border-top: 1px solid var(--border); }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes atlas-unfold { from { opacity: .7; translate: 0 7px; } to { opacity: 1; translate: 0 0; } }
+  @keyframes atlas-fade { from { opacity: 0; } to { opacity: 1; } }
+  /* Fade the dialog itself so its fixed header never moves during measurement
+     or while a keyboard user is reading it. Only the compact menu unfolds. */
+  #modal[open] { animation: atlas-fade 160ms var(--atlas-ease); }
+  .feed-action-menu:not([hidden]) { animation: atlas-unfold 180ms var(--atlas-ease); }
+  .refresh-actions .icon-button svg, .library-bottom .icon-button svg { transition: scale 150ms var(--atlas-ease); }
+  :is(.refresh-actions, .library-bottom) .icon-button:active svg { scale: .85; }
+  .queue-list button, .primary-nav a { transition: background-color 140ms, box-shadow 180ms var(--atlas-ease); }
+  :is(.btn, .icon-button, .filter, .studio-tabs button) { transition: background-color 140ms, color 140ms, border-color 140ms, box-shadow 160ms var(--atlas-ease); }
+  :is(.btn, .icon-button):active { box-shadow: none; }
+  .set-progress span { transition: width 260ms var(--atlas-ease); }
+  .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { transition: opacity 180ms; }
+  [data-action="save"][aria-pressed="true"] svg { fill: currentColor; }
+  .studio-tabs button { position: relative; }
+  .studio-tabs button.active::after {
+    content: ""; position: absolute; inset: auto 12px -5px; height: 2px;
+    background: var(--accent); animation: atlas-unfold 160ms var(--atlas-ease);
+  }
+}
 
 /* ---- Swipe chrome -------------------------------------------------------- */
 .swipe-bar { background: var(--panel); border-bottom: 1px solid var(--border); }
