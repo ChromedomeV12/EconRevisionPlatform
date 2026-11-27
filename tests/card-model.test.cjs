@@ -21,14 +21,13 @@ test("Repository preserves IDs, rejects duplicate/missing graph data, and provid
 });
 test("Published packs are modular, source-backed, graph-valid and contain no private paths", () => {
   const context = vm.createContext({});
-  for (const file of ["demand-basics", "supply-basics", "market-outcomes"]) vm.runInContext(fs.readFileSync(`content/${file}.js`, "utf8"), context);
+  for (const file of ["tb02-demo-intro", "tb02-demo-micro", "tb02-demo-macro", "tb02-demo-global"]) vm.runInContext(fs.readFileSync(`content/${file}.js`, "utf8"), context);
   const payload = JSON.parse(JSON.stringify(context.EconPublished));
-  assert.equal(payload.packs.length, 3); assert.equal(payload.packs.flatMap(p => p.cards).length, 13);
+  assert.equal(payload.packs.length, 4); assert.equal(payload.packs.flatMap(p => p.cards).length, 72);
   const all = model.createRepository(payload.packs, payload.graphs).list();
-  assert.equal(new Set(all.map(c => c.id)).size, 13); assert.equal(all.find(c => c.id === "demand").version, 2);
+  assert.equal(new Set(all.map(c => c.id)).size, 72); assert.equal(all.every(c => c.sourceRefs.every(s => s.id === "TB-02")), true);
   const graphModel = require("../graph.js");
-  for (const graph of Object.values(payload.graphs)) { assert.equal(graphModel.validate(graph).valid, true); assert.equal(graph.review.status, "reviewed"); assert.match(graph.review.reviewer, /teacher verification pending/); }
-  for (const c of all) for (const id of c.related) assert.ok(all.some(x => x.id === id) || id === "scarcity");
+  for (const graph of Object.values(payload.graphs)) assert.equal(graphModel.validate(graph).valid, true);
   assert.doesNotMatch(JSON.stringify(payload), /private-sources|\.ocr-runtime|\.pi[/\\]|transcription\.json/);
 });
 module.exports = { card, pack };

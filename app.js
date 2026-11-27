@@ -79,8 +79,20 @@
   function status(card) {
     return refreshState.confusing.includes(card.id) ? "Flagged" : refreshState.revisit.includes(card.id) ? "Revisit" : refreshState.opened[card.id] ? "Opened" : "Unopened";
   }
+  // An engraved graticule for the atlas cover and chapter dividers. Decorative:
+  // its meridians and rhumb lines do not represent measured economic data.
+  function atlasEngraving() {
+    return `<svg class="atlas-engraving" viewBox="0 0 240 130" aria-hidden="true" focusable="false" fill="none" stroke="currentColor">
+      <g transform="translate(151 74) rotate(-23)">
+        <circle r="79"/><circle r="84" stroke-dasharray="1 5"/>
+        <ellipse rx="29" ry="79"/><ellipse rx="58" ry="79"/>
+        <path d="M0-79V79M-79 0H79M-69-39Q0-18 69-39M-69 39Q0 18 69 39M-48-62Q0-45 48-62M-48 62Q0 45 48 62"/>
+      </g><path d="M26 109Q95 27 197 43" stroke-dasharray="4 4"/>
+      <circle cx="41" cy="93" r="3" fill="currentColor"/><circle cx="194" cy="43" r="3" fill="currentColor"/>
+    </svg>`;
+  }
   function heading(title, subtitle, action = "") {
-    return `<div class="view-heading"><div><h1>${title}</h1><p>${subtitle}</p></div>${action}</div>`;
+    return `<div class="view-heading">${atlasEngraving()}<nav class="crumb" aria-label="Breadcrumb"><a class="crumb-pill crumb-home" href="#feed" aria-label="Refresh feed">${icon("house")} Refresh feed</a><span class="crumb-sep" aria-hidden="true">${icon("chevron-right")}</span><span class="crumb-pill current" aria-current="page">${title}</span></nav><div class="view-heading-row"><div><h1>${title}</h1><p>${subtitle}</p></div>${action}</div></div>`;
   }
   function button(
     text,
@@ -155,7 +167,7 @@
       studio: "Card studio",
     };
     $("#viewLabel").textContent = labels[route];
-    document.title = `${labels[route]} / Econ`;
+    document.title = `${labels[route]} / IB Econ Swipe`;
     $("#navDue").textContent = refreshState.revisit.length;
     $("#navDue").title = "Points set aside to revisit";
     if (route === "welcome") renderWelcome();
@@ -174,7 +186,7 @@
     icons();
   }
   function studyIllustration() {
-    return `<div class="study-illustration" aria-hidden="true"><div class="illustration-window"><div class="window-dots"><span></span><span></span><span></span></div><svg viewBox="0 0 180 100" fill="none"><path d="M18 10V84H168" class="illustration-axis"/><path d="M30 20L153 75" class="illustration-demand"/><path d="M30 76L153 18" class="illustration-supply"/><circle cx="91" cy="48" r="6" class="illustration-point"/></svg></div><span class="illustration-note">${icon("lightbulb")} A new perspective</span></div>`;
+    return `<div class="study-illustration" aria-hidden="true"><div class="illustration-window"><div class="window-dots"><span></span><span></span><span></span></div><svg viewBox="0 0 180 100" fill="none"><path d="M18 10V84H168" class="illustration-axis"/><path d="M30 20L153 75" class="illustration-demand"/><path d="M30 76L153 18" class="illustration-supply"/><circle cx="91" cy="48" r="6" class="illustration-point"/></svg></div><span class="illustration-note">Supply and demand</span></div>`;
   }
   function heroDiagrams() {
     return `<div class="hero-diagrams">
@@ -202,7 +214,7 @@
     </div>`;
   }
   function renderWelcome() {
-    $("#main").innerHTML = `<section class="welcome-hero"><span class="eyebrow">YOUR ECONOMICS STUDY SPACE</span><h1>Understand the ideas.<br>See the bigger picture.</h1><p>Make sense of markets, choices and the world around you.<br> One clear explanation at a time.</p><a class="btn primary hero-cta" href="#feed">Start learning ${icon("arrow-right")}</a><a class="hero-secondary" href="#progress">Go to your dashboard</a>${heroDiagrams()}</section><section class="welcome-features" aria-label="Ways to learn"><a class="welcome-card" href="#feed"><div class="welcome-card-heading"><h2>Refresh your thinking</h2>${icon("arrow-up-right")}</div><p>Explore one economic idea, with a clear explanation and a useful visual.</p><div class="feature-preview" aria-hidden="true"><span>YOUR DAILY PERSPECTIVE</span><strong>Why do markets fail?</strong>${studyIllustration()}</div></a><a class="welcome-card" href="#units"><div class="welcome-card-heading"><h2>Connect the concepts</h2>${icon("arrow-up-right")}</div><p>Find your way through microeconomics, macroeconomics and the global economy.</p><div class="feature-preview preview-topics" aria-hidden="true">${units.slice(1).map(u=>`<div>${icon(u.icon)}<span>${u.name}</span>${icon("arrow-right")}</div>`).join("")}</div></a><a class="welcome-card" href="#saved"><div class="welcome-card-heading"><h2>Keep what matters</h2>${icon("arrow-up-right")}</div><p>Save a useful idea. Set a point aside. Return when you want another look.</p><div class="feature-preview preview-saved" aria-hidden="true">${icon("bookmark")}<strong>Your next lightbulb moment.</strong><span>A personal collection of ideas.</span></div></a><span class="feature-arc" aria-hidden="true"></span></section><div class="welcome-footnote">Built for independent IB Economics revision. Sample content, not teacher verified.</div><button class="help-button" data-action="help" aria-label="Open help">${icon("circle-help")}</button>`;
+    $("#main").innerHTML = `<section class="welcome-hero">${atlasEngraving()}<div class="atlas-cover-copy"><h1>IB Econ Swipe</h1><p>One useful IB Economics idea per swipe, with the explanation and diagram in view.</p><a class="btn primary hero-cta" href="#feed">Start learning ${icon("arrow-right")}</a><a class="hero-secondary" href="#progress">Go to your dashboard</a></div>${heroDiagrams()}</section><section class="welcome-features" aria-label="Ways to learn"><a class="welcome-card" href="#feed"><div class="welcome-card-heading"><h2>Refresh your thinking</h2>${icon("arrow-up-right")}</div><p>Explore one economic idea, with a clear explanation and a useful visual.</p><div class="feature-preview" aria-hidden="true"><span>From the feed</span><strong>Why do markets fail?</strong>${studyIllustration()}</div></a><a class="welcome-card" href="#units"><div class="welcome-card-heading"><h2>Connect the concepts</h2>${icon("arrow-up-right")}</div><p>Find your way through microeconomics, macroeconomics and the global economy.</p><div class="feature-preview preview-topics" aria-hidden="true">${units.slice(1).map(u=>`<div>${icon(u.icon)}<span>${u.name}</span>${icon("arrow-right")}</div>`).join("")}</div></a><a class="welcome-card" href="#saved"><div class="welcome-card-heading"><h2>Keep what matters</h2>${icon("arrow-up-right")}</div><p>Save a useful idea. Set a point aside. Return when you want another look.</p><div class="feature-preview preview-saved" aria-hidden="true">${icon("bookmark")}<strong>Your bookmarks</strong><span>A personal collection of ideas.</span></div></a><span class="feature-arc" aria-hidden="true"></span></section><div class="welcome-footnote">Built for independent IB Economics revision. Sample content, not teacher verified.</div><button class="help-button" data-action="help" aria-label="Open help">${icon("circle-help")}</button>`;
   }
   function renderDashboard() {
     const all = cards();
@@ -211,9 +223,9 @@
     const last = opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id]))[0] : null;
     const stat = (label, value, symbol) => `<div class="stat"><div class="stat-top"><span class="stat-symbol">${icon(symbol)}</span>${label}</div><strong class="stat-value">${value}</strong></div>`;
     const continuation = last
-      ? `<span class="eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>${escape(last.topic)}</h2><p>${escape(unitOf(last).name)} · ${escape(refreshCopy(last).summary)}</p><button class="btn primary" data-action="study" data-id="${escape(last.id)}">Continue refreshing ${icon("arrow-right")}</button>`
-      : `<span class="eyebrow">GET STARTED</span><h2>Open your first point</h2><p>Take the feed's order for a first look at the collection, or choose a topic from the library below.</p><button class="btn primary" data-action="start">Start refreshing ${icon("arrow-right")}</button>`;
-    $("#main").innerHTML = `${heading("Dashboard", "What you have opened, saved and set aside.")}
+      ? `<span class="eyebrow">Last entry opened</span><h2>${escape(last.topic)}</h2><p>${escape(unitOf(last).name)} · ${escape(refreshCopy(last).summary)}</p><button class="btn primary" data-action="study" data-id="${escape(last.id)}">Continue refreshing ${icon("arrow-right")}</button>`
+      : `<span class="eyebrow">Reading desk</span><h2>Open your first point</h2><p>Take the feed's order for a first look at the collection, or choose a topic from the library below.</p><button class="btn primary" data-action="start">Start refreshing ${icon("arrow-right")}</button>`;
+    $("#main").innerHTML = `${heading("Dashboard", "Your reading record on this device.")}
       <section class="activity-section"><div class="section-heading"><h2>Browsing activity</h2><span class="subtle">Browsing activity, not recall</span></div><div class="stats-grid" aria-label="Browsing statistics">${stat("Points opened", opened.length + "<small> / " + all.length + "</small>", "eye")}${stat("Opened today", today, "calendar-days")}${stat("Saved points", state.saved.length, "bookmark")}${stat("Set aside to revisit", refreshState.revisit.length, "history")}</div></section>
       <section class="dashboard-feature"><div class="feature-banner"><div class="banner-entry">${continuation}</div>${studyIllustration()}</div></section>
       <section class="learning-topics"><div class="section-heading"><h2>Start learning</h2><a class="text-button" href="#units">View all topics ${icon("arrow-right")}</a></div><div class="learning-context"><p>Explore <a href="#units">IB Economics</a>, one concept at a time.</p><span>Choose a topic to begin</span></div><div class="topic-grid">${units.map(u => {
@@ -223,15 +235,19 @@
       <div class="overview-bottom"><section class="refresh-overview-list"><div class="section-heading"><h2>Recently opened</h2><span class="subtle">Your browsing</span></div>${opened.length ? [...opened].sort((a,b)=>new Date(refreshState.opened[b.id])-new Date(refreshState.opened[a.id])).slice(0,4).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon(unitOf(c).icon)}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">Your opened points will appear here.</p>'}</section>
       <section class="refresh-overview-list"><div class="section-heading"><h2>Set aside</h2><span class="subtle">Chosen by you</span></div>${refreshState.revisit.length ? refreshState.revisit.map(id=>findCard(id)).filter(Boolean).map(c=>`<button class="refresh-topic-row" data-action="study" data-id="${escape(c.id)}"><span class="unit-icon ${unitOf(c).color}">${icon("history")}</span><span><strong>${escape(c.topic)}</strong><small>${escape(unitOf(c).name)}</small></span>${icon("arrow-up-right")}</button>`).join("") : '<p class="subtle">No points set aside to revisit yet.</p>'}</section></div>`;
   }
-  function libraryCard(card) {
+  // The whole library card is a solid colour block, one hue per card in a
+  // fixed cycle, so no two neighbouring cards share a colour and no image
+  // asset is needed. Hues are dark enough for white text at 4.5:1.
+  const artHues = ["gold", "green", "blue", "red", "teal", "orange", "navy"];
+  function libraryCard(card, index) {
     const unit = unitOf(card),
       saved = state.saved.includes(card.id);
-    return `<article class="library-card"><div class="library-art"><img src="${unit.image}" alt="${unit.name} topic photograph" loading="lazy"/>${card.tag ? `<span class="image-tag">${escape(card.tag)}</span>` : ""}</div><div class="library-body"><div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
+    return `<article class="library-card unit-card ${artHues[index % artHues.length]}"><div class="library-body">${card.tag ? `<span class="image-tag">${escape(card.tag)}</span>` : ""}<div><span class="badge ${unit.color}">${escape(unit.name)}</span> <span class="badge">${escape(status(card))}</span></div><h3>${escape(card.topic)}</h3><p>${escape(refreshCopy(card).summary)}</p><div class="library-bottom"><button class="text-button" data-action="study" data-id="${escape(card.id)}">Open point ${icon("arrow-right")}</button><div><button class="icon-button" data-action="detail" data-id="${escape(card.id)}" title="Open notes" aria-label="Notes for ${escape(card.topic)}">${icon("book-open")}</button> <button class="icon-button ${saved ? "selected" : ""}" data-action="save" data-id="${escape(card.id)}" aria-pressed="${saved}" title="${saved ? "Remove bookmark" : "Save card"}" aria-label="${saved ? "Unsave" : "Save"} ${escape(card.topic)}">${icon("bookmark")}</button></div></div></div></article>`;
   }
   function renderLibrary() {
     const savedView = route === "saved";
     $("#main").innerHTML =
-      `${heading(savedView ? "Saved for later" : "Topic library", savedView ? "The ideas you want to come back to." : "A small collection. Plenty to think about.", button("Create a card", "create", "plus", "", ""))}<div class="library-tools"><label class="search-field">${icon("search")}<input type="search" id="topicSearch" aria-label="Search topics" placeholder="Search topics, concepts, questions..." value="${escape(search)}" /></label><span class="library-count" id="resultCount"></span></div><div class="filters" aria-label="Filter by unit">${[{ id: "all", name: "All topics" }, ...units].map((u) => `<button class="filter ${filter === u.id ? "active" : ""}" data-action="filter" data-unit="${u.id}" aria-pressed="${filter === u.id}">${u.name}</button>`).join("")}</div><div id="libraryResults"></div>`;
+      `${heading(savedView ? "Saved for later" : "Topic library", savedView ? "The entries you bookmarked for another reading." : "Find a concept by unit, or search the index.", button("Create a card", "create", "plus", "", ""))}<div class="library-tools"><label class="search-field">${icon("search")}<input type="search" id="topicSearch" aria-label="Search topics" placeholder="Search topics, concepts, questions..." value="${escape(search)}" /></label><span class="library-count" id="resultCount"></span></div><div class="filters" aria-label="Filter by unit">${[{ id: "all", name: "All topics" }, ...units].map((u) => `<button class="filter ${filter === u.id ? "active" : ""}" data-action="filter" data-unit="${u.id}" aria-pressed="${filter === u.id}">${u.name}</button>`).join("")}</div><div id="libraryResults"></div>`;
     renderLibraryResults();
   }
   function renderLibraryResults() {
@@ -246,7 +262,7 @@
     $("#resultCount").textContent =
       `${results.length} ${results.length === 1 ? "card" : "cards"}`;
     $("#libraryResults").innerHTML = results.length
-      ? `<div class="library-grid">${results.map(libraryCard).join("")}</div>`
+      ? `<div class="library-grid">${results.map((card, i) => libraryCard(card, i)).join("")}</div>`
       : empty(
           route === "saved" && !state.saved.length
             ? "Keep a thought for later"
@@ -295,9 +311,9 @@
   function refreshPoint(card, index, count) {
     const copy = refreshCopy(card), unit = unitOf(card);
     return `<article class="refresh-point" data-point="${escape(card.id)}" aria-label="${index + 1} of ${count}: ${escape(card.topic)}">
-      <div class="refresh-body"><div class="refresh-meta"><span class="refresh-unit">${icon(unit.icon)}${escape(unit.name)}</span><span class="desktop-point-position">${String(index + 1).padStart(2,"0")} / ${String(count).padStart(2,"0")}</span></div>
+      <div class="refresh-body"><div class="refresh-meta"><span class="refresh-unit"><span class="atlas-unit-tab">Unit ${escape(unit.number)}</span>${escape(unit.name)}</span><span class="desktop-point-position">${String(index + 1).padStart(2,"0")} / ${String(count).padStart(2,"0")}</span></div>
         <h2>${escape(copy.headline)}</h2><p class="refresh-summary">${escape(copy.summary)}</p>
-        <div class="refresh-art"><div class="visual-label"><span>${escape(card.topic)}</span>${icon("chart-no-axes-combined")}</div><canvas data-concept="${escape(card.id)}" role="img" aria-label="${escape(visualLabel(card))}"></canvas><small>Original illustrative example</small></div>
+        <figure class="refresh-art"><figcaption class="visual-label"><span>${escape(card.topic)}</span>${icon("chart-no-axes-combined")}</figcaption><canvas data-concept="${escape(card.id)}" role="img" aria-label="${escape(visualLabel(card))}"></canvas><small>Original illustrative example</small></figure>
         ${card.takeaway ? `<p class="refresh-takeaway">${icon("lightbulb")}<span>${escape(card.takeaway)}</span></p>` : ""}
       </div><footer class="refresh-actions"><button data-action="detail" data-id="${escape(card.id)}">${icon("book-open")}Closer look${icon("arrow-up-right")}</button><div>
         ${[["save","bookmark","Save point",state.saved.includes(card.id)],["revisit","history","Revisit later",refreshState.revisit.includes(card.id)],["confusing","flag","Flag as confusing",refreshState.confusing.includes(card.id)]].map(([a,s,l,on])=>`<button class="icon-button" data-action="${a}" data-id="${escape(card.id)}" aria-label="${l}" title="${l}" aria-pressed="${on}">${icon(s)}</button>`).join("")}
@@ -310,7 +326,7 @@
     cancelAnimationFrame(geometryFrame);
     geometryCard = null;
     const list=feedSelection();
-    $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><span class="eyebrow">YOUR DAILY PERSPECTIVE</span><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
+    $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
     ${list.length ? `<div class="refresh-workspace"><div class="refresh-canvas"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div><div class="feed-gesture-controls"></div></div>
       <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong class="queue-title"><span class="subject-dot" data-subject="${subjectOf(card)}" title="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}" aria-label="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}"></span>${escape(card.topic)}</strong></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
       <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div class="desktop-feed-navigation"><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
@@ -318,7 +334,7 @@
     list.forEach(card=>renderConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
     const current=list.find(c=>c.id===activeCard()?.id) || list[0];
     session.index=session.ids.indexOf(current.id);
-    feedControls = EconFeedControls.mount($(".feed-gesture-controls"), { navigate, icons, current: () => {
+    feedControls = EconFeedControls.mount($(".feed-gesture-controls"), { icons, current: () => {
       const card = activeCard(); return card && { id: card.id, saved: state.saved.includes(card.id), revisit: refreshState.revisit.includes(card.id), confusing: refreshState.confusing.includes(card.id), filter: feedFilter };
     } });
     feedSizeObserver.disconnect();
@@ -823,7 +839,7 @@
       (s) => s.status === "pending",
     ).length;
     $("#main").innerHTML =
-      `${heading("Card studio", "Keep one useful idea worth coming back to.", '<span class="badge">Local workspace</span>')}<div class="studio-tabs" role="tablist" aria-label="Card studio views">${[
+      `${heading("Card studio", "Draft a card for your personal library.", '<span class="badge">Local workspace</span>')}<div class="studio-tabs" role="tablist" aria-label="Card studio views">${[
         ["create", "Create a card"],
         ["review", `Review queue (${pending})`],
         ["history", "My submissions"],
@@ -866,12 +882,18 @@
       `<div class="detail-heading"><h2>Study settings</h2>${closeButton()}</div><form id="settingsForm"><div class="settings-row"><label for="dailyGoal">Legacy recall goal<small>Retained for your earlier review data; not used by the refresh feed.</small></label><input id="dailyGoal" name="goal" type="number" min="1" max="30" step="1" required value="${state.goal}" /></div><div class="settings-row"><p>Your study data<small>Reviews, saved cards, and personal submissions.</small></p>${button("Export data", "export", "download", 'type="button"', "")}</div><div class="settings-row"><p>Review history<small>Reset scheduling. Keep saved cards and submissions.</small></p><button type="button" class="text-button danger-button" data-action="reset-confirm">Reset reviews</button></div><div class="dialog-actions"><button type="submit" class="btn primary">Save settings ${icon("check")}</button></div></form>`,
     );
   }
+  // Follow a deliberate jump through the index; initial render and resize
+  // re-anchoring stay instant so they never animate or rewrite a visit.
+  function scrollFeedTo(point) {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    point.closest(".refresh-scroll").scrollTo({ top: point.offsetTop, behavior: reducedMotion ? "instant" : "smooth" });
+  }
   function advance(step) {
     if (!session) return;
     const list=feedSelection(), current=list.findIndex(c=>c.id===activeCard()?.id), next=list[current+step];
     if(!next) return;
     const node=document.querySelector(`[data-point="${CSS.escape(next.id)}"]`);
-    $(".refresh-scroll").scrollTo({top:node.offsetTop,behavior:"instant"});
+    scrollFeedTo(node);
   }
   document.addEventListener("click", async (event) => {
     const nav = event.target.closest("[data-nav]");
@@ -943,7 +965,7 @@
     if (action === "feed-filter") { feedFilter=target.dataset.filter; renderFeed(); }
     if (action === "feed-jump") {
       const point = document.querySelector(`[data-point="${CSS.escape(id)}"]`);
-      if (point) $(".refresh-scroll").scrollTo({top:point.offsetTop,behavior:"instant"});
+      if (point) scrollFeedTo(point);
     }
     if (action === "revisit" || action === "confusing") {
       EconRefresh.toggle(refreshState,action,id); saveRefresh();

@@ -52,7 +52,12 @@ const { createServer } = require("../scripts/serve.cjs");
               }
               const body = document.querySelector(".refresh-body");
               if (innerHeight >= 768 && body.scrollHeight > body.clientHeight + 1) errors.push("Desktop refresh point requires internal scrolling");
-            } else if (Math.abs(panel.top) > 1 || Math.abs(panel.bottom - innerHeight) > 1) errors.push("Swipe refresh no longer fills the viewport");
+            } else {
+              // The swipe stage is viewport-locked: it fills everything below the
+              // compact bar and never extends the page.
+              const bar = document.querySelector(".swipe-bar").getBoundingClientRect();
+              if (Math.abs(panel.top - bar.bottom) > 1 || Math.abs(panel.bottom - innerHeight) > 1) errors.push("Swipe refresh no longer fills the viewport below its bar");
+            }
           }
           for (const el of document.querySelectorAll(".view-heading h1, .section-heading h2, .library-body h3, .library-body p, .form-actions, .studio-tabs, .stat-top")) {
             if (!el.getClientRects().length) continue;

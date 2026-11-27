@@ -10,6 +10,29 @@
   // drawer, so its state is ephemeral as well.
   document.documentElement.dataset.menuHidden = narrow.matches ? "false" : String(menuHidden);
   const usesDrawer = () => narrow.matches || location.hash === "#welcome";
+  // The compact feed bar reuses the header's own menu and theme buttons rather
+  // than cloning them, so both presentations keep one control and one state.
+  const swipeBar = () => document.querySelector(".swipe-bar");
+  const swipeFeed = () => document.documentElement.dataset.layout === "swipe" && document.body.classList.contains("feed-mode");
+  const relocated = [];
+  function syncSwipeTools() {
+    const bar = swipeBar();
+    if (!bar) return;
+    if (swipeFeed()) {
+      for (const slot of bar.querySelectorAll("[data-swipe-slot]")) {
+        const action = slot.dataset.swipeSlot === "theme" ? "theme-toggle" : "menu-toggle";
+        const node = document.querySelector(`.header-tools [data-action="${action}"]`);
+        if (!node) continue;
+        relocated.push({ node, parent: node.parentElement, before: node.nextSibling });
+        slot.append(node);
+      }
+      return;
+    }
+    while (relocated.length) {
+      const { node, parent, before } = relocated.pop();
+      parent.insertBefore(node, before?.isConnected ? before : null);
+    }
+  }
   function applyMenu() {
     const menu = document.getElementById("workspaceMenu"), drawer = document.getElementById("mobileMenu");
     const toggle = document.querySelector('[data-action="menu-toggle"]');
@@ -32,9 +55,15 @@
       toggle.setAttribute("aria-label", menuHidden ? "Show menu" : "Hide menu");
     }
     toggle.title = toggle.getAttribute("aria-label");
+    syncSwipeTools();
   }
+  window.addEventListener("econ:geometry-after", syncSwipeTools);
   document.addEventListener("DOMContentLoaded", () => {
     applyMenu();
+    // Route and presentation changes decide where these controls belong. The
+    // observer runs before the next paint, so a same-document route change never
+    // leaves them inside a hidden bar.
+    new MutationObserver(syncSwipeTools).observe(document.body, { attributes: true, attributeFilter: ["class"] });
     const drawer = document.getElementById("mobileMenu");
     drawer.addEventListener("close", applyMenu);
     drawer.addEventListener("click", event => {
@@ -72,13 +101,15 @@
   function apply(theme) {
     document.documentElement.dataset.theme = theme;
     document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue("--ctp-base").trim();
-    const toggle = document.querySelector('[data-action="theme-toggle"]');
-    if (!toggle) return;
+    const toggles = document.querySelectorAll('[data-action="theme-toggle"]');
+    if (!toggles.length) return;
     const dark = theme === "dark";
-    toggle.setAttribute("aria-checked", String(dark));
-    toggle.title = dark ? "Switch to light mode" : "Switch to dark mode";
-    toggle.innerHTML = `<i data-lucide="${dark ? "sun" : "moon"}" aria-hidden="true"></i>`;
-    if (window.lucide) lucide.createIcons({ root: toggle });
+    for (const toggle of toggles) {
+      toggle.setAttribute("aria-checked", String(dark));
+      toggle.title = dark ? "Switch to light mode" : "Switch to dark mode";
+      toggle.innerHTML = `<i data-lucide="${dark ? "sun" : "moon"}" aria-hidden="true"></i>`;
+      if (window.lucide) lucide.createIcons({ root: toggle });
+    }
   }
 
   // Apply before styles load so a saved dark theme does not flash light.

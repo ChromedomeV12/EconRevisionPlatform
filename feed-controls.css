@@ -1,77 +1,104 @@
 /* The desktop presentation comes from PR #9's parent (0397980). */
+:root { --swipe-bar-height: 56px; }
 .refresh-canvas { position: relative; display: flex; min-width: 0; min-height: 0; }
 :root[data-layout="desktop"] .feed-gesture-controls,
-:root[data-layout="swipe"] .refresh-actions,
 :root[data-layout="swipe"] .desktop-feed-navigation,
 :root[data-layout="swipe"] .desktop-point-position { display: none; }
 .refresh-canvas .refresh-scroll { width: 100%; }
+/* The swipe feed carries the header's own menu and theme buttons, so the bar is
+   empty chrome until theme.js relocates them; desktop hides it entirely. */
+.swipe-bar { display: none; }
+.swipe-bar .swipe-slot { display: flex; align-items: center; min-width: 44px; }
+.swipe-bar .swipe-brand { display: flex; align-items: center; gap: 6px; margin-inline: auto; font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--text); }
+.swipe-bar .brand-mark { display: grid; place-items: center; width: 26px; height: 26px; font-family: var(--reading-serif); font-style: italic; font-size: 19px; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); }
+.swipe-bar .brand-period { margin-left: -6px; color: var(--accent); }
+.swipe-bar .icon-button { display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px; border: 0; background: var(--clear); color: var(--text); }
 .feed-gesture-controls { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: clip; }
 .feed-rail { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px; pointer-events: auto; }
 .feed-rail .icon-button { width: 44px; height: 44px; min-height: 44px; border-radius: 50%; color: var(--text); background: color-mix(in srgb, var(--panel) 78%, transparent); border: 1px solid var(--border); box-shadow: 0 3px 12px color-mix(in srgb, var(--text) 7%, transparent); backdrop-filter: blur(20px); }
+/* The compact tool is a single ruled strip, separate from the reading paper. */
+.feed-rail { background: var(--panel); border-radius: 4px; box-shadow: inset 0 0 0 1px var(--border); }
+.feed-rail::before { content: ""; position: absolute; inset: 0 auto 0 1px; width: 3px; pointer-events: none;
+  background: repeating-linear-gradient(0deg, var(--atlas-rule) 0 1px, transparent 1px 8px); }
+.feed-rail .icon-button { position: relative; border-radius: 4px; box-shadow: none; }
+@supports (backdrop-filter: blur(8px)) {
+  @media (prefers-reduced-transparency: no-preference) {
+    .feed-rail { background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(8px); }
+  }
+}
 .feed-rail .icon-button:hover { background: var(--selected); color: var(--accent); }
 .feed-rail .icon-button:disabled { opacity: .3; cursor: default; }
-.feed-rail .icon-button.feed-multi { color: var(--on-accent); background: var(--accent); border-color: var(--accent); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.feed-rail .feed-multi[aria-expanded=true] { outline: 4px solid var(--selected); }
+.feed-rail .icon-button.feed-multi { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.feed-rail .feed-multi[aria-expanded=true] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); outline: 4px solid var(--selected); }
 .feed-rail .lucide { width: 20px; height: 20px; }
 .feed-gesture-controls [hidden] { display: none !important; }
-.feed-dial-status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .feed-action-menu { position: absolute; right: 56px; top: 50%; transform: translateY(-50%); width: 224px; max-width: calc(100% - 62px); max-height: calc(100% - 24px); overflow-y: auto; padding: 6px; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 16px 48px color-mix(in srgb, var(--text) 16%, transparent); backdrop-filter: blur(28px); pointer-events: auto; }
 .feed-action-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; text-align: left; color: var(--text); font-size: 13px; border-radius: 4px; }
 .feed-action-menu button:hover, .feed-action-menu button:focus-visible { background: var(--selected); color: var(--accent); }
 .feed-action-menu button[aria-checked=true] { color: var(--accent); }
 .feed-action-menu button span { flex: 1; }
 .feed-action-menu .lucide { flex-shrink: 0; width: 17px; height: 17px; }
-.feed-action-menu [data-switch-views] { border-top: 1px solid var(--border); border-radius: 0 0 4px 4px; margin-top: 4px; padding-top: 12px; }
-.feed-dial { position: absolute; top: 50%; right: 0; transform: translateY(-50%); width: 260px; height: 320px; pointer-events: auto; }
-.feed-dial-ring { position: absolute; width: 292px; height: 292px; top: 14px; right: -146px; border-radius: 50%; border: 1px solid var(--border); background: color-mix(in srgb, var(--panel) 92%, transparent); box-shadow: -12px 0 48px color-mix(in srgb, var(--text) 12%, transparent); backdrop-filter: blur(32px); }
-.feed-dial button { position: absolute; transform: translate(-100%, -50%); display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 110px; height: 44px; color: var(--muted); font-size: 12px; transition: top 120ms ease-out, left 120ms ease-out, color 120ms ease-out; }
-.feed-dial button .lucide { width: 38px; height: 38px; flex-shrink: 0; padding: 9px; background: var(--panel); border: 1px solid var(--border); border-radius: 50%; }
-.feed-dial button span { background: var(--panel); padding: 4px 6px; border-radius: 4px; }
-.feed-dial button.is-selected { color: var(--accent); font-weight: 700; }
-.feed-dial button.is-selected .lucide { background: var(--accent); color: var(--on-accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--selected); }
-.feed-dial button:focus-visible { outline: none; }
-.feed-dial button:focus-visible .lucide { outline: 3px solid var(--accent); outline-offset: 4px; }
-.is-dial .feed-rail > :not(.feed-multi) { visibility: hidden; }
-.is-dial .feed-rail { z-index: 2; }
 /* The refresh surface has its own navigation; workspace chrome lives in other views. */
-:root[data-layout="swipe"] body.feed-mode { padding: 0; }
+:root[data-layout="swipe"] body.feed-mode { display: flex; flex-direction: column; min-height: 100dvh; padding: 0; }
 :root[data-layout="swipe"] body.feed-mode :is(.sidebar, .topbar, .refresh-heading, .refresh-queue) { display: none; }
-:root[data-layout="swipe"] body.feed-mode .shell { margin: 0; padding: 0; border: 0; border-radius: 0; min-height: 100dvh; height: 100dvh; }
-:root[data-layout="swipe"] body.feed-mode main { margin: 0 auto; padding: 0 28px; max-width: 620px; height: 100dvh; min-height: 0; }
+/* Compact bar: the only workspace chrome in the swipe feed, and the visible way
+   back to the library, dashboard and study settings. */
+:root[data-layout="swipe"] body.feed-mode .swipe-bar {
+  position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  min-height: calc(var(--swipe-bar-height) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 12px 0;
+  background: var(--secondary); border-bottom: 1px solid var(--border);
+}
+/* The stage stays viewport-locked: the bar owns real height and the shell is
+   sized against the remaining viewport, not against its content. */
+:root[data-layout="swipe"] body.feed-mode .workspace-layout { flex: 1 1 auto; min-height: 0; }
+:root[data-layout="swipe"] body.feed-mode .shell { margin: 0; padding: 0; border: 0; border-radius: 0; min-height: 0; height: calc(100dvh - var(--swipe-bar-height) - env(safe-area-inset-top, 0px)); }
+:root[data-layout="swipe"] body.feed-mode main { margin: 0 auto; padding: 0 24px; max-width: 620px; height: 100%; min-height: 0; }
 :root[data-layout="swipe"] body.feed-mode .refresh-workspace { display: flex; gap: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-canvas { width: 100%; padding-right: 66px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-canvas { width: 100%; padding-right: 64px; }
+/* Actions stay visible: the rail and its menu are shortcuts, not the only route. */
+:root[data-layout="swipe"] body.feed-mode .refresh-actions { padding: 8px 0; gap: 8px; border-top: 1px solid var(--border); }
+:root[data-layout="swipe"] body.feed-mode .refresh-actions > button { min-height: 44px; padding: 0 14px; font-size: 14px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-actions > div { gap: 6px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-actions .icon-button { width: 44px; height: 44px; min-width: 44px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); }
+:root[data-layout="swipe"] body.feed-mode .refresh-actions .icon-button[aria-pressed=true] { background: var(--selected); color: var(--accent); border-color: var(--accent); }
 :root[data-layout="swipe"] body.feed-mode .refresh-scroll { border: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 24px; padding-bottom: 12px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 16px; padding-bottom: 8px; }
 :root[data-layout="swipe"] body.feed-mode .refresh-body { display: flex; flex-direction: column; justify-content: safe center; padding: 4px 2px; }
-:root[data-layout="swipe"] body.feed-mode .refresh-meta { flex-shrink: 0; margin-bottom: 20px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-meta { flex-shrink: 0; margin-bottom: 14px; }
 :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 32px; line-height: 1.2; flex-shrink: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 16px; line-height: 1.65; margin-block: 18px 24px; flex-shrink: 0; }
+:root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 16px; line-height: 1.65; margin-block: 14px 16px; flex-shrink: 0; }
 :root[data-layout="swipe"] body.feed-mode .refresh-art { flex-shrink: 0; }
-:root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(180px, 28dvh, 280px); }
-:root[data-layout="swipe"] body.feed-mode .refresh-takeaway { flex-shrink: 0; margin-block: 20px 8px; font-size: 13px; }
-:root[data-layout="swipe"] body.feed-mode .refresh-controls { width: 100%; max-width: none; padding: 8px 66px max(12px, env(safe-area-inset-bottom)); }
+:root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(150px, 24dvh, 240px); }
+:root[data-layout="swipe"] body.feed-mode .refresh-takeaway { flex-shrink: 0; margin-block: 14px 6px; font-size: 13px; }
+:root[data-layout="swipe"] body.feed-mode .refresh-controls { width: 100%; max-width: none; padding: 8px 64px max(12px, env(safe-area-inset-bottom)); }
 :root[data-layout="swipe"] body.feed-mode .refresh-controls .set-position { font-size: 11px; }
 @media (max-width: 600px) {
-  :root[data-layout="swipe"] body.feed-mode main { padding-inline: 20px 12px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-canvas { padding-right: 54px; }
+  :root[data-layout="swipe"] body.feed-mode main { padding-inline: 16px 8px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-canvas { padding-right: 52px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-controls { padding-right: 52px; }
   .feed-rail { right: 0; gap: 14px; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-point { padding-inline: 0; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-actions { padding: 8px 0; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-actions > button { font-size: 13px; padding: 0 10px; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-actions .icon-button { width: 44px; height: 44px; min-width: 44px; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-meta { gap: 4px; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-meta .refresh-unit { gap: 4px; }
-  :root[data-layout="swipe"] .refresh-canvas .refresh-meta span { font-size: 10px; }
+  :root[data-layout="swipe"] .refresh-canvas .refresh-meta span { font-size: 12px; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-body { padding: 0; }
   :root[data-layout="swipe"] .refresh-canvas .refresh-art { padding-inline: 10px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 28px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 15px; line-height: 1.6; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 24px; line-height: 1.22; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 14.5px; line-height: 1.55; }
   .feed-action-menu { right: 50px; }
 }
-@media (max-height: 720px) {
-  :root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 16px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-meta { margin-bottom: 12px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 24px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 14px; line-height: 1.5; margin-block: 12px 16px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 160px; }
-  :root[data-layout="swipe"] body.feed-mode .refresh-takeaway { margin-top: 12px; font-size: 12px; }
+@media (max-height: 760px) {
+  :root[data-layout="swipe"] body.feed-mode .refresh-point { padding-top: 14px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-meta { margin-bottom: 10px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-point h2 { font-size: 22px; line-height: 1.18; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-summary { font-size: 13.5px; line-height: 1.45; margin-block: 9px 10px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-art { padding: 6px 10px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 140px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-art small { margin-top: 2px; }
+  :root[data-layout="swipe"] body.feed-mode .refresh-takeaway { margin-block: 10px 4px; padding: 6px 10px; font-size: 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .feed-dial button { transition: none; } }
-@media (prefers-reduced-transparency: reduce) { .feed-rail .icon-button, .feed-action-menu, .feed-dial-ring { background: var(--panel); backdrop-filter: none; } .feed-rail .icon-button.feed-multi { background: var(--accent); } }
+@media (prefers-reduced-transparency: reduce) { .feed-rail .icon-button, .feed-action-menu { background: var(--panel); backdrop-filter: none; } .feed-rail .feed-multi[aria-expanded=true] { background: var(--accent); } }

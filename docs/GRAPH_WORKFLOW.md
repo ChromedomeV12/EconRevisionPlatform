@@ -6,7 +6,7 @@ Use **D3 7.9.0 and browser-native SVG**, with a small declarative economics laye
 
 D3's [linear scales](https://d3js.org/d3-scale/linear) preserve proportional differences and map domain coordinates to SVG positions. [JSXGraph](https://jsxgraph.org/docs/) is a viable alternative for interactive geometry and function plotting, but those capabilities are not needed for the current fixed revision diagrams. This choice does not make D3 an economics reasoning engine: we validate relationships ourselves and still require visual and content review.
 
-`graph.css` maps semantic diagram roles to colors, separately from geometry. Change `--graph-demand`, `--graph-supply`, `--graph-cost`, `--graph-guide`, `--graph-arrow`, `--graph-welfare`, `--graph-ink` and `--graph-paper` there. Latte and dark-mode diagram accents remain readable on light paper. Theme changes apply directly through CSS; diagrams do not need rebuilding. Typography uses the existing DM Sans font when available.
+`graph.css` maps semantic diagram roles to colors, separately from geometry. Change `--graph-demand`, `--graph-supply`, `--graph-cost`, `--graph-guide`, `--graph-arrow`, `--graph-welfare`, `--graph-ink` and `--graph-paper` there. Diagram accents stay readable on light paper in both themes. Theme changes apply directly through CSS; diagrams do not need rebuilding. Typography uses the existing DM Sans font when available.
 
 ## Agent Contract
 

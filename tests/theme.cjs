@@ -99,7 +99,9 @@ const path = require("node:path");
         for (const view of ["welcome", "feed", "progress", "units", "saved", "studio"]) {
           await page.goto(`${base}/#${view}`);
           await page.locator(view === "feed" ? ".refresh-point h2" : "#main h1").first().waitFor({ state: "visible" });
-          assert.equal(await toggle.isVisible(), view !== "feed" || width >= 1000);
+          assert.equal(await toggle.isVisible(), true, `${theme}/${view}/${width}: the theme control stays reachable`);
+          // In the swipe feed the control moves into the compact bar, not out of reach.
+          assert.equal(await page.locator('.swipe-bar [data-action="theme-toggle"]').count(), view === 'feed' && width < 1000 ? 1 : 0);
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${theme}/${view}: overflow at ${width}`);
           await checkContrast(view);
           if (view === "feed") {

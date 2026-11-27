@@ -1,4 +1,4 @@
-# Econ / Quick Refresh
+# IB Econ Swipe
 
 A static economics refresher: one knowledge point per swipe, with the explanation immediately visible. Optional deeper notes, saved/revisit lists, a secondary dashboard, a searchable topic library, and personal card review support the feed.
 
@@ -21,8 +21,8 @@ Use this checkout for the demo-ready frontend and UI/style changes. Maintainers 
 - `index.html`: refresh-first application shell.
 - `TikTok Econ.html`: compatibility redirect for old links.
 - `styles.css`: base responsive interface and feed layout, overridden by the appearance layers below.
-- `acrylic.css`: frosted surfaces, rounded controls, serif knowledge headlines and responsive acrylic styling.
-- `theme.js`, `theme.css`: light/dark toolbar switch, persistent appearance preference and Catppuccin Latte light and Mocha dark color overrides. Uses the system preference until a mode is selected; keeps diagrams on light paper.
+- `acrylic.css`: layout layer for the queue, workspace grid and remaining rounded-control structure. It is structural, not decorative: component skins come from the theme layer.
+- `theme.js`, `theme.css`: light/dark toolbar switch, persistent appearance preference and the editorial visual system: navy ink, serif reading/display type, sans-serif controls, ruled diagram plates and restrained drafting textures. The legacy token names survive only as compatibility aliases. Uses the system preference until a mode is selected; keeps diagrams on light paper.
 - `content.js`: legacy sample cards and unit metadata.
 - `card-model.js`, `content-bootstrap.js`, `content/*.js`: versioned card contract, replaceable backend-compatible repository adapter and 13 selected editorial knowledge points with 11 native graph assets.
 - `app.js`: scroll-snap feed, optional introduction, browsing dashboard, bookmarks and card studio.
@@ -60,7 +60,7 @@ Jev integration boundaries remain for future advisory assessment and submission 
 
 Run `node --test tests/learning.test.cjs tests/refresh.test.cjs` for legacy scheduling, service and browsing-state tests. `node tests/browser.cjs` requires Playwright; it verifies feed navigation (including emulated touch), unchanged recall history, saved/revisit preferences, personal submissions, responsive layouts and private-source isolation. Set `PLAYWRIGHT_PATH` to an existing package path and optionally `BROWSER_CHANNEL=msedge` to use installed Edge. Screenshots are written to the ignored `test-output/` folder.
 
-Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, composited text contrast, interaction states and reduced transparency, and captures both themes across all views. The approved PR #5 design combines bright white light reading surfaces with Latte text and accents, and layered Mocha dark surfaces. Sapphire details complement Mauve actions and Blue focus indicators. Dialogs have a fixed serif-title header and separately scrolling content; `node tests/navigation.cjs` checks their behavior and the persistent menu toggle. Diagrams retain light paper in both modes. Palette references: [Catppuccin palette](https://catppuccin.com/palette/) and [style guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md).
+Run `node tests/theme.cjs` with the same Playwright configuration to check the keyboard-accessible switch, saved preference, cross-tab synchronization, OS appearance changes and storage fallback. It also verifies unchanged feed typography and geometry, composited text contrast, interaction states and reduced transparency, and captures both themes across all views. The visual system pairs Georgia reading/display type with Manrope navigation and DM Sans body copy. Graph-paper texture is confined to diagram plates, ruler ticks belong to tool chrome, and decorative engravings are hidden from assistive technology. Action-triggered motion and smooth feed jumps respect reduced motion; dialogs keep a fixed header and separately scrolling content. `node tests/navigation.cjs` checks dialog behavior and the persistent menu toggle. Diagrams retain light paper in both themes. The palette, type, texture and motion contracts are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#visual-system).
 
 `node --test tests/diagram-data.test.cjs` checks image dimensions, attribution and figure/copy consistency. `node tests/diagrams.cjs` checks image loading, uncropped contain fitting, accessible descriptions, enlargement and failure fallbacks across eleven viewport sizes in both themes, including both sides of the navigation and queue layout breakpoints. It and `node tests/browser.cjs` assert that feed content fits without inner scrolling or covered actions. GitHub's required `verify` job runs all `tests/*.test.cjs` unit tests, syntax checks and public-file boundary checks.
 
