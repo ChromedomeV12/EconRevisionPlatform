@@ -327,9 +327,9 @@
     geometryCard = null;
     const list=feedSelection();
     $("#main").innerHTML=`<section class="refresh-stage"><header class="refresh-heading"><div><h1>Economics, refreshed.</h1></div><div class="refresh-filters" role="group" aria-label="Feed selection">${[["all","All"],["saved","Saved"],["revisit","Revisit"]].map(([v,l])=>`<button data-action="feed-filter" data-filter="${v}" aria-pressed="${feedFilter===v}">${l}</button>`).join("")}</div></header>
-    ${list.length ? `<div class="refresh-workspace"><div class="refresh-canvas"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div><div class="feed-gesture-controls"></div></div>
+    ${list.length ? `<div class="refresh-workspace"><div class="refresh-canvas"><div class="refresh-scroll" tabindex="0" aria-label="Knowledge refresh feed">${list.map((card,i)=>refreshPoint(card,i,list.length)).join("")}</div></div>
       <aside class="refresh-queue" aria-label="Points in this set"><div class="queue-heading"><span>In this set</span><span>${list.length} points</span></div><div class="queue-list">${list.map((card,i)=>`<button data-action="feed-jump" data-feed-jump data-id="${escape(card.id)}" title="Open ${escape(card.topic)}"><span class="queue-number">${String(i+1).padStart(2,"0")}</span><span><strong class="queue-title"><span class="subject-dot" data-subject="${subjectOf(card)}" title="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}" aria-label="${escape(card.visual === "development" ? "Economic development" : unitOf(card).name)}"></span>${escape(card.topic)}</strong></span>${icon("arrow-up-right")}</button>`).join("")}</div><a href="#units" class="queue-library">${icon("library")}Explore the library${icon("arrow-right")}</a></aside></div>
-      <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div class="desktop-feed-navigation"><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
+      <footer class="refresh-controls"><div class="set-position"><span id="refreshPosition" aria-live="polite"></span><div class="set-progress" role="progressbar" aria-label="Position in this set" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="1"><span></span></div></div><div class="feed-gesture-controls"></div><div class="desktop-feed-navigation"><button class="icon-button" data-action="previous" aria-label="Previous point" title="Previous point">${icon("arrow-up")}</button><button class="icon-button" data-action="next" aria-label="Next point" title="Next point">${icon("arrow-down")}</button></div></footer>` : `<div class="refresh-empty">${empty(feedFilter==="saved" ? "No saved points yet" : "Nothing set aside", "", button("Back to all points","feed-filter","arrow-right",'data-filter="all"',"lime"),"bookmark")}</div>`}</section>`;
     icons(); if(!list.length) return;
     list.forEach(card=>renderConcept(card, document.querySelector(`[data-concept="${CSS.escape(card.id)}"]`)));
     const current=list.find(c=>c.id===activeCard()?.id) || list[0];
@@ -388,9 +388,12 @@
   function renderConcept(card, canvas) {
     drawConcept(card, canvas);
     const spec = card.graphSpec;
-    // Only curated built-in cards may opt in after human review; local submissions cannot.
-    if (canvas && EconData.cards.includes(card) && spec?.review?.status === "reviewed" &&
-        typeof spec.review.reviewer === "string" && spec.review.reviewer.trim() &&
+    // Reviewed graphs always need a reviewer. The demo may explicitly opt into
+    // draft reconstructions, but they remain labelled as unreviewed.
+    const reviewedGraph = spec?.review?.status === "reviewed" &&
+      typeof spec.review.reviewer === "string" && spec.review.reviewer.trim();
+    const draftDemoGraph = spec?.review?.status === "draft" && globalThis.EconDemoDraftGraphs === true;
+    if (canvas && EconData.cards.includes(card) && (reviewedGraph || draftDemoGraph) &&
         typeof EconGraphs !== "undefined" && EconGraphs.validate(spec).valid) {
       const graph = EconGraphs.render(spec, document);
       graph.dataset.graph = card.id;
@@ -398,7 +401,7 @@
       canvas.style.display = "none";
       canvas.after(graph);
       const caption = canvas.parentElement.querySelector("small");
-      if (caption) caption.textContent = "Reconstructed schematic · Editorial draft";
+      if (caption) caption.textContent = spec.review.status === "draft" ? "Draft reconstruction · Not teacher reviewed" : "Reconstructed schematic · Editorial draft";
       const zoom = document.createElement("button");
       zoom.className = "icon-button graph-zoom";
       zoom.type = "button";
@@ -406,7 +409,7 @@
       zoom.setAttribute("aria-label", `Enlarge ${card.topic} diagram`);
       zoom.innerHTML = icon("zoom-in");
       zoom.addEventListener("click", () => {
-        openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><div class="native-diagram-detail"></div><p>${escape(card.source)}. Editorial draft; not teacher verified.</p>`);
+        openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><div class="native-diagram-detail"></div><p>${escape(card.source)}. ${spec.review.status === "draft" ? "Draft graph; not teacher reviewed." : "Editorial draft; not teacher verified."}</p>`);
         $(".native-diagram-detail").append(EconGraphs.render(spec, document));
       });
       canvas.parentElement.append(zoom);

@@ -1347,3 +1347,28 @@ body { font-family: var(--font-body); font-kerning: normal; text-rendering: opti
 @media (prefers-reduced-transparency: reduce) {
   .feed-rail .icon-button, .feed-action-menu, .swipe-bar .icon-button { background: var(--panel); backdrop-filter: none; }
 }
+
+/* ---- Diagrams large enough to read without opening zoom ------------------ */
+:root[data-layout="desktop"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) {
+  height: clamp(180px, 26dvh, 250px);
+}
+:root[data-layout="desktop"] body.feed-mode .refresh-stage { padding-block: 6px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-heading { padding-bottom: 6px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-heading h1 { font-size: 32px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-point { padding-top: 8px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-meta { margin-bottom: 8px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-point h2 { line-height: 1.18; }
+:root[data-layout="desktop"] body.feed-mode .refresh-summary { margin-block: 8px 10px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-art { padding: 8px 12px 6px; }
+:root[data-layout="desktop"] body.feed-mode .visual-label { padding-bottom: 4px; margin-bottom: 6px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-art small { margin-top: 2px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-takeaway { margin-block: 8px 4px; padding-block: 6px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-actions { padding-block: 6px; }
+:root[data-layout="desktop"] body.feed-mode .refresh-controls { padding-top: 4px; }
+:root[data-layout="desktop"] body.feed-mode .workspace-layout { padding-bottom: 6px; }
+@media (max-height: 820px) and (min-width: 651px) {
+  :root[data-layout="desktop"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 190px; }
+}
+@media (max-height: 800px) and (min-width: 651px) {
+  :root[data-layout="desktop"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 180px; }
+}

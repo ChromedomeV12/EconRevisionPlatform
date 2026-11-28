@@ -51,6 +51,14 @@ const { createServer } = require("../scripts/serve.cjs");
                 if (element?.getClientRects().length && Math.abs(element.getBoundingClientRect()[side] - edge) > 1) errors.push(`Refresh panel edge misaligned: ${selector}`);
               }
               const body = document.querySelector(".refresh-body");
+              const graph = [...document.querySelectorAll('.refresh-point .refresh-art :is(canvas, img[data-diagram], svg[data-graph])')].find(el => el.getClientRects().length);
+              if (graph) {
+                const layout = document.documentElement.dataset.layout;
+                const expected = layout === "swipe"
+                  ? (innerHeight <= 760 ? 180 : Math.min(280, Math.max(180, innerHeight * .28)))
+                  : (innerHeight <= 800 ? 180 : innerHeight <= 820 ? 190 : Math.min(250, Math.max(180, innerHeight * .26)));
+                if (Math.abs(graph.getBoundingClientRect().height - expected) > 1) errors.push(`Diagram is too small to read without zoom: expected ${expected}px`);
+              }
               if (innerHeight >= 768 && body.scrollHeight > body.clientHeight + 1) errors.push("Desktop refresh point requires internal scrolling");
             } else {
               // The swipe stage is viewport-locked: it fills everything below the
