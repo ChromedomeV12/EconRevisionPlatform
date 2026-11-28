@@ -1010,6 +1010,9 @@ body { font-family: var(--font-body); font-kerning: normal; text-rendering: opti
 .refresh-filters button { border-radius: var(--radius-pill); color: var(--muted); font-weight: 600; }
 .refresh-filters button:hover { color: var(--text); background: var(--panel); }
 .refresh-point h2 { font-size: 34px; line-height: 1.22; letter-spacing: 0; color: var(--text); }
+/* Cards without geometry use the reclaimed visual space for larger reading text. */
+.refresh-point.no-visual h2 { font-size: clamp(38px, 3.2vw, 46px); line-height: 1.12; }
+.refresh-point.no-visual .refresh-summary { font-size: 19px; line-height: 1.68; max-width: 64ch; }
 .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: clamp(132px, 18dvh, 190px); background: transparent; }
 .refresh-art :is(canvas, svg[data-graph]) { border: 0; }
 .refresh-summary { font-size: 16px; line-height: 1.6; }
@@ -1371,4 +1374,32 @@ body { font-family: var(--font-body); font-kerning: normal; text-rendering: opti
 }
 @media (max-height: 800px) and (min-width: 651px) {
   :root[data-layout="desktop"] body.feed-mode .refresh-art :is(canvas, img[data-diagram], svg[data-graph]) { height: 180px; }
+}
+
+
+@media (max-width: 650px) {
+  .refresh-point.no-visual h2 { font-size: 30px; line-height: 1.14; }
+  .refresh-point.no-visual .refresh-summary { font-size: 17px; line-height: 1.62; }
+}
+@media (max-width: 430px) {
+  .refresh-point.no-visual h2 { font-size: 27px; }
+  .refresh-point.no-visual .refresh-summary { font-size: 16px; }
+}
+
+:root[data-layout] body.feed-mode .refresh-point.no-visual h2 {
+  font-size: clamp(38px, 3.2vw, 46px);
+  line-height: 1.12;
+}
+:root[data-layout] body.feed-mode .refresh-point.no-visual .refresh-summary {
+  font-size: 19px;
+  line-height: 1.68;
+  max-width: 64ch;
+}
+@media (max-width: 650px) {
+  :root[data-layout] body.feed-mode .refresh-point.no-visual h2 { font-size: 30px; line-height: 1.14; }
+  :root[data-layout] body.feed-mode .refresh-point.no-visual .refresh-summary { font-size: 17px; line-height: 1.62; }
+}
+@media (max-width: 430px) {
+  :root[data-layout] body.feed-mode .refresh-point.no-visual h2 { font-size: 27px; }
+  :root[data-layout] body.feed-mode .refresh-point.no-visual .refresh-summary { font-size: 16px; }
 }
