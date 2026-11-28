@@ -1,3 +1,4 @@
+globalThis.EconDemoDraftGraphs = true;
 /* TB-02 demo pack. Drafts awaiting human review. */
 (() => {
   const data = {
@@ -7,51 +8,52 @@
     "title": "TB-02 demo: Introduction",
     "cards": [
       {
-        "id": "tb-02-p012-economics-as-social-science",
+        "id": "tb-02-p017-opportunity-cost-on-the-ppc",
         "revision": 1,
         "unit": "intro",
-        "topic": "Nature of the subject",
-        "title": "Economics as a social science",
-        "headline": "Economics studies how scarce resources are allocated to unlimited wants.",
-        "summary": "Economics looks at how resources get allocated to satisfy the unlimited needs and wants of individuals, firms and governments. It counts as a social science because it studies the behaviour and interdependence of people and institutions, using models and theories to explain the choices of consumers, producers and governments.",
-        "notes": "The allocation problem is the centre of the definition: wants are treated as unlimited, resources as limited, so choosing is unavoidable. Being a social science shapes the method. Economists cannot isolate people in a laboratory, so they build models and theories of decision makers and check them against observed behaviour. That makes assumptions and ceteris paribus conditions part of the explanation, not an optional extra.",
-        "takeaway": "Scarcity forces choice, and the choosing is studied with models rather than experiments.",
-        "caution": "A model's assumptions are not a claim that people literally calculate this way; they are a simplification whose usefulness depends on the question.",
+        "topic": "Opportunity cost and curve shape",
+        "title": "Slope as opportunity cost",
+        "headline": "The gradient of the PPC measures the opportunity cost between the two products.",
+        "summary": "The gradient of the curve shows the opportunity cost between the two products in the model. The PPC is typically drawn concave to the origin because of increasing opportunity costs: as the economy takes more of one product, the amount of the other product given up rises.",
+        "notes": "The concavity is therefore a statement about cost, not decoration. A curve bending away from the origin means each further transfer of resources costs more of the other product, whereas a straight line would show a constant opportunity cost for each unit transferred. Read the slope together with the axes, since the gradient is measured in units of the vertical product per unit of the horizontal product.",
+        "takeaway": "Concave to the origin means rising opportunity cost; a straight line would mean constant cost.",
+        "caution": "The gradient is not a price and not a money value; it is a ratio of two physical quantities given up.",
         "related": [
-          "tb-02-p012-three-levels-of-analysis"
+          "tb-02-p017-ppc-model",
+          "tb-02-p015-opportunity-cost"
         ],
         "sources": [
           {
             "id": "TB-02",
-            "page": 12
+            "page": 17
           }
         ],
         "level": "common-core-provisional",
-        "graphId": null
+        "graphId": "ocr-tb-02-p17-2da169ca225a"
       },
       {
-        "id": "tb-02-p012-real-world-issues",
+        "id": "tb-02-p017-ppc-model",
         "revision": 1,
         "unit": "intro",
-        "topic": "Real-world application",
-        "title": "Six issue questions",
-        "headline": "Six real-world issue questions frame how models get applied.",
-        "summary": "The course applies models and theories through six issues: how consumers and producers make choices to meet their objectives; when markets fail important objectives and whether government intervention helps; why economic activity varies over time; how governments manage the economy and how effective policy is; who wins and loses from integrating the world's economies; and why development is uneven.",
-        "notes": "The six questions run from individual choice to market failure, through fluctuations and policy, and out to trade integration and uneven development, so each one points at a different part of the subject. A workable study habit is to attach a specific model, say a market diagram or an aggregate model, and some empirical evidence to each question instead of treating the list as topics to memorise.",
-        "takeaway": "Use an issue question to pick the model and the evidence for an answer.",
-        "caution": "The page attributes this framing to the IB Economics Guide, first assessment 2022, which is not in the local collection; check the applicable official guide before relying on the exact wording.",
+        "topic": "Production possibility curve",
+        "title": "Reading the PPC",
+        "headline": "The PPC shows the maximum combinations an economy can produce efficiently.",
+        "summary": "The production possibility curve diagrams the maximum combination of two products an economy can produce at a point in time when resources are used efficiently, so it pictures productive capacity. A point inside the curve means resources are not being used efficiently, a point outside is not attainable with current resources and technology, and the downward slope means gaining one product requires forgoing some of the other.",
+        "notes": "Reading a point on the curve gives a combination, not a total: the book's Figure 1.4 shows the economy at point X, producing the quantity marked A of producer goods and the quantity marked B of consumer goods. The three positions do different jobs, which is why they are easy to mix up. On the curve is efficient use of the available capacity, inside is underuse such as unemployment of resources, and beyond is unattainable until capacity or technology changes.",
+        "takeaway": "On the curve is attainable and efficient, inside is attainable but wasteful, beyond is unattainable.",
+        "caution": "A point on the curve does not say which combination is best for society; it only says the combination is productively efficient.",
         "related": [
-          "tb-02-p012-three-levels-of-analysis",
-          "tb-02-p012-economics-as-social-science"
+          "tb-02-p017-ppc-assumptions",
+          "tb-02-p017-opportunity-cost-on-the-ppc"
         ],
         "sources": [
           {
             "id": "TB-02",
-            "page": 12
+            "page": 17
           }
         ],
         "level": "common-core-provisional",
-        "graphId": null
+        "graphId": "ocr-tb-02-p17-2da169ca225a"
       },
       {
         "id": "tb-02-p022-logic-and-rational-choice",
@@ -101,7 +103,187 @@
       }
     ]
   },
-  "graphs": {}
+  "graphs": {
+    "ocr-tb-02-p17-2da169ca225a": {
+      "version": 1,
+      "id": "ocr-tb-02-p17-2da169ca225a",
+      "title": "Reconstruction fig-1-4-v2",
+      "description": "Production possibility curve bowing out from the producer-goods axis to the consumer-goods axis, with point X on the curve and dashed guides to 'Producer A goods' on the vertical axis and B on the horizontal axis.",
+      "coordinateMode": "schematic",
+      "axes": {
+        "x": {
+          "label": "Consumer good",
+          "min": 0,
+          "max": 100
+        },
+        "y": {
+          "label": "Producer A goods",
+          "min": 0,
+          "max": 100
+        },
+        "aspectRatio": 1.5
+      },
+      "curves": [
+        {
+          "id": "ppc",
+          "label": "PPC",
+          "role": "ppc",
+          "shape": "piecewise",
+          "labelPosition": [
+            92,
+            30
+          ],
+          "points": [
+            [
+              0,
+              89.1
+            ],
+            [
+              5,
+              88.8
+            ],
+            [
+              9.6,
+              88.3
+            ],
+            [
+              14.2,
+              87.5
+            ],
+            [
+              18.8,
+              86.4
+            ],
+            [
+              23.4,
+              85.1
+            ],
+            [
+              28.1,
+              83.4
+            ],
+            [
+              32.7,
+              81.4
+            ],
+            [
+              37.3,
+              78.8
+            ],
+            [
+              41.9,
+              76
+            ],
+            [
+              46.5,
+              72.8
+            ],
+            [
+              51.1,
+              69.2
+            ],
+            [
+              55.8,
+              65
+            ],
+            [
+              60.4,
+              60.2
+            ],
+            [
+              63,
+              57.3
+            ],
+            [
+              65,
+              54.9
+            ],
+            [
+              70.8,
+              46.6
+            ],
+            [
+              72.8,
+              43.4
+            ],
+            [
+              74.6,
+              40.2
+            ],
+            [
+              76.3,
+              37
+            ],
+            [
+              77.8,
+              33.8
+            ],
+            [
+              79.2,
+              30.6
+            ],
+            [
+              80.4,
+              27.4
+            ],
+            [
+              82.6,
+              21
+            ],
+            [
+              84.1,
+              14.6
+            ],
+            [
+              85.5,
+              5.1
+            ],
+            [
+              85.9,
+              0
+            ]
+          ]
+        }
+      ],
+      "points": [
+        {
+          "id": "x",
+          "label": "X",
+          "curve": "ppc",
+          "x": 63,
+          "y": 57.3,
+          "xLabel": "B",
+          "labelPosition": [
+            66.4,
+            65.5
+          ],
+          "marker": true
+        }
+      ],
+      "guides": [
+        {
+          "point": "x",
+          "axes": [
+            "x",
+            "y"
+          ]
+        }
+      ],
+      "arrows": [],
+      "areas": [],
+      "labels": [
+        {
+          "text": "0",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "reviewer": null
+      }
+    }
+  }
 };
   globalThis.EconPublished ||= { packs: [], graphs: {} };
   EconPublished.packs.push(data.pack);

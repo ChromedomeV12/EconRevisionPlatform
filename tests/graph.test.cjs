@@ -43,6 +43,7 @@ const invalidCases = [
   ["zero-length segment", s => s.curves[0].points[1] = [1, 9]],
   ["wrong demand slope", s => s.curves[0].points[1] = [5, 10]],
   ["wrong supply slope", s => s.curves[1].points[1] = [5, 0]],
+  ["wrong ppc slope", s => { s.curves[0].role = "ppc"; s.curves[0].points[1] = [5, 10]; }],
   ["unknown curve shape", s => s.curves[0].shape = "smooth"],
   ["bent declared-linear curve", s => { s.curves[0].shape = "linear"; s.curves[0].points[1] = [5, 5.5]; }],
   ["reversed x", s => s.curves[0].points.reverse()],
@@ -59,7 +60,7 @@ const invalidCases = [
   ["arrow offset numeric string", s => s.arrows[0].offset = [0, "1"]],
   ["arrow offset nonfinite", s => s.arrows[0].offset = [0, Infinity]],
   ["arrow offset outside axis", s => s.arrows[0].offset = [0, 20]],
-  ["invalid welfare role", s => s.areas[0].role = "profit"],
+  ["invalid area role", s => s.areas[0].role = "unknown"],
   ["degenerate area", s => s.areas[0].points = [[1, 1], [2, 2], [3, 3]]],
   ["repeated closing vertex", s => s.areas[0].points.push(s.areas[0].points[0])],
   ["long text", s => s.labels[0].text = "x".repeat(81)],
@@ -183,6 +184,53 @@ test("Surplus roles are semantic and annotation coordinates are not silently cla
   assert.ok(nodes.some(n => n.attributes.class === "graph-area graph-area-producer-surplus"));
   assert.equal(nodes.find(n => n.attributes.class === "graph-annotation").attributes.y, "244.8");
 });
+test("Free-standing points and horizontal/vertical curves are explicit schema features", () => {
+  const free = fixture();
+  free.points.push({ id: "inside", label: "C", x: 4, y: 4 });
+  assert.equal(validate(free).valid, true);
+  const freeNodes = flatten(render(free, fakeDocument()));
+  assert.equal(freeNodes.filter(node => node.attributes.class === "graph-point").length, 4);
+
+  const flat = fixture();
+  flat.curves = [
+    { id: "elastic", label: "D", role: "demand", orientation: "horizontal", points: [[1, 5], [9, 5]] },
+    { id: "fixed", label: "S", role: "supply", orientation: "vertical", points: [[5, 1], [5, 9]] },
+  ];
+  flat.points = []; flat.guides = []; flat.arrows = []; flat.areas = []; flat.labels = [];
+  assert.equal(validate(flat).valid, true);
+  const flatNodes = flatten(render(flat, fakeDocument()));
+  assert.ok(flatNodes.some(node => node.attributes.class === "graph-curve graph-curve-demand"));
+  assert.ok(flatNodes.some(node => node.attributes.class === "graph-curve graph-curve-supply"));
+
+  const mixed = fixture();
+  mixed.curves = [{ id: "as", label: "AS", role: "supply", shape: "piecewise", orientation: "mixed", points: [[1, 2], [5, 2], [7, 5], [7, 9]] }];
+  mixed.points = []; mixed.guides = []; mixed.arrows = []; mixed.areas = []; mixed.labels = [];
+  assert.equal(validate(mixed).valid, true);
+  mixed.curves[0].shape = "linear";
+  assert.equal(validate(mixed).valid, false, "mixed orientation must be explicitly piecewise");
+});
+
+test("Profit and loss area roles are semantic and rendered", () => {
+  const spec = fixture();
+  spec.areas = [
+    { id: "profit", role: "profit", points: [[1, 8], [4, 8], [4, 6], [1, 6]] },
+    { id: "loss", role: "loss", points: [[5, 4], [8, 4], [8, 2], [5, 2]] },
+  ];
+  assert.equal(validate(spec).valid, true);
+  const nodes = flatten(render(spec, fakeDocument()));
+  assert.ok(nodes.some(node => node.attributes.class === "graph-area graph-area-profit"));
+  assert.ok(nodes.some(node => node.attributes.class === "graph-area graph-area-loss"));
+});
+
+test("PPC role is a valid solid neutral curve, not a demand curve", () => {
+  const spec = fixture();
+  spec.curves[0].role = "ppc";
+  assert.equal(validate(spec).valid, true);
+  const nodes = flatten(render(spec, fakeDocument()));
+  assert.ok(nodes.some(node => node.attributes.class === "graph-curve graph-curve-ppc"));
+  assert.ok(!nodes.some(node => node.attributes.class === "graph-curve graph-curve-demand"));
+});
+
 test("Arrow offsets translate only arrows, preserving direction, length and economic geometry", () => {
   const spec = fixture();
   const original = flatten(render(spec, fakeDocument()));
@@ -260,4 +308,64 @@ test("Rendering returns isolated accessible SVG, literal text, stable geometry a
   assert.ok(nodes.every(n => !Object.values(n.attributes).some(value => /NaN|Infinity/.test(value))));
   assert.equal(JSON.stringify(spec), before);
   assert.throws(() => render(spec, null), /DOM document/);
+});
+
+test("Schematic family renders bounded nodes, connectors, bands, paths and arcs", () => {
+  const spec = {
+    version: 1, kind: "schematic", id: "synthetic-schematic", title: "Synthetic schematic",
+    description: "Two labelled nodes, a band, a flow path and an arc.", coordinateMode: "schematic",
+    nodes: [
+      { id: "a", label: "Firms", x: 30, y: 40, shape: "box", w: 20, h: 12, tone: "accent" },
+      { id: "b", label: "Households", x: 70, y: 60, shape: "circle", w: 16, tone: "cyan" }
+    ],
+    connectors: [{ from: "a", to: "b", arrow: "end", label: "spending" }],
+    bands: [{ x: 10, y: 10, w: 30, h: 10, label: "Market", tone: "muted" }],
+    paths: [{ points: [[10, 85], [40, 85], [70, 85]], arrow: "both", style: "dashed" }],
+    arcs: [{ cx: 50, cy: 50, r: 30, start: 0, end: 180, arrow: "end", tone: "magenta" }],
+    labels: [{ text: "Source", x: 50, y: 95 }],
+    review: { status: "draft", reviewer: null }
+  };
+  assert.equal(validate(spec).valid, true);
+  const nodes = flatten(render(spec, fakeDocument()));
+  for (const cls of ["graph-node graph-node-box", "graph-node graph-node-circle", "graph-connector", "graph-band", "graph-flow", "graph-arc", "graph-annotation"]) assert.ok(nodes.some(node => String(node.attributes.class).includes(cls)), cls);
+});
+
+test("Table family renders a bounded payoff matrix", () => {
+  const spec = {
+    version: 1, kind: "table", id: "synthetic-payoff", title: "Synthetic payoff matrix",
+    description: "Two by two table.", coordinateMode: "schematic",
+    columns: ["", "Firm B: low", "Firm B: high"],
+    rows: [{ label: "Firm A: low", cells: ["10, 10", "2, 14"] }, { label: "Firm A: high", cells: ["14, 2", "6, 6"] }],
+    review: { status: "draft", reviewer: null }
+  };
+  assert.equal(validate(spec).valid, true);
+  const nodes = flatten(render(spec, fakeDocument()));
+  assert.ok(nodes.some(node => node.attributes.class === "graph-table-header"));
+  assert.equal(nodes.filter(node => node.attributes.class === "graph-table-row").length, 2);
+  assert.ok(nodes.some(node => node.textContent === "10, 10"));
+});
+
+test("Multipanel family validates chart panels and stacks their SVGs", () => {
+  const one = fixture(); one.id = "panel-one"; one.title = "Panel one";
+  const two = fixture(); two.id = "panel-two"; two.title = "Panel two";
+  const spec = { version: 1, kind: "multipanel", id: "synthetic-multipanel", title: "Synthetic panels", description: "Two independent charts.", coordinateMode: "schematic", panels: [one, two], review: { status: "draft", reviewer: null } };
+  assert.equal(validate(spec).valid, true);
+  const svg = render(spec, fakeDocument());
+  assert.equal(svg.attributes["data-kind"], "multipanel");
+  assert.equal(svg.children.filter(child => child.tag === "svg").length, 2);
+  const bad = { ...spec, panels: [one] };
+  assert.equal(validate(bad).valid, false);
+});
+
+test("Guide paths, double-headed detached arrows and curve tones are explicit chart features", () => {
+  const spec = fixture();
+  spec.guidePaths = [{ points: [[1, 7], [3, 7], [3, 3]], label: "L" }];
+  spec.arrows.push({ start: [1, 7], end: [3, 7], heads: "both" });
+  spec.curves[0].tone = "magenta";
+  assert.equal(validate(spec).valid, true);
+  const nodes = flatten(render(spec, fakeDocument()));
+  assert.ok(nodes.some(node => node.attributes.class === "graph-guide graph-guide-path"));
+  const curve = nodes.find(node => String(node.attributes.class).includes("graph-curve-demand"));
+  assert.match(curve.attributes.class, /graph-tone-magenta/);
+  assert.ok(nodes.some(node => node.attributes["marker-start"]));
 });

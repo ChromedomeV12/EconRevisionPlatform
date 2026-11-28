@@ -388,9 +388,12 @@
   function renderConcept(card, canvas) {
     drawConcept(card, canvas);
     const spec = card.graphSpec;
-    // Only curated built-in cards may opt in after human review; local submissions cannot.
-    if (canvas && EconData.cards.includes(card) && spec?.review?.status === "reviewed" &&
-        typeof spec.review.reviewer === "string" && spec.review.reviewer.trim() &&
+    // Reviewed graphs always need a reviewer. The demo may explicitly opt into
+    // draft reconstructions, but they remain labelled as unreviewed.
+    const reviewedGraph = spec?.review?.status === "reviewed" &&
+      typeof spec.review.reviewer === "string" && spec.review.reviewer.trim();
+    const draftDemoGraph = spec?.review?.status === "draft" && globalThis.EconDemoDraftGraphs === true;
+    if (canvas && EconData.cards.includes(card) && (reviewedGraph || draftDemoGraph) &&
         typeof EconGraphs !== "undefined" && EconGraphs.validate(spec).valid) {
       const graph = EconGraphs.render(spec, document);
       graph.dataset.graph = card.id;
@@ -398,7 +401,7 @@
       canvas.style.display = "none";
       canvas.after(graph);
       const caption = canvas.parentElement.querySelector("small");
-      if (caption) caption.textContent = "Reconstructed schematic · Editorial draft";
+      if (caption) caption.textContent = spec.review.status === "draft" ? "Draft reconstruction · Not teacher reviewed" : "Reconstructed schematic · Editorial draft";
       const zoom = document.createElement("button");
       zoom.className = "icon-button graph-zoom";
       zoom.type = "button";
@@ -406,7 +409,7 @@
       zoom.setAttribute("aria-label", `Enlarge ${card.topic} diagram`);
       zoom.innerHTML = icon("zoom-in");
       zoom.addEventListener("click", () => {
-        openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><div class="native-diagram-detail"></div><p>${escape(card.source)}. Editorial draft; not teacher verified.</p>`);
+        openModal(`<div class="detail-heading"><h2>${escape(card.topic)}</h2>${closeButton()}</div><div class="native-diagram-detail"></div><p>${escape(card.source)}. ${spec.review.status === "draft" ? "Draft graph; not teacher reviewed." : "Editorial draft; not teacher verified."}</p>`);
         $(".native-diagram-detail").append(EconGraphs.render(spec, document));
       });
       canvas.parentElement.append(zoom);

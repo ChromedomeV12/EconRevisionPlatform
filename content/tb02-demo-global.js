@@ -1,3 +1,4 @@
+globalThis.EconDemoDraftGraphs = true;
 /* TB-02 demo pack. Drafts awaiting human review. */
 (() => {
   const data = {

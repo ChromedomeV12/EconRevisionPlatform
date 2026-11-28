@@ -1,3 +1,4 @@
+globalThis.EconDemoDraftGraphs = true;
 /* TB-02 demo pack. Drafts awaiting human review. */
 (() => {
   const data = {
@@ -53,52 +54,54 @@
         "graphId": null
       },
       {
-        "id": "tb-02-p128-ad-curve",
+        "id": "tb-02-p129-ad-shifts",
         "revision": 1,
         "unit": "macro",
         "topic": "Aggregate demand",
-        "title": "What the AD curve shows",
-        "headline": "The aggregate demand curve shows planned spending on domestic output at each average price level, and it slopes downward.",
-        "summary": "Aggregate demand is the value of total demand for all goods and services in an economy per time period: the planned spending on domestically produced goods and services at different average price levels. On a diagram with the average price level on the vertical axis and real GDP on the horizontal axis, the AD curve slopes downward, so a higher average price level goes with a lower level of aggregate demand, other things equal.",
-        "notes": "The page's explanation is a purchasing-power channel: when the average price level falls, individuals, households, firms and the government can buy more with a given amount of money, so consumption, investment and government spending rise, ceteris paribus. That is why the slope is a claim about spending across the whole economy rather than about one market's demand. The ceteris paribus clause matters: the curve relates the price level to planned spending with everything else held constant, so the slope should not be read as a list of every influence on spending. Figure 17.1 carries no tick marks or numeric scale, so only the direction of the relationship can be read from it, not magnitudes. The page's top tip warns against carrying micro labels into macro diagrams: use 'average price level' (or 'general price level') and 'Real GDP' (or 'National output'), not 'price' and 'quantity'.",
-        "takeaway": "AD slopes down because a lower price level raises the purchasing power behind C, I and G, not because one good became cheaper.",
-        "caution": "Labelling AD-AS axes 'price' and 'quantity' is a micro slip; macro diagrams take average price level and real GDP.",
+        "title": "What shifts the AD curve",
+        "headline": "A change in any aggregate demand component shifts AD: favourable shifts right, detrimental shifts left.",
+        "summary": "Aggregate demand is planned spending, C + I + G + X - M. A factor that raises or lowers one component shifts the whole AD curve, ceteris paribus. A favourable factor moves it right, from AD1 to AD2, raising real GDP at every average price level; a detrimental factor moves it left, lowering real GDP at every average price level. The page's examples are higher consumer confidence shifting AD right and higher interest rates making borrowing less affordable shifting it left.",
+        "notes": "The shift is a change in planned spending at a given price level, not a movement along the curve. Consumption has six listed influences: consumer confidence, interest rates, wealth, income taxes, household indebtedness and expectations of the future price level. Confidence is low in a recession and high in a boom, so it moves with the cycle rather than independently of it. The page warns that GDP and AD are easily confused: GDP is the value of actual expenditure over the year, while AD is planned or expected expenditure for a given year. Neither figure prints a numeric scale or tick marks, so the diagrams show direction only, not the size of the shift.",
+        "takeaway": "A component change shifts AD; a price-level change moves the economy along an existing AD curve.",
+        "caution": "Do not treat a higher average price level as a reason for the AD curve to shift; that relationship is already drawn as the curve's slope.",
         "related": [
-          "tb-02-p118-three-approaches",
-          "tb-02-p115-circular-flow"
+          "tb-02-p128-ad-curve",
+          "tb-02-p128-investment-definition"
         ],
         "sources": [
           {
             "id": "TB-02",
-            "page": 128
+            "page": 129
           }
         ],
         "level": "common-core-provisional",
-        "graphId": null
+        "graphId": "ocr-tb-02-p129-448707b91331"
       },
       {
-        "id": "tb-02-p128-investment-definition",
+        "id": "tb-02-p133-keynesian-as-sections",
         "revision": 1,
         "unit": "macro",
-        "topic": "Aggregate demand",
-        "title": "Investment means capital goods",
-        "headline": "Investment is firms' spending on capital goods that raises the capital stock and productive capacity, not household saving.",
-        "summary": "The page defines investment (I) as the expenditure of firms on capital goods in order to increase their capital stock and productive capacity, such as machinery, tools, capital equipment, commercial vehicles and industrial buildings. Investment is one of the five components of aggregate demand, alongside consumption expenditure, government spending, export earnings and import expenditure; consumption is the single largest of these components.",
-        "notes": "The definition turns on what the spending buys: new capital goods add to what the economy can produce, so machinery, equipment, vehicles and industrial buildings qualify. Placing money in a savings account or buying an existing financial asset is a transfer of funds between holders, not the creation of capital goods, so it does not fit this definition. The same five components appear in the expenditure measure of GDP, where the term enters as C + I + G + (X - M); the AD card uses the same list from the demand side, which is why the two are related rather than separate formulas.",
-        "takeaway": "In this chapter investment is firms' capital-goods spending, not the act of saving or buying financial assets.",
-        "caution": "A household deposit or a share purchase is not investment in this macro sense; it creates no new capital goods.",
+        "topic": "Aggregate supply",
+        "title": "The three sections of the Keynesian AS curve",
+        "headline": "The Keynesian AS curve passes through a flat, an upward-sloping and a vertical section as spare capacity runs out.",
+        "summary": "Keynesians draw aggregate supply in three sections because spare capacity varies as the economy grows. In section 1 unemployed resources make AS horizontal and perfectly price elastic, so extra aggregate demand raises output without raising the price level. In section 2, between Y1 and Yf, scarce resources push prices up and AS slopes upwards. In section 3, at Yf, no spare capacity remains, so AS is vertical and further demand growth is purely inflationary.",
+        "notes": "The figure shows one continuous AS curve with the flat section labelled 1, the rising section labelled 2 and the vertical section labelled 3. Dashed vertical guides drop from the two bends in the curve to Y1 and Yf on the real GDP axis; the vertical axis is the general price level. Keynesians argue the economy does not necessarily reach Yf even in the long run, and the page cites Spain's 2008-2014 recession and Japan's 1995-2007 slump, when nominal GDP fell by more than 18 per cent. Read the price effects section by section rather than applying one result to the whole curve. The page's terminology tip asks for 'Keynesian aggregate supply' rather than 'LRAS' for this curve, because it is not a long-run vertical supply curve.",
+        "takeaway": "On the flat part of the Keynesian AS curve demand growth raises output; on the vertical part it raises only prices.",
+        "caution": "The output and price effect of an AD shift depends on which section the economy is in, so it is wrong to apply the section 1 result to the whole curve.",
         "related": [
-          "tb-02-p118-three-approaches",
-          "tb-02-p128-ad-curve"
+          "tb-02-p131-spare-capacity",
+          "tb-02-p132-as-views",
+          "tb-02-p133-lras-vertical"
         ],
         "sources": [
           {
             "id": "TB-02",
-            "page": 128
+            "page": 133,
+            "figure": "Figure 17.7"
           }
         ],
         "level": "common-core-provisional",
-        "graphId": null
+        "graphId": "ocr-tb-02-p133-bc27cc72022c"
       },
       {
         "id": "tb-02-p141-growth-definition",
@@ -520,7 +523,237 @@
       }
     ]
   },
-  "graphs": {}
+  "graphs": {
+    "ocr-tb-02-p129-448707b91331": {
+      "version": 1,
+      "id": "ocr-tb-02-p129-448707b91331",
+      "title": "Figure 17.3 Leftwards shift of the aggregate demand curve",
+      "description": "Single-panel aggregate-demand diagram from TB-02 PDF viewer page 129: an upward-pointing vertical axis labelled 'Average price level' and a rightward-pointing horizontal axis labelled 'Real GDP'. Two parallel downward-sloping blue straight lines, AD1 on the right and AD2 on the left, represent a leftward (inward) shift of aggregate demand. A short detached horizontal black arrow between the two lines at mid-height points left from AD1 towards AD2. The source prints no ticks, numeric values, dashed guides, dot markers or shading, so positions are illustrative schematic layout only.",
+      "coordinateMode": "schematic",
+      "axes": {
+        "x": {
+          "label": "Real GDP",
+          "min": 0,
+          "max": 100
+        },
+        "y": {
+          "label": "Average price level",
+          "min": 0,
+          "max": 100
+        },
+        "aspectRatio": 1.58
+      },
+      "curves": [
+        {
+          "id": "ad1",
+          "label": "AD₁",
+          "role": "demand",
+          "points": [
+            [
+              28,
+              89.2
+            ],
+            [
+              83.5,
+              15.8
+            ]
+          ],
+          "shape": "linear",
+          "labelPosition": [
+            90.5,
+            18.3
+          ]
+        },
+        {
+          "id": "ad2",
+          "label": "AD₂",
+          "role": "demand",
+          "points": [
+            [
+              3.9,
+              85
+            ],
+            [
+              59,
+              11.8
+            ]
+          ],
+          "shape": "linear",
+          "labelPosition": [
+            66.5,
+            12.4
+          ]
+        }
+      ],
+      "points": [],
+      "guides": [],
+      "arrows": [
+        {
+          "start": [
+            53.5,
+            50.3
+          ],
+          "end": [
+            33.5,
+            50.3
+          ]
+        }
+      ],
+      "areas": [],
+      "labels": [],
+      "review": {
+        "status": "draft",
+        "reviewer": null
+      }
+    },
+    "ocr-tb-02-p133-bc27cc72022c": {
+      "version": 1,
+      "id": "ocr-tb-02-p133-bc27cc72022c",
+      "title": "Figure 17.7 The Keynesian AS curve (Keynesian view)",
+      "description": "Single-panel Keynesian aggregate supply diagram from TB-02 PDF viewer page 133. One AS curve has three printed parts: a flat horizontal stretch at low output labelled 1, a rising curved stretch labelled 2, and a vertical stretch at potential output labelled 3. Dashed vertical guides from the curve down to the horizontal axis are labelled Y1 at the end of the flat stretch and Yf at the foot of the vertical stretch. Vertical axis: General price level. Horizontal axis: Real GDP. Schematic layout only; the source prints no numbers, ticks or gridlines.",
+      "coordinateMode": "schematic",
+      "axes": {
+        "x": {
+          "label": "Real GDP",
+          "min": 0,
+          "max": 100
+        },
+        "y": {
+          "label": "General price level",
+          "min": 0,
+          "max": 100
+        },
+        "aspectRatio": 1.48
+      },
+      "curves": [
+        {
+          "id": "as",
+          "label": "AS",
+          "role": "reference",
+          "shape": "piecewise",
+          "points": [
+            [
+              3.8,
+              17.9
+            ],
+            [
+              15,
+              17.9
+            ],
+            [
+              31.6,
+              17.9
+            ],
+            [
+              35,
+              18.2
+            ],
+            [
+              40.5,
+              20.5
+            ],
+            [
+              46,
+              24
+            ],
+            [
+              52,
+              29.5
+            ],
+            [
+              57,
+              35
+            ],
+            [
+              61,
+              40.5
+            ],
+            [
+              64,
+              44.5
+            ],
+            [
+              66.6,
+              48.6
+            ],
+            [
+              66.6,
+              55
+            ],
+            [
+              66.6,
+              65
+            ],
+            [
+              66.6,
+              77.8
+            ]
+          ],
+          "labelPosition": [
+            65,
+            84
+          ]
+        }
+      ],
+      "points": [
+        {
+          "id": "y1",
+          "label": "",
+          "curve": "as",
+          "x": 31.6,
+          "y": 17.9,
+          "xLabel": "Y1",
+          "marker": false
+        },
+        {
+          "id": "yf",
+          "label": "",
+          "curve": "as",
+          "x": 66.6,
+          "y": 48.6,
+          "xLabel": "Yf",
+          "marker": false
+        }
+      ],
+      "guides": [
+        {
+          "point": "y1",
+          "axes": [
+            "x"
+          ]
+        },
+        {
+          "point": "yf",
+          "axes": [
+            "x"
+          ]
+        }
+      ],
+      "arrows": [],
+      "areas": [],
+      "labels": [
+        {
+          "text": "1",
+          "x": 17.3,
+          "y": 21.8
+        },
+        {
+          "text": "2",
+          "x": 44.6,
+          "y": 34.5
+        },
+        {
+          "text": "3",
+          "x": 62.5,
+          "y": 62.3
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "reviewer": null
+      }
+    }
+  }
 };
   globalThis.EconPublished ||= { packs: [], graphs: {} };
   EconPublished.packs.push(data.pack);
