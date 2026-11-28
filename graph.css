@@ -11,6 +11,8 @@
   --graph-welfare: #df8e1d;
   --graph-consumer-surplus: #40a02b;
   --graph-producer-surplus: #fe640b;
+  --graph-profit: #e6a15c;
+  --graph-loss: #8bbf8a;
   display: block;
   width: 100%;
   max-width: 960px;
@@ -34,6 +36,8 @@
   --graph-reference: #45475a;
   --graph-arrow: #a12d50;
   --graph-welfare: #df8e1d;
+  --graph-profit: #b97836;
+  --graph-loss: #4f8a58;
 }
 .econ-graph .graph-paper { fill: var(--graph-paper); }
 .econ-graph text {
@@ -59,6 +63,7 @@
 .econ-graph .graph-curve-supply { stroke: var(--graph-supply); }
 .econ-graph .graph-curve-cost { stroke: var(--graph-cost); }
 .econ-graph .graph-curve-reference { stroke: var(--graph-reference); stroke-dasharray: 9 5; }
+.econ-graph .graph-curve-ppc { stroke: var(--graph-ink); }
 .econ-graph .graph-arrow { stroke: var(--graph-arrow); stroke-width: 2.5; stroke-linecap: butt; }
 .econ-graph .graph-arrowhead { fill: var(--graph-ink); }
 .econ-graph .graph-movement-arrowhead { fill: var(--graph-arrow); }
@@ -66,8 +71,56 @@
 .econ-graph .graph-area { fill: var(--graph-welfare); fill-opacity: 0.3; stroke: var(--graph-guide); stroke-width: 1; }
 .econ-graph .graph-area-consumer-surplus { fill: var(--graph-consumer-surplus); }
 .econ-graph .graph-area-producer-surplus { fill: var(--graph-producer-surplus); }
+.econ-graph .graph-area-profit { fill: var(--graph-profit); }
+.econ-graph .graph-area-loss { fill: var(--graph-loss); }
 .refresh-art:has(.graph-zoom) { position: relative; }
 .refresh-art:has(.graph-zoom) .visual-label > svg { visibility: hidden; }
 .refresh-art .graph-zoom { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; min-height: 0; z-index: 1; }
 .native-diagram-detail { overflow: auto; max-height: 65dvh; background: var(--graph-paper, #eff1f5); }
 .native-diagram-detail .econ-graph { max-height: none; }
+
+/* Schematic, multi-panel and table families share the same bounded graph tokens. */
+.econ-graph {
+  --graph-magenta: #c02668;
+  --graph-cyan: #0e7c86;
+  --graph-accent: #8839ef;
+  --graph-muted: #8c8fa1;
+  --graph-warning: #9a5b00;
+}
+:root[data-theme="dark"] .econ-graph {
+  --graph-magenta: #a83a68;
+  --graph-cyan: #2b7f88;
+  --graph-accent: #7543a0;
+  --graph-muted: #6c6f85;
+  --graph-warning: #a76b1c;
+}
+.econ-graph .graph-node { fill: var(--graph-paper); stroke: var(--graph-ink); stroke-width: 2; }
+.econ-graph .graph-node-circle { fill: var(--graph-paper); }
+.econ-graph .graph-connector, .econ-graph .graph-flow, .econ-graph .graph-arc { fill: none; stroke: var(--graph-ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.econ-graph .graph-band { fill: var(--graph-muted); fill-opacity: 0.38; stroke: var(--graph-ink); stroke-width: 1; }
+.econ-graph .graph-band-label { font-size: 16px; }
+.econ-graph .graph-table-header { fill: var(--graph-muted); fill-opacity: 0.22; stroke: var(--graph-ink); stroke-width: 1; }
+.econ-graph .graph-table-row { fill: var(--graph-paper); stroke: var(--graph-muted); stroke-width: 1; }
+.econ-graph .graph-table-heading { font-size: 15px; font-weight: 700; }
+.econ-graph .graph-table-row-label { font-size: 15px; font-weight: 700; }
+.econ-graph .graph-table-cell { font-size: 15px; }
+.econ-graph .graph-node-label { font-size: 16px; }
+.econ-graph :is(.graph-curve, .graph-connector, .graph-flow, .graph-arc).graph-tone-neutral { stroke: var(--graph-ink); }
+.econ-graph :is(.graph-curve, .graph-connector, .graph-flow, .graph-arc).graph-tone-muted { stroke: var(--graph-muted); }
+.econ-graph :is(.graph-curve, .graph-connector, .graph-flow, .graph-arc).graph-tone-accent { stroke: var(--graph-accent); }
+.econ-graph :is(.graph-curve, .graph-connector, .graph-flow, .graph-arc).graph-tone-magenta { stroke: var(--graph-magenta); }
+.econ-graph :is(.graph-curve, .graph-connector, .graph-flow, .graph-arc).graph-tone-cyan { stroke: var(--graph-cyan); }
+.econ-graph :is(.graph-curve, .graph-connector, .graph-flow, .graph-arc).graph-tone-warning { stroke: var(--graph-warning); }
+.econ-graph .graph-node.graph-tone-neutral { fill: var(--graph-paper); stroke: var(--graph-ink); }
+.econ-graph .graph-node.graph-tone-muted { fill: var(--graph-muted); stroke: var(--graph-ink); }
+.econ-graph .graph-node.graph-tone-accent { fill: var(--graph-paper); stroke: var(--graph-accent); }
+.econ-graph .graph-node.graph-tone-magenta { fill: var(--graph-paper); stroke: var(--graph-magenta); }
+.econ-graph .graph-node.graph-tone-cyan { fill: var(--graph-paper); stroke: var(--graph-cyan); }
+.econ-graph .graph-node.graph-tone-warning { fill: var(--graph-paper); stroke: var(--graph-warning); }
+.econ-graph .graph-band.graph-tone-muted { fill: var(--graph-muted); }
+.econ-graph .graph-band.graph-tone-accent { fill: var(--graph-accent); }
+.econ-graph .graph-band.graph-tone-magenta { fill: var(--graph-magenta); }
+.econ-graph .graph-band.graph-tone-cyan { fill: var(--graph-cyan); }
+.econ-graph .graph-band.graph-tone-warning { fill: var(--graph-warning); }
+
+.econ-graph-schematic :is(.graph-annotation, .graph-node-label, .graph-flow-label, .graph-connector-label, .graph-band-label) { font-size: 14px; }
